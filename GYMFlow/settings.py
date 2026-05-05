@@ -11,9 +11,14 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv, dotenv_values
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Cargar variables de entorno desde .env (si existe)
+load_dotenv(BASE_DIR / ".env")
+env = dotenv_values(BASE_DIR / ".env")
 
 
 # Quick-start development settings - TODO: unsuitable for production
@@ -81,14 +86,23 @@ WSGI_APPLICATION = "GYMFlow.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 #
-# PostgreSQL
-# https://docs.djangoproject.com/en/6.0/ref/databases/#postgresql-notes
-DATABASES = {
-    # "default": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "OPTIONS": {},
-    # }
-}
+# Configurar las variables de entorno para la base de datos.
+# Para el desarrollo, utilizamos un servicio PostgreSQL dockerizado. Ver docker-compose.yml
+# Si no se proporcionan las variables de entorno de Postgres en el archivo .env o en el entorno,
+# se lanza una excepción.
+if env.get("POSTGRES_DB"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env.get("POSTGRES_DB", "gymflow"),
+            "USER": env.get("POSTGRES_USER", "gymflow"),
+            "PASSWORD": env.get("POSTGRES_PASSWORD", "gymflow"),
+            "HOST": env.get("POSTGRES_HOST", "localhost"),
+            "PORT": env.get("POSTGRES_PORT", "5432"),
+        }
+    }
+else:
+    raise Exception("No se proporcionaron las variables de entorno de Postgres en .env")
 
 
 # Password validation

@@ -7,5 +7,6 @@ requires-python = ">=3.14.4"
 dependencies = [
   "django>=6.0.5",              # framework base
   "django-cors-headers>=4.9.0", # cors headers para http reqs
-  "psycopg>=3.3.4",             # postgre connector
+  "psycopg[binary]>=3.3.4",    # postgre connector
+  "python-dotenv>=1.2.2",
 ]

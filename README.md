@@ -42,6 +42,9 @@ pip install uv
 
 O revisá la documentacion: [https://github.com/astral-sh/uv](https://github.com/astral-sh/uv)
 
+
+Además, instalá docker y docker-compose.
+
 ## Primera vez
 
 1. Cloná el repositorio y entrá a la carpeta
@@ -51,6 +54,16 @@ O revisá la documentacion: [https://github.com/astral-sh/uv](https://github.com
   ```
   uv sync
   ```
+
+Para levantar el servidor de PostgreSQL:
+
+1. Copiá el ejemplo de variables de entorno en `.env.example` como `.env`, ajustá si querés las credenciales.
+2. Levantá el servidor de base de datos:
+
+	```bash
+	docker compose -f ./docker-compose.yml up -d db
+	uv run python manage.py migrate
+	```
 
 ## Correr
 
