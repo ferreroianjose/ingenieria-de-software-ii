@@ -1,0 +1,50 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>
+			SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
+		</title>
+
+		<!-- Tailwind v4 -->
+		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+		<!-- Alpine.js -->
+		<script
+			defer
+			src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+		></script>
+
+		<!-- HTMX -->
+		<script
+			src="https://cdn.jsdelivr.net/npm/htmx.org@2.0/dist/htmx.min.js"
+			integrity="sha256-cepnGFv6jJjDnTFxfG/OXYUjcPzf0SnbRUN3TTFFwN4="
+			crossorigin="anonymous"
+		></script>
+
+		<!-- Estilos globales -->
+		<link rel="stylesheet" href="{% static 'css/global.css' %}" />
+		{% block extra_head %}{% endblock %}
+	</head>
+	<body class="min-h-screen min-w-full flex flex-col md:mt-0">
+		{% include 'partials/_header.html' %}
+
+		<main class="flex-grow md:ml-56">
+			{% block content %}
+			<!-- Contenido de cada página -->
+			{% endblock %}
+			<div
+				id="global-spinner"
+				class="hidden fixed top-0 left-0 w-full h-1 bg-purple-500 animate-pulse"
+			></div>
+		</main>
+
+		{% include 'partials/_footer.html' %}
+
+		<!-- Scripts globales -->
+		<script src="{% static 'js/main.js' %}"></script>
+		{% block extra_js %}{% endblock %}
+	</body>
+</html>

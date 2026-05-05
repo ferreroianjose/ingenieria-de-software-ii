@@ -1,0 +1,16 @@
+<header class="fixed left-4 right-4 z-50 bg-white shadow-lg rounded-full p-2 flex items-between justify-between md:fixed md:top-0 md:left-0 md:bottom-0 md:min-w-52 md:max-w-70 md:rounded-none md:shadow-xl">
+    <nav class="w-full flex items-center justify-between px-3 md:flex-col md:items-start md:py-6 md:space-y-6">
+        <!-- Logo / Marca -->
+        <a href="/" class="text-lg font-bold text-purple-600 md:ml-2">SIEMPRE GYM</a>
+
+        <!-- Controles de usuario -->
+        <div class="flex items-center space-x-3 md:flex-col md:space-x-0 md:space-y-3 md:w-full md:pl-2">
+            {% if user.is_authenticated %}
+                <span class="text-gray-700 text-sm md:text-base">Hola, {{ user.username }}</span>
+                <a href="{% url 'logout' %}" class="text-gray-700 hover:text-purple-600 text-sm md:text-base">Cerrar sesión</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="text-gray-700 hover:text-purple-600 text-sm md:text-base">Aqui van botones</a>
+            {% endif %}
+        </div>
+    </nav>
+</header>
