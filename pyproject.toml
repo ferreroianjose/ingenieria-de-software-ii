@@ -1,0 +1,11 @@
+[project]
+name = "GYMFLOW"
+version = "0.1.0"
+description = "Sistema de gestion para el centro de actividades físicas Siempre GYM."
+readme = "README.md"
+requires-python = ">=3.14.4"
+dependencies = [
+  "django>=6.0.5",              # framework base
+  "django-cors-headers>=4.9.0", # cors headers para http reqs
+  "psycopg>=3.3.4",             # postgre connector
+]
