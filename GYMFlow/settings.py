@@ -36,6 +36,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Nuestras Apps
     "corsheaders",  # https://github.com/adamchainz/django-cors-headers
+    "users",  # Módulo de autenticación y gestión de usuarios
+    "classes",  # Módulo de gestión de clases e inscripciones
+    "payments",  # Módulo de gestion de cobros
+    "attendance",  # Módulo de asistencia
+    "reports",  # Módulo de reportes y métricas
+    "notifications",  # Módulo de notificaciones
 ]
 
 MIDDLEWARE = [
