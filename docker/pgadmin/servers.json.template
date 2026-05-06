@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "gymflow-db",
+      "Group": "Servers",
+      "Host": "${POSTGRES_HOST:-db}",
+      "Port": ${POSTGRES_PORT:-5432},
+      "MaintenanceDB": "${POSTGRES_DB}",
+      "Username": "${POSTGRES_USER}",
+      "SSLMode": "prefer",
+      "Comment": "",
+      "Password": "${POSTGRES_PASSWORD:-gymflow}"
+    }
+  }
+}

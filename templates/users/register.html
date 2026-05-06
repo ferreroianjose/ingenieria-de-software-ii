@@ -1,0 +1,55 @@
+{% extends 'partials/_auth_card.html' %}
+
+{% block title %}Registrarse{% endblock %}
+
+{% block auth_title %}Crear una cuenta{% endblock %}
+{% block auth_subtitle %}Completa los datos para crear una cuenta{% endblock %}
+{% block auth_form_action %}{% url 'register' %}{% endblock %}
+
+{% block auth_fields %}
+  <div>
+      <label for="username">
+          Usuario
+      </label>
+      <input id="username" name="username" type="text" required autofocus value="{{ form.username.value|default:'' }}">
+  </div>
+
+  <div>
+      <label for="email">
+          Correo electrónico
+      </label>
+      <input id="email" name="email" type="email" required value="{{ form.email.value|default:'' }}">
+  </div>
+
+  <div>
+      <label for="password1">
+          Contraseña
+      </label>
+      <input id="password1" name="password1" type="password" required>
+  </div>
+
+  <div>
+      <label for="password2">
+          Confirmar contraseña
+      </label>
+      <input id="password2" name="password2" type="password" required>
+  </div>
+{% endblock %}
+
+{% block auth_primary_button %}
+  {% include 'partials/_primary_button.html' with label="Crear cuenta" %}
+{% endblock %}
+
+{% block auth_extra %}
+  <p>
+    ¿Ya tenés una cuenta? 
+    <a href="{% url 'login' %}" 
+       hx-get="{% url 'login' %}"
+       hx-target="#auth-card"
+       hx-select="#auth-card"
+       hx-swap="outerHTML"
+       hx-push-url="true">
+       Inicia sesión
+    </a>
+  </p>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'partials/_auth_card.html' %}
+
+{% block title %}Verificación de dos factores{% endblock %}
+
+{% block auth_title %}<div class="lg:text-5xl tracking-tight">Verificación en dos pasos</div>{% endblock %}
+{% block auth_subtitle %}Ingresa el código enviado a tu dispositivo{% endblock %}
+{% block auth_form_action %}{% url 'two_factor' %}{% endblock %}
+
+{% block auth_fields %}
+  <div>
+      <label for="code">
+          Código de verificación
+      </label>
+      <input id="code" name="code" type="text" required autofocus placeholder="000000">
+  </div>
+{% endblock %}
+
+{% block auth_primary_button %}
+  {% include 'partials/_primary_button.html' with label="Verificar" %}
+{% endblock %}
+
+{% block auth_extra %}
+  <div>
+    <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" 
+           hx-post="{% url 'logout' %}"
+           hx-target="#auth-card"
+           hx-select="#auth-card"
+           hx-swap="outerHTML"
+           hx-push-url="true">
+           Regresar al login
+        </button>
+    </form>
+  </div>
+{% endblock %}

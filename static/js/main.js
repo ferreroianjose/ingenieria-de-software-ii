@@ -1,10 +1,10 @@
 /**
- * @fileOverview Custom client-side JavaScript for GYMFlow project.
+ * @fileOverview Custom client-side JavaScript
  * @description Este archivo contiene scripts de inicialización y lógica global para la aplicación.
  */
 
 // Configurar HTMX globalmente
-htmx.config.globalViewTransitions = true; // para que se vea más lindo
+htmx.config.globalViewTransitions = true;
 htmx.config.selfRequestsOnly = true; // evita que HTMX responda a eventos de elementos anidados
 
 // Para cualquier error 403/401 redirigir al login.

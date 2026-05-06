@@ -42,7 +42,6 @@ pip install uv
 
 O revisá la documentacion: [https://github.com/astral-sh/uv](https://github.com/astral-sh/uv)
 
-
 Además, instalá docker y docker-compose.
 
 ## Primera vez
@@ -61,12 +60,15 @@ Para levantar el servidor de PostgreSQL:
 2. Levantá el servidor de base de datos:
 
 	```bash
-	docker compose -f ./docker-compose.yml up -d db
+	docker compose up -d --build
+	uv run python manage.py makemigrations
 	uv run python manage.py migrate
+	uv run python manage.py createsuperuser # opcional
 	```
 
 ## Correr
 
+1. Asegurate que esté corriendo el servidor de base de datos con `docker ps`. Si no está corriendo y ya lo tenés configurado, `docker start gymflow_db`.
 1. Para levantar el servidor de desarrollo ejecutá:
 
 	```bash
@@ -74,3 +76,7 @@ Para levantar el servidor de PostgreSQL:
 	```
 
 1. Accedé por el navegador a [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+## Visualizar la base de datos
+
+En el docker compose tenemos configurado `pgAdmin` para visualizar la base de datos. Accedé a [http://localhost:5050](http://localhost:5050) y logueate con las credenciales que configuraste en el `.env` o el superusuario que hayas creado.

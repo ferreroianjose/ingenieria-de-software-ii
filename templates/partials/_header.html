@@ -1,16 +1,44 @@
-<header class="fixed left-4 right-4 z-50 bg-white shadow-lg rounded-full p-2 flex items-between justify-between md:fixed md:top-0 md:left-0 md:bottom-0 md:min-w-52 md:max-w-70 md:rounded-none md:shadow-xl">
-    <nav class="w-full flex items-center justify-between px-3 md:flex-col md:items-start md:py-6 md:space-y-6">
-        <!-- Logo / Marca -->
-        <a href="/" class="text-lg font-bold text-purple-600 md:ml-2">SIEMPRE GYM</a>
+<header
+	class="fixed top-4 left-4 right-4 z-40 bg-white shadow-fair-lg rounded-full p-2 flex flex-row md:flex-col justify-between items-center md:items-between md:fixed md:top-0 md:left-0 md:bottom-0 md:w-72 md:rounded-none md:shadow-xl px-4 mt-0 md:py-8"
+>
+	<div>
+		<!-- Logo / Marca -->
+		<div class="flex flex-row justify-start items-center">
+			<img src="/static/favicon.svg" alt="" class="h-16 md:h-20" />
+			<p
+				href="/"
+				class="text-left text-wrap md:block font-bold text-primary-500 md:ml-2 leading-none font-serif text-[1.5em]"
+			>
+				SIEMPRE GYM
+			</p>
+		</div>
 
-        <!-- Controles de usuario -->
-        <div class="flex items-center space-x-3 md:flex-col md:space-x-0 md:space-y-3 md:w-full md:pl-2">
-            {% if user.is_authenticated %}
-                <span class="text-gray-700 text-sm md:text-base">Hola, {{ user.username }}</span>
-                <a href="{% url 'logout' %}" class="text-gray-700 hover:text-purple-600 text-sm md:text-base">Cerrar sesión</a>
-            {% else %}
-                <a href="{% url 'login' %}" class="text-gray-700 hover:text-purple-600 text-sm md:text-base">Aqui van botones</a>
-            {% endif %}
-        </div>
-    </nav>
+		<!-- navegacion -->
+		<nav class="">
+			<div
+				class="flex items-center space-x-3 md:flex-col md:space-x-0 md:space-y-3 md:w-full md:pl-2"
+			>
+				<!-- #TODO: Obtener según el rol de usuario -->
+			</div>
+		</nav>
+	</div>
+
+	<div>
+		<!-- botones de sesión -->
+		{% block _user_pill %}
+			{% include 'partials/_user_pill.html' %}
+		{% endblock %}
+
+		<div class="p-2 block md:hidden">
+			<svg
+				class="size-10"
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 640 640"
+			>
+				<path
+					d="M96 160C96 142.3 110.3 128 128 128L512 128C529.7 128 544 142.3 544 160C544 177.7 529.7 192 512 192L128 192C110.3 192 96 177.7 96 160zM96 320C96 302.3 110.3 288 128 288L512 288C529.7 288 544 302.3 544 320C544 337.7 529.7 352 512 352L128 352C110.3 352 96 337.7 96 320zM544 480C544 497.7 529.7 512 512 512L128 512C110.3 512 96 497.7 96 480C96 462.3 110.3 448 128 448L512 448C529.7 448 544 462.3 544 480z"
+				/>
+			</svg>
+		</div>
+	</div>
 </header>

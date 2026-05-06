@@ -11,6 +11,67 @@
 		<!-- Tailwind v4 -->
 		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
+		<!-- Tailwind configuration -->
+		<style type="text/tailwindcss">
+		@theme {
+		  /* Colors */
+		  --color-transparent: #00000000;
+		  --color-light-bg-500: #ffffff;
+		  --color-dark-bg-500: #101010;
+
+		  --color-secondary-50: oklch(0.321 0.055 204.14);
+		  --color-secondary-100: oklch(0.5 0.085 202.33);
+		  --color-secondary-200: oklch(0.87 0.148 202.86);
+		  --color-secondary-300: oklch(0.778 0.133 202.83);
+		  --color-secondary-400: oklch(0.687 0.117 202.75);
+		  --color-secondary-500: oklch(0.592 0.101 202.63);
+		  --color-secondary-600: oklch(0.5 0.085 202.33);
+		  --color-secondary-700: oklch(0.416 0.071 202.91);
+		  --color-secondary-800: oklch(0.321 0.055 204.14);
+		  --color-secondary-900: oklch(0.23 0.039 203.33);
+		  --color-secondary-950: oklch(0.174 0.03 202.83);
+
+		  --color-primary-50: oklch(0.22 0.101 328.37);
+		  --color-primary-100: oklch(0.284 0.131 328.37);
+		  --color-primary-200: oklch(0.423 0.195 328.37);
+		  --color-primary-300: oklch(0.56 0.257 328.37);
+		  --color-primary-400: oklch(0.702 0.322 328.37);
+		  --color-primary-500: oklch(0.606 0.279 328.37);
+		  --color-primary-600: oklch(0.516 0.237 328.37);
+		  --color-primary-700: oklch(0.423 0.195 328.37);
+		  --color-primary-800: oklch(0.331 0.152 328.37);
+		  --color-primary-900: oklch(0.239 0.11 328.37);
+		  --color-primary-950: oklch(0.188 0.087 328.37);
+
+		  --color-on-light-bg-500: #1A1A1A;
+		  --color-on-dark-bg-500: #EAEAF0;
+		  --color-on-primary-500: #ffffff;
+
+		  /* Fonts */
+		  --font-serif: "Syne", "Georgia", "Times New Roman", "Times", "serif";
+		  --font-sans: "Inter", "Roboto", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "sans-serif";
+
+		  /* Shadows */
+		  --shadow-fair-sm: 0 0px 4px rgba(0, 0, 0, 0.20);
+		  --shadow-fair-md: 0 2px 8px rgba(0, 0, 0, 0.25);
+		  --shadow-fair-lg: 0 3px 10px rgba(0, 0, 0, 0.25);
+		  --shadow-fair-xl: 0 4px 16px rgba(0, 0, 0, 0.25);
+		  --shadow-fair-2xl: 0 8px 32px rgba(0, 0, 0, 0.25);
+
+		  /* Border Radius */
+		  --radius-xl: 0.75rem;
+		  --radius-2xl: 1.0rem;
+		  --radius-3xl: 1.5rem;
+		  --radius-4xl: 2.0rem;
+		  --radius-5xl: 2.25rem;
+		  --radius-6xl: 2.5rem;
+		  --radius-7xl: 2.75rem;
+		  --radius-8xl: 3.0rem;
+		  --radius-9xl: 3.5rem;
+		  --radius-xxl: 4.0rem;
+		}
+		</style>
+
 		<!-- Alpine.js -->
 		<script
 			defer
@@ -26,22 +87,30 @@
 
 		<!-- Estilos globales -->
 		<link rel="stylesheet" href="{% static 'css/global.css' %}" />
-		{% block extra_head %}{% endblock %}
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/favicon.svg">
 	</head>
 	<body class="min-h-screen min-w-full flex flex-col md:mt-0">
-		{% include 'partials/_header.html' %}
+		{% block header %}
+			{% include 'partials/_header.html' %}
+		{% endblock %}
 
-		<main class="flex-grow md:ml-56">
+		<main class="flex flex-grow h-lvh w-lvw {% block main_class %}md:pl-72{% endblock %}">
 			{% block content %}
 			<!-- Contenido de cada página -->
 			{% endblock %}
 			<div
 				id="global-spinner"
-				class="hidden fixed top-0 left-0 w-full h-1 bg-purple-500 animate-pulse"
+				class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"
 			></div>
 		</main>
 
-		{% include 'partials/_footer.html' %}
+		{% block footer %}
+			{% include 'partials/_footer.html' with account_header=True %}
+		{% endblock %}
+
+		{% block other_footer_classes %}{% endblock %}
 
 		<!-- Scripts globales -->
 		<script src="{% static 'js/main.js' %}"></script>

@@ -19,10 +19,11 @@ from django.contrib import admin
 from django.urls import path, include
 
 from . import views
-from users import urls as users_urls
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.root, name="root"),
-    path("login", include(users_urls))
+    path("dashboard/", views.dashboard, name="dashboard"),
+
+    path("users/", include("users.urls")),
 ]

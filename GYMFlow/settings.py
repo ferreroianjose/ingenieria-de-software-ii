@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
-from dotenv import load_dotenv, dotenv_values
+
+from django.core.management.commands.runserver import Command as runserver
+from dotenv import dotenv_values, load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -133,10 +135,16 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
-STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # LOGIN
-LOGIN_URL = '/users/login'         # nombre de la URL de login
-#TODO: LOGIN_REDIRECT_URL = '/'    # después de iniciar sesión, a dónde va
-#TODO: LOGOUT_REDIRECT_URL = '/'   # después de cerrar sesión
+LOGIN_URL = "/users/login/"  # nombre de la URL de login
+LOGIN_REDIRECT_URL = "dashboard"  # después de iniciar sesión, a dónde va
+LOGOUT_REDIRECT_URL = "login"  # después de cerrar sesión
+
+
+# Servidor
+runserver.default_port = "8000"

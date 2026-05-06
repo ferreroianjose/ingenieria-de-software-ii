@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+
+{% block header %}{% endblock %}
+{% block footer %}
+	{% include 'partials/_footer.html' with account_header=False %}
+{% endblock %}
+{% block main_class %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen w-full flex flex-col justify-center items-center p-[clamp(1em,5vw,4em)]">
+
+    <!-- Tarjeta principal -->
+    <div class="flex flex-row w-fit md:w-full max-w-[1200px] bg-white rounded-4xl shadow-fair-xl border border-white overflow-hidden min-h-fit justify-center items-center">
+
+        <!-- Columna izquierda -->
+        <div class="hidden md:flex flex-1 relative size-full p-[clamp(8px,3.25vw,3em)] flex-col justify-center">
+          <!-- fondo -->
+            {% block _brand-bg-card %}
+              {% include 'partials/_brand-bg.html' %}
+            {% endblock %}
+
+            <!-- Textos -->
+            <div class="relative z-10 flex flex-col items-start">
+                <h2 class="text-5xl lg:text-6xl xl:text-7xl font-black tracking-tighter mb-8 uppercase">
+                  <span class="text-primary-400 block mb-2 text-[1.15em]">Siempre</span>
+                    <span class="text-gray-800 block">En</span>
+                    <span class="text-gray-800 block">Movimiento</span>
+                </h2>
+
+                <!-- Burbuja con slogan -->
+                <div class="relative bg-primary-400 text-white p-6 lg:p-8 rounded-8xl rounded-bl-none max-w-[18rem] lg:max-w-[20rem] shadow-fair-md mt-4">
+                    <p class="font-bold text-wrap text-md lg:text-lg text-center leading-snug">
+                        "La energía no se crea ni se destruye, solo se entrena."
+                    </p>
+                    <!-- Triángulo inferior de la burbuja -->
+                    <div class="absolute -bottom-4 left-0 w-8 h-8 bg-primary-400" style="clip-path: polygon(0 0, 100% 0, 0 100%);"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha, el formulario -->
+        <div id="auth-card" class="size-fit flex-initial p-6 lg:p-10 flex flex-col justify-center relative bg-white">
+            <style type="text/tailwindcss">
+                @layer base {
+                    #auth-card label {
+                        @apply block text-sm font-bold text-gray-700 mb-2;
+                    }
+                    #auth-card input {
+                        @apply block w-full py-4 px-6 md:py-2 md:px-4 lg:py-4 lg:px-4 bg-white border border-gray-200 rounded-full shadow-sm text-gray-700 leading-tight transition-all focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-transparent;
+                    }
+                    #auth-card p {
+                        @apply text-sm text-gray-500;
+                    }
+                    #auth-card a {
+                        @apply text-primary-500 font-bold underline underline-offset-2 hover:text-primary-600 transition-colors;
+                    }
+                    #auth-card .error-list {
+                        @apply text-red-600 text-sm font-medium;
+                    }
+                }
+            </style>
+            {% block auth_card_content %}
+            <form method="post" action="{% block auth_form_action %}{% endblock %}" class="w-full max-w-sm mx-auto flex flex-col h-full justify-center space-y-8">
+                {% csrf_token %}
+
+                <!-- Título/errores -->
+                <div class="text-center md:text-left space-y-2">
+                    {% if form.errors %}
+                        <h1 class="text-4xl md:text-4xl lg:text-5xl font-black text-red-500 uppercase tracking-none">
+                            {% block auth_error_msg %}¡Hay un problema!{% endblock %}
+                        </h1>
+                        <div class="error-list">
+                            <ul class="space-y-1">
+                                {% block auth_error_list %}
+                                    {% for field in form %}
+                                        {% for error in field.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                {% endblock %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        <h1 class="text-5xl md:text-5xl lg:text-6xl font-black text-primary-400 uppercase tracking-none">
+                            {% block auth_title %}{% endblock %}
+                        </h1>
+                        <p class="text-md text-gray-600 font-medium">
+                            {% block auth_subtitle %}{% endblock %}
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Inputs -->
+                <div class="space-y-4 m-0 p-0">
+                    {% block auth_fields %}{% endblock %}
+                </div>
+
+                <!-- Extra top -->
+                <div class="flex justify-end">
+                     {% block auth_forgot_password %}{% endblock %}
+                </div>
+
+                <!-- Botón de envío -->
+                <div>
+                    {% block auth_primary_button %}
+                        {% include 'partials/_primary_button.html' with label="Entrar →" %}
+                    {% endblock %}
+                </div>
+
+                <!-- Extras inferior (ej. Registrarse) -->
+                <div class="flex flex-col items-center">
+                    {% block auth_extra %}
+                    {% endblock %}
+                </div>
+
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+            </form>
+            {% endblock %}
+        </div>
+    </div>
+<!-- fondo en mobile -->
+{% endblock %}

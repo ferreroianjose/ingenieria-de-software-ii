@@ -1,0 +1,53 @@
+<!-- Fondo -->
+<div
+	class="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden"
+>
+	<style>
+		@keyframes float {
+		  0% { transform: translate(0, 0) scale(1); }
+		  33% { transform: translate(150px, 300px) scale(2.0); }
+		  66% { transform: translate(250px, -30px) scale(2.0); }
+		  100% { transform: translate(0, 0) scale(1); }
+		}
+		.animate-float {
+			animation: float 15s ease-in-out;
+		}
+
+		@keyframes float-1 {
+		  0% { transform: translate(1500px, -300px) scale(2.0); }
+		  66% { transform: translate(-0px, 150px) scale(1); }
+		  100% { transform: translate(0, 0) scale(1); }
+		}
+		.animate-float-1 {
+			animation: float-1 15s ease-in-out;
+		}
+
+		@keyframes float-2 {
+		  0% { transform: translate(0, -1500px) scale(0); }
+		  100% { transform: translate(0, 0) scale(1); }
+		}
+		.animate-float-2 {
+			animation: float-2 15s ease-in-out;
+		}
+
+		.animate-float, {
+		.animate-float-1, {
+		.animate-float-2 {
+		  animation-iteration-count: 1;
+		}
+
+	</style>
+
+	{% block auth_bg %}
+	<!-- Manchas de color animadas -->
+	<div
+		class="absolute top-[5%] left-[20%] w-[350px] h-[350px] bg-primary-400/20 rounded-full blur-[50px] animate-float"
+	></div>
+	<div
+		class="absolute bottom-[10%] right-[-10%] w-[300px] h-[300px] bg-primary-400/20 rounded-full blur-[50px] animate-float-1"
+	></div>
+	<div
+		class="absolute bottom-[30%] left-[-15%] w-[250px] h-[250px] bg-secondary-300/35 rounded-full blur-[50px] animate-float-2"
+	></div>
+	{% endblock %}
+</div>
