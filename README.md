@@ -17,8 +17,9 @@
 - `static/`: Assets estáticos como css, js. Se sirve como están allí.
   - `base.html`: Las librerías JS (HTMX, Alpine.js, Tailwind) se cargan vía CDN aquí. Podríamos considerar incluirlas de forma estática o utilizar un bundler.
   - `partials`: Los partials de Django son bloques de codigo reutilizables. Permiten utilizar componentes HTML pasando parámetros desde otros archivos HTML. Parecido a React.
+- `templates/`: Los templates de Django son los archivos HTML que se renderizan en las vistas.
 
-Módulos (Django Apps):
+Los módulos (Django Apps) se encuentran en el directorio `apps/`:
 
 - `users/`: Módulo de autenticación y gestión de usuarios. Registros, asignación de roles y desarrollo del MFA para administradores.
 - `classes/`: Módulo de gestión de clases e inscripciones. Configuración de las disciplinas, con sus horarios, profesores y lista de espera. Control de apertura/cierre de inscripciones según el calendario.
@@ -26,6 +27,8 @@ Módulos (Django Apps):
 - `attendance/`: Módulo de asistencia. Generación/lectura de códigos QR y carga de constancias de tutores para menores de edad.
 - `reports/`: Módulo de panel de administrador para visualizar los ingresos, cancelaciones, la concurrencia y más.
 - `notifications/` Módulo de notificaciones. Envío de correos para la confirmación de cupos y recordatorios de clases.
+
+Para cada módulo, dentro de `templates/` y un directorio de su propio nombre, se encuentran los archivos HTML que se renderizan en las vistas.
 
 ## Esquema de la base de datos
 

@@ -41,12 +41,12 @@ INSTALLED_APPS = [
     # Nuestras Apps
     "corsheaders",  # https://github.com/adamchainz/django-cors-headers
     "django_browser_reload",  # Live reload
-    "users",  # Módulo de autenticación y gestión de usuarios
-    "classes",  # Módulo de gestión de clases e inscripciones
-    "payments",  # Módulo de gestion de cobros
-    "attendance",  # Módulo de asistencia
-    "reports",  # Módulo de reportes y métricas
-    "notifications",  # Módulo de notificaciones
+    "apps.users",  # Módulo de autenticación y gestión de usuarios
+    "apps.classes",  # Módulo de gestión de clases e inscripciones
+    "apps.payments",  # Módulo de gestion de cobros
+    "apps.attendance",  # Módulo de asistencia
+    "apps.reports",  # Módulo de reportes y métricas
+    "apps.notifications",  # Módulo de notificaciones
 ]
 
 MIDDLEWARE = [
