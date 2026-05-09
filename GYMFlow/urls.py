@@ -26,4 +26,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
 
     path("users/", include("users.urls")),
+
+    # Para el desarrollo
+    path("__reload__/", include("django_browser_reload.urls")),
 ]

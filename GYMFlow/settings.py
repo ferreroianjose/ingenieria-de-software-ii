@@ -10,27 +10,24 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 from django.core.management.commands.runserver import Command as runserver
-from dotenv import dotenv_values, load_dotenv
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Cargar variables de entorno desde .env (si existe)
 load_dotenv(BASE_DIR / ".env")
-env = dotenv_values(BASE_DIR / ".env")
 
-
-# Quick-start development settings - TODO: unsuitable for production
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-o^&2jtb!@ztx-(wjgyp!i8-!!(kk90!jp6xqtnu5j%ildyip9w"
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+# Configuración de desarrollo
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
+ALLOWED_HOSTS = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]"
+).split(" ")
 
 # Application definition
 INSTALLED_APPS = [
@@ -43,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Nuestras Apps
     "corsheaders",  # https://github.com/adamchainz/django-cors-headers
+    "django_browser_reload",  # Live reload
     "users",  # Módulo de autenticación y gestión de usuarios
     "classes",  # Módulo de gestión de clases e inscripciones
     "payments",  # Módulo de gestion de cobros
@@ -63,6 +61,8 @@ MIDDLEWARE = [
     # Nuestros middlewares
     # https://github.com/adamchainz/django-cors-headers
     "corsheaders.middleware.CorsMiddleware",
+    # Recarga el navegador cuando se producen cambios en el código
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
 
 ROOT_URLCONF = "GYMFlow.urls"
@@ -87,20 +87,16 @@ WSGI_APPLICATION = "GYMFlow.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-#
-# Configurar las variables de entorno para la base de datos.
-# Para el desarrollo, utilizamos un servicio PostgreSQL dockerizado. Ver docker-compose.yml
-# Si no se proporcionan las variables de entorno de Postgres en el archivo .env o en el entorno,
-# se lanza una excepción.
-if env.get("POSTGRES_DB"):
+POSTGRES_DB = os.environ.get("POSTGRES_DB")
+if POSTGRES_DB:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": env.get("POSTGRES_DB", "gymflow"),
-            "USER": env.get("POSTGRES_USER", "gymflow"),
-            "PASSWORD": env.get("POSTGRES_PASSWORD", "gymflow"),
-            "HOST": env.get("POSTGRES_HOST", "localhost"),
-            "PORT": env.get("POSTGRES_PORT", "5432"),
+            "NAME": POSTGRES_DB,
+            "USER": os.environ["POSTGRES_USER"],
+            "PASSWORD": os.environ["POSTGRES_PASSWORD"],
+            "HOST": os.environ.get("POSTGRES_HOST", "localhost"),
+            "PORT": os.environ.get("POSTGRES_PORT", "5432"),
         }
     }
 else:

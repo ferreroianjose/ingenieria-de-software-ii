@@ -19,7 +19,28 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - gymflow-dev-web
+      - gymflow-network
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: gymflow_web
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: db
+      DJANGO_DEBUG: "True"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - gymflow-network
 
   pgadmin:
     image: dpage/pgadmin4:9
@@ -35,11 +56,11 @@ services:
     depends_on:
       - db
     networks:
-      - gymflow-dev-web
+      - gymflow-network
 
 volumes:
   postgres_data: {}
 
 networks:
-  gymflow-dev-web:
+  gymflow-network:
     driver: bridge

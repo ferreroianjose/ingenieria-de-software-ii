@@ -5,7 +5,7 @@
 - **Backend:** Django 6
 - **Frontend CSS:** Tailwind CSS
 - **Frontend Interactivity:** HTMX (para AJAX)
-- **Frontend State/UI:** Alpine.js (interacciones *client-side*)
+- **Frontend State/UI:** Alpine.js (interacciones _client-side_)
 - **Base de datos:** PostgreSQL (falta configurar aún)
 
 ## Estructura del proyecto
@@ -119,11 +119,11 @@ erDiagram
         int id PK
         int usuario_id FK
         int periodo_id FK
-        int disciplina_id FK 
+        int disciplina_id FK
         int cantidad
         string estado "DISPONIBLE, UTILIZADO"
     }
-    
+
     PAGO_INSCRIPCION {
         int id PK
         int pago_id FK
@@ -150,55 +150,89 @@ erDiagram
     INSCRIPCION ||--o| ASISTENCIA : "genera"
 ```
 
-# Setup
+# Configuración del entorno de desarrollo
 
 ## Pre-requisitos
 
-Para este proyecto usamos **uv**. Es un gestor de paquetes y entornos de Python escrito que reemplaza a `pip` y `venv`. Es mucho más rápido y simple.
+Para desarrollo utilizamos **docker**, con Python 3.14 y el gestor de paquetes uv. Especificado en `docker-compose.yml` y Dockerfile. Solo necesitás tener docker y docker-compose instalado.
 
-Si no lo tenés, instalalo globalmente:
+Si preferís correr el backend localmente sin Docker podés, mirá [instalar uv](https://github.com/astral-sh/uv). Pero aún deberías conectarte a la base de datos PostgreSQL para poder ejecutar las migraciones y el servidor de Django.
 
-```bash
-pip install uv
-```
+## Desarrollo con docker (recomendado)
 
-O revisá la documentacion: [https://github.com/astral-sh/uv](https://github.com/astral-sh/uv)
+Esta es la forma más sencilla de levantar el proyecto. Incluye el servidor de Django con _live reload_ (*gymflow_web*), la base de datos PostgreSQL (*gymflow_db*) y pgAdmin (*gymflow_pgadmin*) para inspeccionar la BD. Los tres contenedores comparten la misma red (*gymflow_network*) para comunicarse entre sí.
 
-Además, instalá docker y docker-compose.
+1.  Para configurar las variables de entorno, copiá el archivo de ejemplo `.env.example` en `.env`, y modificalo:
 
-## Primera vez
+    ```bash
+    cp .env.example .env
+    ```
 
-1. Cloná el repositorio y entrá a la carpeta
+1.  Para levantar el entorno ejecutá:
 
-1. Sincronizá el proyecto. Esto crea el entorno virtual y descarga todas las dependencias en las versiones correctas
+    ```bash
+    docker compose up
+    ```
 
+1.  Para acceder:
+    - App: [http://localhost:8000](http://localhost:8000)
+    - pgAdmin: [http://localhost:5050](http://localhost:5050)
+
+## Desarrollo local (con `uv`)
+
+Si preferís no usar Docker para el servidor de Django:
+
+1.  Levantar solo la base de datos y pgadmin:
+
+    ```bash
+    docker compose up -d db pgadmin
+    ```
+
+2.  Sincronizá las dependencias:
+
+    ```bash
+    uv sync
+    ```
+
+3.  Configurá el `.env`, y asegurate de que que esta variable se vea asi `POSTGRES_HOST=localhost`.
+
+4.  Corré las migraciones y finalmente el servidor:
+
+    ```bash
+    uv run python manage.py migrate
+    uv run python manage.py runserver
+    ```
+
+## Comandos útiles
+
+El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno virtual.
+
+- Crear superusuario:
+
+	```bash
+	docker exec -it gymflow_web uv run python manage.py createsuperuser
   ```
-  uv sync
+
+- Hacer nuevas migraciones:
+
+	```bash
+	docker exec -it gymflow_web uv run python manage.py makemigrations
+	```
+  
+- Ver logs:
+
+  ```bash
+  docker compose logs -f web
   ```
 
-Para levantar el servidor de PostgreSQL:
+- Usar un shell dentro del container de Django:
 
-1. Copiá el ejemplo de variables de entorno en `.env.example` como `.env`, ajustá si querés las credenciales.
-2. Levantá el servidor de base de datos:
+	```bash
+  docker exec -it gymflow_web uv run python manage.py shell
+  ```
 
- ```bash
- docker compose up -d --build
- uv run python manage.py makemigrations
- uv run python manage.py migrate
- uv run python manage.py createsuperuser # opcional
- ```
+-  Al añadir o quitar alguna dependencia en `pyproject.toml`, al cambiar el `Dockerfile` o scripts de configuración en `docker/`, o si algo se rompe y querés limpiar el entorno, agregá el flag `--build` a `docker compose up`:
 
-## Correr
-
-1. Asegurate que esté corriendo el servidor de base de datos con `docker ps`. Si no está corriendo y ya lo tenés configurado, `docker start gymflow_db`.
-1. Para levantar el servidor de desarrollo ejecutá:
-
- ```bash
- uv run python manage.py runserver
- ```
-
-1. Accedé por el navegador a [http://127.0.0.1:8000](http://127.0.0.1:8000).
-
-## Visualizar la base de datos
-
-En el docker compose tenemos configurado `pgAdmin` para visualizar la base de datos. Accedé a [http://localhost:5050](http://localhost:5050) y logueate con las credenciales que configuraste en el `.env` o el superusuario que hayas creado.
+	```bash
+	docker compose up --build
+	```
