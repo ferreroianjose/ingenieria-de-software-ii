@@ -205,7 +205,7 @@ Si preferís no usar Docker para el servidor de Django:
 
 ## Comandos útiles
 
-El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno virtual.
+El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno virtual. Si no estás utilizando docker, el prefijo `docker exec -it gymflow_web` no es necesario.
 
 - Crear superusuario:
 
@@ -235,4 +235,10 @@ El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno v
 
 	```bash
 	docker compose up --build
+	```
+
+-  Detener el entorno:
+
+	```bash
+	docker compose down
 	```
