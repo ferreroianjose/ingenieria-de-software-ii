@@ -122,11 +122,10 @@ erDiagram
         int id PK
         int usuario_id FK
         int periodo_id FK
-        int disciplina_id FK
-        int cantidad
+        int disciplina_id FK 
         string estado "DISPONIBLE, UTILIZADO"
     }
-
+    
     PAGO_INSCRIPCION {
         int id PK
         int pago_id FK
@@ -136,12 +135,11 @@ erDiagram
 
     PAGO ||--o{ PAGO_INSCRIPCION : "detalla"
     INSCRIPCION ||--o{ PAGO_INSCRIPCION : "es cubierta por"
-
-    SEDE ||--o{ CLASE : "alberga"
+    SEDE ||--o{ SALA : "contiene"
+    SALA ||--o{ CLASE : "alberga"
     PROFESOR ||--o{ CLASE : "dicta"
     PERIODO_COBRO ||--o{ INSCRIPCION : "agrupa"
-    PERIODO_COBRO ||--o{ SALA : "contiene"
-    SALA ||--o{ PRECIO_DISCIPLINA : "define tarifas"
+    PERIODO_COBRO ||--o{ PRECIO_DISCIPLINA : "define tarifas"
     PERIODO_COBRO ||--o{ PAGO : "registra recaudación"
     PERIODO_COBRO ||--o{ CREDITO : "limita validez"
     USUARIO ||--o{ INSCRIPCION : "realiza"
