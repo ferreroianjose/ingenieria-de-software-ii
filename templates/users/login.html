@@ -28,8 +28,7 @@
 {% block auth_extra %}
   <p>
     ¿No tenés una cuenta? 
-    <a href="{% url 'register' %}" 
-       hx-get="{% url 'register' %}"
+    <a hx-get="{% url 'register' %}"
        hx-target="#auth-card"
        hx-select="#auth-card"
        hx-swap="outerHTML"

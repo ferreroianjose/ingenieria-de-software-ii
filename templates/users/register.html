@@ -43,8 +43,7 @@
 {% block auth_extra %}
   <p>
     ¿Ya tenés una cuenta? 
-    <a href="{% url 'login' %}" 
-       hx-get="{% url 'login' %}"
+    <a hx-get="{% url 'login' %}"
        hx-target="#auth-card"
        hx-select="#auth-card"
        hx-swap="outerHTML"
