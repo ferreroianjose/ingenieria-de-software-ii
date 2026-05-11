@@ -45,7 +45,7 @@ erDiagram
         string email
         date fecha_nacimiento
         string telefono_emergencia
-        string url_constancia_tutor
+        file constancia_tutor
         string estado_constancia "PENDIENTE, APROBADA, RECHAZADA"
     }
     SEDE {

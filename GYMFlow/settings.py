@@ -153,6 +153,7 @@ LOGIN_URL = "/users/login/"  # nombre de la URL de login
 LOGIN_REDIRECT_URL = "dashboard"  # después de iniciar sesión, a dónde va
 LOGOUT_REDIRECT_URL = "login"  # después de cerrar sesión
 
+AUTH_USER_MODEL = 'users.User'
 
 # Servidor
 runserver.default_port = "8000"

@@ -14,14 +14,31 @@
       get isPass1Valid() { return this.pass1.length >= 10 },
       get passwordsMatch() { return this.pass1 === this.pass2 && this.pass2.length > 0 }
   }" class="space-y-4">
-      <div>
-          <label for="username">Usuario</label>
-          <input id="username" name="username" type="text" required autofocus value="{{ form.username.value|default:'' }}">
+      
+      <div class="grid grid-cols-2 gap-2">
+          <div>
+              <label for="first_name">Nombre</label>
+              <input id="first_name" name="first_name" type="text" required autofocus value="{{ form.first_name.value|default:'' }}">
+          </div>
+          <div>
+              <label for="last_name">Apellido</label>
+              <input id="last_name" name="last_name" type="text" required value="{{ form.last_name.value|default:'' }}">
+          </div>
       </div>
 
       <div>
           <label for="email">Correo electrónico</label>
           <input id="email" name="email" type="email" required value="{{ form.email.value|default:'' }}">
+      </div>
+
+      <div class="flex flex-row gap-2">
+          <div class="flex-1">
+              <label for="dni">DNI</label>
+              <input id="dni" name="dni" type="text" required value="{{ form.dni.value|default:'' }}">
+          </div>
+          <div class="flex-0 w-fit">
+              {% include 'partials/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" required=True %}
+          </div>
       </div>
 
       <div class="relative">
@@ -42,7 +59,6 @@
               {% include 'partials/_status_indicator.html' with model='pass2' check='passwordsMatch' %}
           </div>
       </div>
-      
   </div>
 {% endblock %}
 

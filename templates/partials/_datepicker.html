@@ -1,0 +1,84 @@
+{% comment %}
+Air Datepicker v3 widget:
+  https://github.com/t1m0n/air-datepicker
+
+  Required parameters:
+    field_name  — name attribute for the hidden input submitted to Django (e.g. "fecha_nacimiento")
+    label       — visible label text
+
+  Optional parameters:
+    value       — initial date value in YYYY-MM-DD format (e.g. form.fecha_nacimiento.value)
+    placeholder — text shown when empty          (default: "dd/mm/aaaa")
+    position    — Air Datepicker popup position  (default: "bottom left")
+    min_year    — earliest selectable year       (default: 1920)
+    required    — mark the display input as required (default: False)
+{% endcomment %}
+{% load static %}
+
+{# Visible input — Air Datepicker attaches here, carries required validation #}
+<label for="dp_{{ field_name }}" class="text-nowrap">{{ label }}</label>
+<input id="dp_{{ field_name }}" type="text"
+       class="text-center cursor-pointer w-36"
+       placeholder="{{ placeholder|default:'dd/mm/aaaa' }}"
+       {% if required %}required{% endif %}
+       readonly>
+
+{# Hidden input — submits YYYY-MM-DD to Django #}
+<input id="dp_hidden_{{ field_name }}" name="{{ field_name }}" type="hidden"
+       value="{{ value|default:'' }}">
+
+<link rel="stylesheet" href="{% static 'vendors/air-datepicker/air-datepicker.css' %}">
+<style>
+  .air-datepicker {
+    --adp-font-family: var(--font-sans);
+    --adp-accent-color: var(--color-primary-400);
+    --adp-nav-color-secondary: var(--color-secondary-400);
+    --adp-day-name-color: var(--color-primary-500);
+    --adp-border-radius: var(--radius-2xl);
+    --adp-border-radius-inner: calc(var(--radius-2xl) - 4px);
+    --adp-cell-border-radius: calc(var(--radius-2xl) - 4px);
+  }
+</style>
+<script src="{% static 'vendors/air-datepicker/air-datepicker.js' %}"></script>
+<script>
+  (function () {
+    var displayEl = document.getElementById('dp_{{ field_name }}');
+    var hiddenEl  = document.getElementById('dp_hidden_{{ field_name }}');
+    if (!displayEl || displayEl._adp) return;
+
+    var locale = {
+      days:        ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],
+      daysShort:   ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],
+      daysMin:     ['Do','Lu','Ma','Mi','Ju','Vi','Sá'],
+      months:      ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+      monthsShort: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+      today: 'Hoy', clear: 'Limpiar',
+      dateFormat: 'dd/MM/yyyy', timeFormat: 'hh:mm aa', firstDay: 1,
+    };
+
+    var picker = new AirDatepicker(displayEl, {
+      view: 'years',
+      locale: locale,
+      dateFormat: 'dd/MM/yyyy',
+      position: '{{ position|default:"bottom left" }}',
+      autoClose: true,
+      minDate: new Date({{ min_year|default:1920 }}, 0, 1),
+      maxDate: new Date(),
+      onSelect: function ({ date }) {
+        if (!date) { hiddenEl.value = ''; return; }
+        var d = Array.isArray(date) ? date[0] : date;
+        hiddenEl.value = d.getFullYear() + '-'
+          + String(d.getMonth() + 1).padStart(2, '0') + '-'
+          + String(d.getDate()).padStart(2, '0');
+      },
+    });
+
+    displayEl._adp = picker;
+
+    if (hiddenEl.value) {
+      var p = hiddenEl.value.split('-');
+      picker.selectDate(new Date(+p[0], +p[1] - 1, +p[2]));
+    }
+  })();
+</script>
