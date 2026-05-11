@@ -24,13 +24,17 @@ class CustomUserCreationForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get("email")
         if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("Este correo ya está en uso.")
+            raise forms.ValidationError(
+                "Este correo ya está en uso.", code="email_exists"
+            )
         return email
 
     def clean_dni(self):
         dni = self.cleaned_data.get("dni")
         if User.objects.filter(dni=dni).exists():
-            raise forms.ValidationError("Este DNI ya está registrado.")
+            raise forms.ValidationError(
+                "Este DNI ya está registrado.", code="dni_exists"
+            )
         return dni
 
     def clean_fecha_nacimiento(self):
@@ -42,6 +46,7 @@ class CustomUserCreationForm(UserCreationForm):
             edad = hoy.year - fecha.year - (1 if cumple_este_anio > hoy else 0)
             if edad < MIN_AGE:
                 raise forms.ValidationError(
-                    f"Debés tener al menos {MIN_AGE} años para registrarte."
+                    f"Debés tener al menos {MIN_AGE} años para registrarte.",
+                    code="under_age",
                 )
         return fecha
