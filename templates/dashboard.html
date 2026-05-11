@@ -10,9 +10,6 @@
         <div class="mt-8">
              <form action="{% url 'logout' %}" method="post">
                  {% csrf_token %}
-                 <button type="submit" class="text-secondary-500 underline font-medium cursor-pointer">
-                     Cerrar sesión
-                 </button>
              </form>
         </div>
     </div>

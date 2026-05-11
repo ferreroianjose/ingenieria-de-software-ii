@@ -1,23 +1,55 @@
-<div
-			class="hidden md:block flex items-center justify-between md:flex-col bg-primary-300/50 shadow-fair-sm rounded-full"
-		>
-			<div class="flex flex-row w-full items-center p-4">
-				<div class="flex flex-col">
-					<p class="w-full font-bold">{{ user.first_name }} {{ user.last_name }}</p>
-					<p class="w-full text-sm tracking-tighter">{{ user.get_rol_display|upper }}</p>
-				</div>
-				<div class="p-2 rounded-full bg-white">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						class="size-8"
-						fill="currentColor"
-						class="bi bi-person"
-						viewBox="0 0 16 16"
-					>
-						<path
-							d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"
-						/>
-					</svg>
-				</div>
-			</div>
-		</div>
+<div x-data="{ open: false }" @click.outside="open = false"
+  class="w-full hidden md:block bg-secondary-300 shadow-fair-md overflow-hidden transition-[border-radius] duration-350 ease-in-out"
+  :class="open ? 'rounded-2xl' : 'rounded-9xl'">
+
+  <div class="grid transition-[grid-template-rows] duration-350 ease-in-out"
+    :style="open ? 'grid-template-rows:1fr' : 'grid-template-rows:0fr'">
+    <div class="overflow-hidden">
+      <div class="p-2">
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="rounded-[calc(var(--radius-2xl)-calc(var(--spacing)*2))] w-full flex items-center gap-4 p-4 text-sm font-bold text-left hover:bg-white/40 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd"
+                d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z" />
+              <path fill-rule="evenodd"
+                d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z" />
+            </svg>
+            Cerrar sesión
+          </button>
+        </form>
+      </div>
+
+      <!-- Divider  -->
+      <div class="mx-4 border-t border-white/40"></div>
+    </div>
+  </div>
+
+  <!-- Pill -->
+  <div @click="open = !open" class="flex items-center gap-2 p-2 cursor-pointer select-none">
+
+    <!-- Avatar -->
+    <div class="p-2 bg-white/75 shrink-0 duration-350 transition-[border-radius] ease-in-out" :class="open ? 'rounded-[calc(var(--radius-2xl)-calc(var(--spacing)*2))]' : 'rounded-6xl '">
+      <svg xmlns="http://www.w3.org/2000/svg" class="size-8" fill="currentColor" viewBox="0 0 16 16">
+        <path
+          d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
+      </svg>
+    </div>
+
+    <!-- Nombre / rol -->
+    <div class="flex flex-col flex-1 min-w-0 max-w-36 pr-2">
+      <p class="font-bold truncate">{{ user.first_name }} {{ user.last_name }}</p>
+      <p class="text-sm tracking-tighter truncate">{{ user.get_rol_display|upper }}</p>
+    </div>
+
+    <div class="p-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="size-4 shrink-0 transition-transform duration-500"
+        :class="open ? 'rotate-180' : ''" fill="currentColor" viewBox="0 0 16 16">
+        <path fill-rule="evenodd"
+          d="M7.646 11.354a.5.5 0 0 0 .708 0l6-6a.5.5 0 0 0-.708-.708L8 10.293 2.354 4.646a.5.5 0 0 0-.708.708z" />
+      </svg>
+
+    </div>
+  </div>
+
+</div>
