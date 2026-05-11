@@ -1,17 +1,18 @@
 {# ── Sidebar ── #}
 <aside
-  class="fixed left-0 top-0 bottom-0 w-72 z-50 bg-white shadow-fair-xl flex flex-col px-4 py-12 md:py-8 gap-6 -translate-x-full md:translate-x-0 transition-transform duration-350 ease-out"
-  :class="mobileOpen ? 'translate-x-0' : ''"
+  class="fixed left-0 top-0 bottom-0 w-72 z-50 bg-white shadow-fair-xl flex flex-col px-4 py-[clamp(calc(var(--spacing)*2),5lvh,calc(var(--spacing)*24))]  gap-6 -translate-x-full md:translate-x-0 transition-transform duration-350 ease-out @container overflow-x-hidden"
+  :class="mobileOpen ? 'translate-x-0 overflow-visible' : ''"
 >
   {# Brand + mobile close #}
-  <div class="flex items-center justify-between">
-    {% include 'partials/_brand.html' with text_class="bg-red text-3xl" %}
+  <div class="flex items-center justify-between relative">
+    {% include 'partials/_brand.html' with text_class="text-3xl" logo_class="size-18" %}
     <button
       @click="mobileOpen = false"
-      class="md:hidden -mt-28 w-fit p-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
+      class="md:hidden absolute -right-18 w-fit p-2 rounded-full flex items-center justify-center bg-white/75 hover:bg-white/80 transition-opacity duration-1000 focus:outline-none"
+      :class="mobileOpen ? 'opacity-100' : 'opacity-0'"
       aria-label="Cerrar menú"
     >
-      {% include 'partials/_icon.html' with name="x-lg" class="size-5" %}
+      {% include 'partials/_icon.html' with name="arrow-left" class="size-5" %}
     </button>
   </div>
 
@@ -21,9 +22,11 @@
   </nav>
 
   {# User pill #}
+  <div class="absolute bottom-[clamp(calc(var(--spacing)*2),3lvh,calc(var(--spacing)*24))]">
   {% block _user_pill %}
     {% include 'partials/_user_pill.html' %}
   {% endblock %}
+  </div>
 </aside>
 
 
