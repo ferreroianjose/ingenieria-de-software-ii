@@ -11,6 +11,7 @@ Air Datepicker v3 widget:
     placeholder — text shown when empty          (default: "dd/mm/aaaa")
     position    — Air Datepicker popup position  (default: "bottom left")
     min_year    — earliest selectable year       (default: 1920)
+    min_age     — minimum age in years; sets the latest selectable date (default: 0)
     required    — mark the display input as required (default: False)
 {% endcomment %}
 {% load static %}
@@ -48,17 +49,19 @@ Air Datepicker v3 widget:
         dateFormat: 'dd/MM/yyyy', timeFormat: 'hh:mm aa', firstDay: 1,
       };
 
+      var maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() - {{ min_age|default:0 }});
+
       var picker = new AirDatepicker(displayEl, {
         view: 'years',
         locale: locale,
         isMobile: window.innerWidth < 768,
         autoClose: true,
-
         dateFormat: 'dd/MM/yyyy',
         position: '{{ position|default:"bottom left" }}',
         autoClose: true,
         minDate: new Date({{ min_year|default:1920 }}, 0, 1),
-        maxDate: new Date(),
+        maxDate: maxDate,
         onSelect: function ({ date }) {
           if (!date) { hiddenEl.value = ''; return; }
           var d = Array.isArray(date) ? date[0] : date;

@@ -1,6 +1,7 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import UserCreationForm
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -31,3 +32,16 @@ class CustomUserCreationForm(UserCreationForm):
         if User.objects.filter(dni=dni).exists():
             raise forms.ValidationError("Este DNI ya está registrado.")
         return dni
+
+    def clean_fecha_nacimiento(self):
+        MIN_AGE = 14
+        fecha = self.cleaned_data.get("fecha_nacimiento")
+        if fecha:
+            hoy = timezone.localdate()
+            cumple_este_anio = fecha.replace(year=hoy.year)
+            edad = hoy.year - fecha.year - (1 if cumple_este_anio > hoy else 0)
+            if edad < MIN_AGE:
+                raise forms.ValidationError(
+                    f"Debés tener al menos {MIN_AGE} años para registrarte."
+                )
+        return fecha

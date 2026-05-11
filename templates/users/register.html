@@ -37,7 +37,7 @@
               <input id="dni" name="dni" type="text" required value="{{ form.dni.value|default:'' }}">
           </div>
           <div class="flex-0 w-fit">
-              {% include 'partials/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" required=True %}
+              {% include 'partials/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" min_age=14 required=True %}
           </div>
       </div>
 
