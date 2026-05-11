@@ -10,3 +10,7 @@ body {
   background-color: var(--color-light-bg-500);
   color: var(--color-on-light-bg-500);
 }
+
+*::selection {
+  background-color: var(--color-secondary-300);
+}
