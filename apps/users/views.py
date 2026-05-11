@@ -24,7 +24,7 @@ class CustomLoginView(LoginView):
             )
             self.request.session["is_2fa_pending"] = True
             self.request.session["post_login_next"] = next_url
-            
+
             return HttpResponseRedirect(reverse("two_factor"))
 
         return response
@@ -33,7 +33,7 @@ class CustomLoginView(LoginView):
 @login_required
 def two_factor(request):
     user = request.user
-    
+
     if not user.is_staff:
         return redirect("dashboard")
 
@@ -50,7 +50,6 @@ def two_factor(request):
     next_url = request.session.get("post_login_next", "")
     return render(request, "users/two_factor.html", {"next": next_url})
 
-
 def register(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -64,4 +63,7 @@ def register(request):
     else:
         form = CustomUserCreationForm()
 
-    return render(request, "users/register.html", {"form": form})
+    return render(request, "users/register.html", {
+        "form": form,
+        "password_help_texts": "La contraseña debe tener 10 o más caracteres, incluyendo letras, números y al menos un carácter especial."
+    })

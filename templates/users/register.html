@@ -7,32 +7,42 @@
 {% block auth_form_action %}{% url 'register' %}{% endblock %}
 
 {% block auth_fields %}
-  <div>
-      <label for="username">
-          Usuario
-      </label>
-      <input id="username" name="username" type="text" required autofocus value="{{ form.username.value|default:'' }}">
-  </div>
+  <div x-data="{ 
+      pass1: '', 
+      pass2: '', 
+      showTooltip: false,
+      get isPass1Valid() { return this.pass1.length >= 10 },
+      get passwordsMatch() { return this.pass1 === this.pass2 && this.pass2.length > 0 }
+  }" class="space-y-4">
+      <div>
+          <label for="username">Usuario</label>
+          <input id="username" name="username" type="text" required autofocus value="{{ form.username.value|default:'' }}">
+      </div>
 
-  <div>
-      <label for="email">
-          Correo electrónico
-      </label>
-      <input id="email" name="email" type="email" required value="{{ form.email.value|default:'' }}">
-  </div>
+      <div>
+          <label for="email">Correo electrónico</label>
+          <input id="email" name="email" type="email" required value="{{ form.email.value|default:'' }}">
+      </div>
 
-  <div>
-      <label for="password1">
-          Contraseña
-      </label>
-      <input id="password1" name="password1" type="password" required>
-  </div>
+      <div class="relative">
+          <label for="password1" class="flex items-center gap-2">
+              Contraseña
+              {% include 'partials/_tooltip.html' with text=password_help_texts %}
+          </label>
+          <div class="relative flex items-center">
+              <input id="password1" name="password1" type="password" required x-model="pass1" class="pr-12 md:pr-10">
+              {% include 'partials/_status_indicator.html' with model='pass1' check='isPass1Valid' %}
+          </div>
+      </div>
 
-  <div>
-      <label for="password2">
-          Confirmar contraseña
-      </label>
-      <input id="password2" name="password2" type="password" required>
+      <div class="relative">
+          <label for="password2">Confirmar contraseña</label>
+          <div class="relative flex items-center">
+              <input id="password2" name="password2" type="password" required x-model="pass2" class="pr-12 md:pr-10">
+              {% include 'partials/_status_indicator.html' with model='pass2' check='passwordsMatch' %}
+          </div>
+      </div>
+      
   </div>
 {% endblock %}
 

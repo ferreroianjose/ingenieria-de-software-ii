@@ -1,0 +1,12 @@
+<div class="absolute will-change-contents right-3 md:right-0 md:mr-[2px] p-2 flex items-center pointer-events-none bg-gray-200/75 rounded-full md:rounded-l-none md:bg-transparent md:bg-gradient-to-l md:from-gray-200 md:to-transparent" x-show="{{ model }}.length > 0">
+  <svg x-show="!{{ check }}" class="size-4 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+  <svg x-show="{{ check }}" class="size-4 text-primary-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+    style="display: none;">
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+</div>
