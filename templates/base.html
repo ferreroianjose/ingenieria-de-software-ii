@@ -112,9 +112,10 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'css/favicon.svg' %}">
 	</head>
-	<body class="min-h-screen min-w-full flex flex-col md:mt-0">
+	<body x-data="{ mobileOpen: false }" class="min-h-screen min-w-full flex flex-col md:mt-0">
 		{% block header %}
-			{% include 'partials/_header.html' %}
+			{% include 'partials/_sidebar.html' %}
+			{% include 'partials/_topbar.html' %}
 		{% endblock %}
 
 		<main class="flex flex-grow h-lvh w-lvw {% block main_class %}md:pl-72{% endblock %}">

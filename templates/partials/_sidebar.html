@@ -1,0 +1,42 @@
+{# ── Sidebar ── #}
+<aside
+  class="fixed left-0 top-0 bottom-0 w-72 z-50 bg-white shadow-fair-xl flex flex-col px-4 py-12 md:py-8 gap-6 -translate-x-full md:translate-x-0 transition-transform duration-350 ease-out"
+  :class="mobileOpen ? 'translate-x-0' : ''"
+>
+  {# Brand + mobile close #}
+  <div class="flex items-center justify-between">
+    {% include 'partials/_brand.html' with text_class="bg-red text-3xl" %}
+    <button
+      @click="mobileOpen = false"
+      class="md:hidden -mt-28 w-fit p-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
+      aria-label="Cerrar menú"
+    >
+      {% include 'partials/_icon.html' with name="x-lg" class="size-5" %}
+    </button>
+  </div>
+
+  {# Navigation #}
+  <nav class="flex flex-col flex-1 gap-1">
+    {% include 'partials/_nav_items.html' %}
+  </nav>
+
+  {# User pill #}
+  {% block _user_pill %}
+    {% include 'partials/_user_pill.html' %}
+  {% endblock %}
+</aside>
+
+
+
+{# ── Backdrop (mobile only) ── #}
+<div
+  x-show="mobileOpen"
+  x-transition:enter="transition-opacity ease-out duration-350"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition-opacity ease-in duration-350"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0"
+  @click="mobileOpen = false"
+  class="md:hidden fixed inset-0 z-40 bg-black/25 backdrop-blur-sm"
+></div>
