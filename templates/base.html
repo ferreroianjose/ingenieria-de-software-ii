@@ -70,6 +70,27 @@
 		  --radius-9xl: 3.5rem;
 		  --radius-xxl: 4.0rem;
 		}
+
+    @layer base {
+      h1 {
+        @apply text-5xl lg:text-6xl font-black text-primary-400 uppercase text-pretty;
+      }
+      h2 {
+        @apply text-3xl lg:text-4xl font-bold text-primary-400 uppercase;
+      }
+      button {
+        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 w-full transition-colors font-bold;
+      }
+      label {
+        @apply text-sm font-bold text-gray-700 mb-2;
+      }
+      input {
+        @apply bg-white border border-gray-200 rounded-full shadow-sm text-on-light-bg-500 leading-tight transition-all ring-0 hover:ring-2 hover:ring-primary-400/25 focus:outline-none focus:ring-2 focus:ring-primary-400;
+      }
+      a {
+        @apply text-primary-500 visited:text-primary-600 font-bold underline underline-offset-2 hover:text-primary-400 transition-colors;
+      }
+    }
 		</style>
 
 		<!-- Alpine.js -->
