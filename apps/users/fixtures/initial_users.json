@@ -1,0 +1,67 @@
+[
+  {
+    "email": "laura@siempregym.com",
+    "username": "laura@siempregym.com",
+    "raw_password": "laura123",
+    "is_superuser": true,
+    "is_staff": true,
+    "rol": "ADMIN",
+    "dni": "00000000",
+    "first_name": "Laura",
+    "last_name": "Ibarra",
+    "fecha_nacimiento": "1985-03-15",
+    "estado_constancia": "APROBADA"
+  },
+  {
+    "email": "jose@siempregym.com",
+    "username": "jose@siempregym.com",
+    "raw_password": "jose123",
+    "is_superuser": true,
+    "is_staff": true,
+    "rol": "ADMIN",
+    "dni": "00000001",
+    "first_name": "José",
+    "last_name": "Mckenzie",
+    "fecha_nacimiento": "1988-07-22",
+    "estado_constancia": "APROBADA"
+  },
+  {
+    "email": "empleado@siempregym.com",
+    "username": "empleado@siempregym.com",
+    "raw_password": "empleado123",
+    "is_superuser": false,
+    "is_staff": true,
+    "rol": "EMPLEADO",
+    "dni": "11111111",
+    "first_name": "Empleado",
+    "last_name": "Uno",
+    "fecha_nacimiento": "1995-11-02",
+    "estado_constancia": "APROBADA"
+  },
+  {
+    "email": "enrique@mail.com",
+    "username": "enrique@mail.com",
+    "raw_password": "enrique123",
+    "is_superuser": false,
+    "is_staff": false,
+    "rol": "CLIENTE",
+    "dni": "22222222",
+    "first_name": "Enrique",
+    "last_name": "Gonzales",
+    "fecha_nacimiento": "2002-05-10",
+    "estado_constancia": "APROBADA"
+  },
+  {
+    "email": "guadalupe@mail.com",
+    "username": "guadalupe@mail.com",
+    "raw_password": "guadalupe123",
+    "is_superuser": false,
+    "is_staff": false,
+    "rol": "CLIENTE",
+    "dni": "22222223",
+    "first_name": "Guadalupe",
+    "last_name": "Figueroa",
+    "fecha_nacimiento": "2005-09-30",
+    "estado_constancia": "PENDIENTE"
+  }
+]

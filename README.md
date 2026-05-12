@@ -243,3 +243,19 @@ El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno v
 	```bash
 	docker compose down
 	```
+
+## Carga de datos iniciales
+
+Los datos iniciales (como usuarios por defecto) se cargan mediante _fixtures_ en el directorio `fixtures/` de cada módulo (Django App). Por ejemplo, en `apps/users/fixtures/initial_users.json`.
+
+E.g. en el módulo `users`: El comando `load_initial_users` carga usuarios desde el fixture. El comando se ejecuta automáticamente después de las migraciones en `docker/backend/docker-entrypoint.sh`, tras verificar si `DJANGO_DEBUG` está activado.
+
+Si no usas docker para correrlo, después de `uv run python manage.py migrate`, ejecutá manualmente `uv run python manage.py load_initial_users` (y similar para cada otro módulo).
+
+Para agregar datos iniciales en otro módulo (ej. `classes`):
+
+1. Creá un fixture en `apps/classes/fixtures/initial_classes.json`.
+2. Creá un comando en `apps/classes/management/commands/load_initial_classes.py` (copiá el patrón de `users`, adaptando para tus modelos y campos únicos).
+3. Agregá una línea en `docker/backend/docker-entrypoint.sh` como: `echo "Loading initial data for classes..."; uv run python manage.py load_initial_classes`.
+
+De esta forma cada módulo maneja la carga de sus propios datos iniciales de forma idempotente (verifica si ya existen antes de crear, para no duplicar). Así, ese script solo correría durante el desarrollo, y evitamos problemas de migraciones 🥴.
