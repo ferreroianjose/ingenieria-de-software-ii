@@ -17,7 +17,7 @@ class Class(models.Model):
 
     disciplina = models.CharField(max_length=100, choices=DISCIPLINA_CHOICES)
     sala = models.CharField(max_length=100, choices=SALA_CHOICES)
-    profesor = models.CharField(max_length=100)
+    profesor = models.ForeignKey('Teacher', on_delete=models.CASCADE)
     inicio = models.DateTimeField()
     duracion = models.DurationField()
     cupo_maximo = models.PositiveIntegerField(default=1)

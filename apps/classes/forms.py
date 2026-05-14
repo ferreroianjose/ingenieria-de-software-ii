@@ -6,6 +6,12 @@ from django.core.exceptions import ValidationError
 from .models import Class, Teacher
 
 class ClassForm(forms.ModelForm):
+    profesor = forms.ModelChoiceField(
+        queryset=Teacher.objects.all(),
+        label='Profesor',
+        empty_label='Selecciona un profesor'
+    )
+    
     inicio = forms.DateTimeField(
         widget=forms.DateTimeInput(attrs={
             'type': 'datetime-local',
@@ -34,15 +40,12 @@ class ClassForm(forms.ModelForm):
         widgets = {
             'disciplina': forms.Select(),
             'sala': forms.Select(),
-            'profesor': forms.TextInput(attrs={
-                'placeholder': 'Nombre del profesor'
-            }),
         }
 
     def clean_inicio(self):
         inicio = self.cleaned_data.get('inicio')
         if inicio and inicio.weekday() == 6:
-            raise ValidationError('La clase solo puede programarse de lunes a sábado.')
+            raise ValidationError('La clase solo puede programarse de lunes a viernes.')
         return inicio
 
     def clean_duracion(self):
