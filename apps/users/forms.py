@@ -50,3 +50,19 @@ class CustomUserCreationForm(UserCreationForm):
                     code="under_age",
                 )
         return fecha
+
+
+class TwoFactorForm(forms.Form):
+    code = forms.CharField(
+        max_length=6, min_length=6, required=True, label="Código de verificación"
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.expected_code = kwargs.pop("expected_code", None)
+        super().__init__(*args, **kwargs)
+
+    def clean_code(self):
+        code = self.cleaned_data.get("code")
+        if code != self.expected_code:
+            raise forms.ValidationError("El código ingresado es incorrecto.")
+        return code
