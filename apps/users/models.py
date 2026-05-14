@@ -35,3 +35,14 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.email})"
+
+    def get_notification_contact(self, channel_slug: str) -> str:
+        """
+        Retorna el dato de contacto (email, teléfono, etc.) según el canal solicitado.
+        """
+        mapping = {
+            "email": self.email,
+            "fake_email": self.email,
+            # "sms": self.telefono_emergencia,
+        }
+        return mapping.get(channel_slug, "")
