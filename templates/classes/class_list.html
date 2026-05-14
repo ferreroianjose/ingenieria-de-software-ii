@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Clases{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-primary-500 mb-6">Gestionar Clases</h1>
+
+    <div class="mb-6">
+        <button class="bg-primary-400 hover:bg-primary-600 text-white py-2 px-4 rounded-full font-bold transition-colors">
+            Crear Clase
+        </button>
+    </div>
+
+    <div class="bg-white shadow-fair-md rounded-lg overflow-hidden">
+        <table class="min-w-full table-auto">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disciplina</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sala</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesor</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha/Hora</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duración</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cupo</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for class in classes %}
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ class.disciplina }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ class.sala }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ class.profesor }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ class.inicio|date:"d/m/Y H:i" }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ class.duracion }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ class.cupo }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if class.estado == 'disponible' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ class.get_estado_display }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-2">Editar</button>
+                        <button class="text-red-600 hover:text-red-900 mr-2">Eliminar</button>
+                        <button class="text-yellow-600 hover:text-yellow-900">Pausar</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">No hay clases disponibles.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
