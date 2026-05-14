@@ -36,6 +36,23 @@
     Mis pagos
   </a>
   
+
+  {% if user.is_staff %}
+  <a href="{% url 'classes:class_list' %}"
+     class="nav-item"
+     :class="currentPath === '/classes/list/' ? 'nav-item-active' : ''">
+    {% include 'partials/_icon.html' with name="list" class="size-5 shrink-0" %}
+    Gestionar clases
+  </a>
+
+  <a href="{% url 'classes:teacher_list' %}"
+     class="nav-item"
+     :class="currentPath === '/classes/teachers/' ? 'nav-item-active' : ''">
+    {% include 'partials/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+    Gestionar profesores
+  </a>
+  {% endif %}
+
   <a href="{% url 'settings' %}"
      class="nav-item"
      x-show="currentPath === '{% url 'settings' %}'"

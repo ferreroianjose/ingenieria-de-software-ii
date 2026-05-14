@@ -28,6 +28,7 @@ urlpatterns = [
 
     path("users/", include("apps.users.urls")),
     path("test-notifications/", TestNotificationView.as_view(), name="test-notifications"),
+    path("classes/", include("apps.classes.urls")),
 
     # Para el desarrollo
     path("__reload__/", include("django_browser_reload.urls")),
