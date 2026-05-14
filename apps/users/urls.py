@@ -19,6 +19,8 @@ urlpatterns = [
 
     path('2fa/', views.two_factor, name='two_factor'),
 
+    path('settings/', views.settings_view, name='settings'),
+
 
     # TODO: agregar password reset, etc.
 ]

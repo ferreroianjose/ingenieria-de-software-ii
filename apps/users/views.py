@@ -11,6 +11,16 @@ from django.urls import reverse
 from apps.notifications.services import notification_service
 from .forms import CustomUserCreationForm, TwoFactorForm
 
+@login_required
+def settings_view(request):
+    # Contexto para el partial de notificaciones (si el usuario tiene permisos)
+    context = {}
+    if request.user.rol in ["ADMIN", "EMPLEADO"]:
+        context["adapters"] = notification_service.adapters
+        
+    return render(request, "users/settings.html", context)
+
+
 # Custom LoginView that forces admins through a 2FA step
 class CustomLoginView(LoginView):
     def form_valid(self, form):

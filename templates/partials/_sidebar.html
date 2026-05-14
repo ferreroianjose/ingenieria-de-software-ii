@@ -1,7 +1,7 @@
 {# ── Sidebar ── #}
 <aside
-  class="fixed left-0 top-0 bottom-0 w-72 z-50 bg-white flex flex-col px-4 py-[clamp(calc(var(--spacing)*2),3lvh,calc(var(--spacing)*18))] gap-6 -translate-x-full md:translate-x-0 transition-transform duration-350 ease-out @container items-center"
-  :class="mobileOpen ? 'translate-x-0 overflow-x-visible shadow-fair-xl ' : 'overflow-x-hidden shadow-none'"
+  class="fixed left-0 top-0 bottom-0 w-72 z-50 bg-white flex flex-col px-4 py-[clamp(calc(var(--spacing)*2),3lvh,calc(var(--spacing)*18))] gap-6 -translate-x-full md:translate-x-0 transition-transform duration-350 ease-out @container items-center shadow-fair-xl"
+  :class="mobileOpen ? 'translate-x-0 overflow-x-visible' : 'overflow-x-hidden shadow-none md:shadow-fair-md'"
 >
   {# Brand + mobile close #}
   <div class="flex items-center justify-between relative w-full">
