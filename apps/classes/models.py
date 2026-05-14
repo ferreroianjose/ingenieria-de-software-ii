@@ -1,17 +1,36 @@
 from django.db import models
 
 class Class(models.Model):
-    disciplina = models.CharField(max_length=100)
-    sala = models.CharField(max_length=100)
+    DISCIPLINA_CHOICES = [
+        ('Funcional', 'Funcional'),
+        ('Pilates', 'Pilates'),
+        ('Yoga', 'Yoga'),
+    ]
+    SALA_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+    ]
+    ESTADO_CHOICES = [
+        ('disponible', 'Disponible'),
+        ('pausada', 'Pausada'),
+    ]
+
+    disciplina = models.CharField(max_length=100, choices=DISCIPLINA_CHOICES)
+    sala = models.CharField(max_length=100, choices=SALA_CHOICES)
     profesor = models.CharField(max_length=100)
     inicio = models.DateTimeField()
-    duracion = models.DurationField()  # Duración en formato de tiempo
-    cupo = models.IntegerField()
+    duracion = models.DurationField()
+    cupo_maximo = models.PositiveIntegerField(default=1)
     estado = models.CharField(
         max_length=20,
-        choices=[('disponible', 'Disponible'), ('pausada', 'Pausada')],
+        choices=ESTADO_CHOICES,
         default='disponible'
     )
 
     def __str__(self):
         return f"{self.disciplina} - {self.profesor} - {self.inicio}"
+
+    @property
+    def duracion_minutos(self):
+        return int(self.duracion.total_seconds() // 60)
+
