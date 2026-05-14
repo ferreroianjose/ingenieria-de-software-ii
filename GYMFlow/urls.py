@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from . import views
+from apps.notifications.views import TestNotificationView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -26,6 +27,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
 
     path("users/", include("apps.users.urls")),
+    path("test-notifications/", TestNotificationView.as_view(), name="test-notifications"),
 
     # Para el desarrollo
     path("__reload__/", include("django_browser_reload.urls")),

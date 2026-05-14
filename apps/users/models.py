@@ -24,6 +24,8 @@ class User(AbstractUser):
         max_length=20, choices=ESTADOS, default="PENDIENTE"
     )
 
+    REQUIRED_FIELDS = ["dni", "first_name", "last_name", "email"]
+
     # Django define email y username como parte del usuario por defecto
     # para evitar sobreescribir métodos y otros problemas,
     # manejamos username = email.
@@ -35,3 +37,14 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.email})"
+
+    def get_notification_contact(self, channel_slug: str) -> str:
+        """
+        Retorna el dato de contacto (email, teléfono, etc.) según el canal solicitado.
+        """
+        mapping = {
+            "email": self.email,
+            "fake_email": self.email,
+            # "sms": self.telefono_emergencia,
+        }
+        return mapping.get(channel_slug, "")

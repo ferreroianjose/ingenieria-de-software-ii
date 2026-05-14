@@ -56,6 +56,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.users.middleware.TwoFactorMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Nuestros middlewares
@@ -157,3 +158,19 @@ AUTH_USER_MODEL = 'users.User'
 
 # Servidor
 runserver.default_port = "8000"
+
+# Email Configuration
+EMAIL_BACKEND = "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "GYMFlow <noreply@gymflow.com>")
+
+# Notification Configuration
+NOTIFICATION_ADAPTERS = [
+    "apps.notifications.adapters.email.EmailNotificationAdapter",
+]
+if DEBUG:
+    NOTIFICATION_ADAPTERS.insert(0, "apps.notifications.adapters.email.FakeEmailNotificationAdapter")

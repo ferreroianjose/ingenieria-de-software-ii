@@ -79,13 +79,25 @@
         @apply text-3xl lg:text-4xl font-bold text-primary-400 uppercase;
       }
       button {
-        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 w-full transition-colors font-bold;
+        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 w-full transition-colors font-bold cursor-pointer;
+      }
+      button, a {
+      	
       }
       label {
         @apply text-sm font-bold text-gray-700 mb-2;
       }
-      input {
-        @apply bg-white rounded-full shadow-fair-sm text-on-light-bg-500 leading-tight transition-all ring-0 hover:ring-2 ring-primary-400/25 focus:outline-none focus:ring-2 focus:ring-primary-400;
+      input, textarea, select, .input-field {
+        @apply bg-white rounded-full shadow-fair-sm text-on-light-bg-500 leading-tight transition-all ring-0 hover:ring-2 ring-primary-400/25 focus:outline-none focus:ring-2 focus:ring-primary-400 p-4 md:py-2;
+      }
+      select {
+        @apply appearance-none bg-no-repeat pr-12;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 1rem center;
+        background-size: 1.5em 1.5em;
+      }
+      textarea {
+        @apply rounded-2xl;
       }
       a {
         @apply text-primary-500 visited:text-primary-600 font-bold underline underline-offset-2 hover:text-primary-400 transition-colors;
@@ -112,13 +124,13 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'css/favicon.svg' %}">
 	</head>
-	<body x-data="{ mobileOpen: false }" class="min-h-screen min-w-full flex flex-col md:mt-0">
+	<body x-data="{ mobileOpen: false }" class="min-h-screen min-w-full flex flex-col">
 		{% block header %}
 			{% include 'partials/_sidebar.html' %}
 			{% include 'partials/_topbar.html' %}
 		{% endblock %}
 
-		<main class="flex flex-grow h-lvh w-lvw {% block main_class %}md:pl-72{% endblock %}">
+		<main class="flex flex-grow h-lvh w-lvw {% block main_class %}transition-[padding] pt-42 md:pt-0 md:pl-72{% endblock %}">
 			{% block content %}
 			<!-- Contenido de cada página -->
 			{% endblock %}

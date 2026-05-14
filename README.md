@@ -229,16 +229,8 @@ El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno v
 - Usar un shell dentro del container de Django:
 
 	```bash
-  docker exec -it gymflow_web uv run python manage.py shell
+	docker exec -it gymflow_web uv run python manage.py shell
   ```
-
--  Al añadir o quitar alguna dependencia en `pyproject.toml`, al cambiar el `Dockerfile` o scripts de configuración en `docker/`, o si algo se rompe y querés limpiar el entorno, agregá el flag `--build` a `docker compose up`:
-
-	```bash
-	docker compose up --build
-	```
-
--  Detener el entorno:
 
 	```bash
 	docker compose down
@@ -259,3 +251,44 @@ Para agregar datos iniciales en otro módulo (ej. `classes`):
 3. Agregá una línea en `docker/backend/docker-entrypoint.sh` como: `echo "Loading initial data for classes..."; uv run python manage.py load_initial_classes`.
 
 De esta forma cada módulo maneja la carga de sus propios datos iniciales de forma idempotente (verifica si ya existen antes de crear, para no duplicar). Así, ese script solo correría durante el desarrollo, y evitamos problemas de migraciones 🥴.
+
+### Configuración de Notificaciones
+
+El módulo de notificaciones (`apps/notifications`) utiliza el patrón **Adapter** para posibilitar el envío a través de diferentes canales a futuro.
+
+Los servicios disponibles se configuran en `GYMFLOW/settings.py`. En desarrollo se incluye automáticamente el adaptador de consola.
+
+```python
+NOTIFICATION_ADAPTERS = [
+    "apps.notifications.adapters.email.EmailNotificationAdapter",
+]
+```
+
+* `FakeEmailNotificationAdapter`: Correos falsos. Se imprimen en la consola de la terminal.
+* `EmailNotificationAdapter`: Envío real vía SMTP utilizando los backends de Django.
+
+Para configurar el envío real, se utilizan estas variables en el `.env`:
+- `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`: Configuración del servidor SMTP.
+- `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`: Credenciales de autenticación.
+- `DEFAULT_FROM_EMAIL`: El remitente (ej: `Siempre GYM <noreply@siempregym.com>`).
+
+Para enviar notificaciones, se utiliza un patron singleton en `/apps/notifications/services.py`:
+
+```python
+from apps.notifications.services import notification_service
+
+# Envío a todos los canales
+notification_service.notify(
+    recipient=user_instance,
+    subject="Asunto",
+    message="Mensaje"
+)
+
+# Envío a un canal específico
+notification_service.notify(
+    recipient="admin@gymflow.com",
+    subject="Alerta",
+    message="Error en el sistema",
+    adapter_slug="fake_email"
+)
+```

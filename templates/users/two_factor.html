@@ -7,12 +7,44 @@
 {% block auth_form_action %}{% url 'two_factor' %}{% endblock %}
 
 {% block auth_fields %}
-  <div>
-      <label for="code">
-          Código de verificación
-      </label>
-      <input id="code" name="code" type="text" required autofocus placeholder="000000">
+  <div class="space-y-4 my-auto w-full" x-data="{ code: '', focused: true }">
+      <div class="relative w-full">
+          <!-- Input real oculto -->
+          <input type="text" 
+                 inputmode="numeric"
+                 pattern="[0-9]*"
+                 name="code" 
+                 maxlength="6" 
+                 x-model="code"
+                 @focus="focused = true"
+                 @blur="focused = false"
+                 class="opacity-0 absolute inset-0 w-full h-full z-10 cursor-default"
+                 autocomplete="one-time-code"
+                 autofocus>
+
+          <!-- Grilla de 6 columnas individuales -->
+          <div class="grid grid-cols-6 gap-4 md:gap-2 lg:gap-3 w-full pointer-events-none">
+              <template x-for="i in 6" :key="i">
+                  <div class="aspect-[2/3] h-18 text-3xl md:h-16 lg:h-18  bg-white rounded-2xl shadow-fair-sm flex items-center justify-center font-black transition-all duration-250"
+                       :class="{
+                           'ring-2 ring-primary-400 scale-120 shadow-fair-md': focused && code.length === i - 1,
+                           'text-gray-600': code[i-1],
+                           'text-gray-300': !code[i-1]
+                       }"
+                       x-text="code[i-1] || '0'">
+                  </div>
+              </template>
+          </div>
+      </div>
   </div>
+
+  <style>
+      /* Forzar que el formulario ocupe todo el ancho disponible en la tarjeta */
+      #auth-card form {
+          max-width: none !important;
+          width: 100% !important;
+      }
+  </style>
 {% endblock %}
 
 {% block auth_primary_button %}
@@ -23,7 +55,8 @@
   <div>
     <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
-        <a type="submit" 
+        <a
+           type="submit" 
            hx-post="{% url 'logout' %}"
            hx-target="#auth-card"
            hx-select="#auth-card"
