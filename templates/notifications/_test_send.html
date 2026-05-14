@@ -1,3 +1,4 @@
+<div id="notification-test-container" class="w-full">
 {% if messages %}
     <div class="w-full space-y-2 mb-4">
         {% for message in messages %}
@@ -8,24 +9,13 @@
     </div>
 {% endif %}
 
-<style type="text/tailwindcss">
-    @layer base {
-        #notification-test-form input, 
-        #notification-test-form select, 
-        #notification-test-form textarea {
-            @apply block w-full mt-1;
-        }
-    }
-</style>
-
-<form method="post" action="{% url 'test-notifications' %}" id="notification-test-form" class="w-full space-y-4">
+<form hx-post="{% url 'test-notifications' %}" hx-target="#notification-test-container" hx-swap="outerHTML" id="notification-test-form" class="w-full space-y-4">
     {% csrf_token %}
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
             <label>Receptor</label>
-            <input type="text" name="recipient" value="{{ recipient|default:'' }}" 
-                   placeholder="usuario@ejemplo.com">
+            <input type="text" name="recipient" value="{{ recipient|default:'' }}"  placeholder="usuario@ejemplo.com" >
         </div>
 
         <div>
@@ -56,12 +46,11 @@
     </div>
 </form>
 
-<div class="w-full space-y-4 pt-6 mt-6 border-t border-gray-100">
+<div class="w-full space-y-2 mt-4 border-t border-gray-100">
     <div class="flex items-center justify-between">
-        <h2 class="text-lg font-bold uppercase tracking-tight">Estado del envío</h2>
         {% if last_results %}
-        <div class="px-3 py-1 rounded-full text-xs font-black uppercase {% if all_success %}bg-primary-400 text-white{% else %}bg-red-500 text-white{% endif %}">
-            {% if all_success %}Completado{% else %}Error parcial{% endif %}
+        <div class="mt-2 rounded-full text-md font-black uppercase {% if all_success %} text-secondary-500{% else %}text-red-500{% endif %}">
+            {% if all_success %}Enviado{% else %}Error parcial{% endif %}
         </div>
         {% endif %}
     </div>
@@ -69,11 +58,11 @@
     {% if last_results %}
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {% for adapter, success in last_results.items %}
-            <div class="flex items-center justify-between p-3 rounded-full bg-gray-100 border border-white/50 shadow-fair-md">
+            <div class="flex items-center justify-between p-2 rounded-full bg-gray-100 border border-white/50 shadow-fair-md">
                 <div class="flex flex-col">
                     <span class="ml-3 font-mono text-md font-bold text-on-light-bg-500">{{ adapter|title }}</span>
                 </div>
-                <span class="flex items-center justify-center size-10 rounded-full shadow-fair-sm transition-transform duration-500 hover:scale-110 {% if success %}bg-primary-400 text-white{% else %}bg-red-500 text-white{% endif %}">
+                <span class="flex items-center justify-center size-10 rounded-full shadow-fair-sm transition-transform duration-500 hover:scale-110 {% if success %}bg-secondary-300 text-white{% else %}bg-red-500 text-white{% endif %}">
                     {% if success %}✓{% else %}✕{% endif %}
                 </span>
             </div>
@@ -84,4 +73,5 @@
         <p class="text-sm font-bold uppercase tracking-widest">Esperando envío...</p>
     </div>
     {% endif %}
+</div>
 </div>

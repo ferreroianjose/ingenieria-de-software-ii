@@ -38,7 +38,7 @@ class TestNotificationView(UserPassesTestMixin, View):
         
         all_success = all(results.values())
         
-        return render(request, self.template_name, {
+        context = {
             'adapters': notification_service.adapters,
             'last_results': results,
             'all_success': all_success,
@@ -46,4 +46,9 @@ class TestNotificationView(UserPassesTestMixin, View):
             'subject': subject,
             'message': message,
             'selected_adapter': adapter_slug
-        })
+        }
+
+        if request.headers.get('HX-Request'):
+            return render(request, 'notifications/_test_send.html', context)
+            
+        return render(request, self.template_name, context)

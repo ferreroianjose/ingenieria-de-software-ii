@@ -12,7 +12,7 @@
         }
       </style>
       <div class="user-pill-item">
-        <form method="post" action="{% url 'logout' %}">
+        <form method="post" action="{% url 'logout' %}" hx-boost="false">
           {% csrf_token %}
           <button>
             {% include 'partials/_icon.html' with name="box-arrow-left" class="size-4 shrink-0" %}

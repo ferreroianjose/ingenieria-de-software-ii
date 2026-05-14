@@ -14,3 +14,8 @@ body {
 *::selection {
   background-color: var(--color-secondary-300);
 }
+
+/* Animación simple para el intercambio de contenido */
+.htmx-swapping #main-content {
+  opacity: 0;
+}

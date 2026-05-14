@@ -1,9 +1,7 @@
 {% extends 'base.html' %}
 
 {% block header %}{% endblock %}
-{% block footer %}
-	{% include 'partials/_footer.html' with account_header=False %}
-{% endblock %}
+{% block footer_class %}{% endblock %}
 {% block main_class %}{% endblock %}
 
 {% block content %}
@@ -41,25 +39,6 @@
         <!-- Columna derecha, el formulario -->
         <!-- Notar que está "flotanto" sobre la "columna" izquierda -->
         <div id="auth-card" class="relative z-20 w-full md:w-[400px] lg:w-[450px] bg-white md:bg-white/50 backdrop-blur-sm overflow-y-auto p-8 lg:p-12 flex flex-col md:border-l md:border-white/50 h-fit max-h-[90vh] will-change-contents">
-            <style type="text/tailwindcss">
-                @layer base {
-                    #auth-card h1 {
-                      font-size: clamp(var(--text-2xl),15cqw,var(--text-6xl)) !important;
-                    }
-                    #auth-card label {
-                        @apply block mb-2;
-                    }
-                    #auth-card input {
-                        @apply block w-full;
-                    }
-                    #auth-card a {
-                        @apply visited:text-primary-500;
-                    }
-                    #auth-card p {
-                        @apply text-sm text-gray-500;
-                    }
-                }
-            </style>
             {% block auth_card_content %}
             <form method="post" action="{% block auth_form_action %}{% endblock %}" class="w-full h-fit max-w-sm mx-auto my-auto flex flex-col justify-center space-y-6">
                 {% csrf_token %}

@@ -3,7 +3,7 @@
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-<div class="h-full w-full flex flex-col justify-center items-center bg-gray-50">
+<div class="min-h-lvh w-full flex flex-col justify-center items-center">
     <div class="">
         <h1 class="text-4xl font-bold text-primary-500 mb-4 font-serif">¡Hola, {{ user.first_name|default:user.email }}!</h1>
         <p class="text-xl text-gray-600">Bienvenido de nuevo a SIEMPRE GYM.</p>
