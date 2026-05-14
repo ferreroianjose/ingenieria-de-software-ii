@@ -37,6 +37,12 @@
   {% include 'partials/_icon.html' with name="list" class="size-5 shrink-0" %}
   Gestionar clases
 </a>
+
+<a href="{% url 'classes:teacher_list' %}"
+   class="nav-item {% if url_name == 'teacher_list' %}nav-item-active{% endif %}">
+  {% include 'partials/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+  Gestionar profesores
+</a>
 {% endif %}
 
 {% endwith %}

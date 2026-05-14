@@ -3,13 +3,12 @@ from datetime import timedelta
 from django import forms
 from django.core.exceptions import ValidationError
 
-from .models import Class
+from .models import Class, Teacher
 
 class ClassForm(forms.ModelForm):
     inicio = forms.DateTimeField(
         widget=forms.DateTimeInput(attrs={
             'type': 'datetime-local',
-            'class': 'w-full rounded-full border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400',
         }),
         input_formats=['%Y-%m-%dT%H:%M'],
         label='Inicio'
@@ -18,7 +17,6 @@ class ClassForm(forms.ModelForm):
         min_value=1,
         label='Duración (minutos)',
         widget=forms.NumberInput(attrs={
-            'class': 'w-full rounded-full border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400',
             'placeholder': 'Ej. 45'
         })
     )
@@ -26,7 +24,6 @@ class ClassForm(forms.ModelForm):
         min_value=1,
         label='Cupo máximo',
         widget=forms.NumberInput(attrs={
-            'class': 'w-full rounded-full border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400',
             'placeholder': 'Ej. 20'
         })
     )
@@ -35,14 +32,9 @@ class ClassForm(forms.ModelForm):
         model = Class
         fields = ['disciplina', 'sala', 'profesor', 'inicio', 'duracion', 'cupo_maximo']
         widgets = {
-            'disciplina': forms.Select(attrs={
-                'class': 'w-full rounded-full border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400'
-            }),
-            'sala': forms.Select(attrs={
-                'class': 'w-full rounded-full border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400'
-            }),
+            'disciplina': forms.Select(),
+            'sala': forms.Select(),
             'profesor': forms.TextInput(attrs={
-                'class': 'w-full rounded-full border border-gray-200 px-4 py-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-400',
                 'placeholder': 'Nombre del profesor'
             }),
         }
@@ -58,3 +50,33 @@ class ClassForm(forms.ModelForm):
         if minutos is None:
             return minutos
         return timedelta(minutes=minutos)
+
+
+class TeacherForm(forms.ModelForm):
+    class Meta:
+        model = Teacher
+        fields = ['nombre', 'apellido']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'placeholder': 'Nombre del profesor'
+            }),
+            'apellido': forms.TextInput(attrs={
+                'placeholder': 'Apellido del profesor'
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        nombre = cleaned_data.get('nombre')
+        apellido = cleaned_data.get('apellido')
+
+        if nombre and apellido:
+            # Validar duplicados case-insensitive
+            existe = Teacher.objects.filter(
+                nombre__iexact=nombre,
+                apellido__iexact=apellido
+            ).exists()
+            if existe:
+                raise ValidationError('Ya existe un profesor con ese nombre y apellido.')
+
+        return cleaned_data

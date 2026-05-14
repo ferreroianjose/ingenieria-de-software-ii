@@ -34,3 +34,14 @@ class Class(models.Model):
     def duracion_minutos(self):
         return int(self.duracion.total_seconds() // 60)
 
+
+class Teacher(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellido = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('nombre', 'apellido')
+
+    def __str__(self):
+        return f"{self.nombre} {self.apellido}"
+

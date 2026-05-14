@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.admin.views.decorators import staff_member_required
 
-from .forms import ClassForm
-from .models import Class
+from .forms import ClassForm, TeacherForm
+from .models import Class, Teacher
 
 @staff_member_required
 def class_list(request):
@@ -24,3 +24,34 @@ def class_list(request):
         'classes/class_list.html',
         {'classes': classes, 'form': form, 'show_modal': show_modal},
     )
+
+
+@staff_member_required
+def teacher_list(request):
+    form = TeacherForm()
+    show_modal = False
+
+    if request.method == 'POST':
+        form = TeacherForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('classes:teacher_list')
+        show_modal = True
+
+    teachers = Teacher.objects.all()
+    return render(
+        request,
+        'classes/teacher_list.html',
+        {'teachers': teachers, 'form': form, 'show_modal': show_modal},
+    )
+
+
+@staff_member_required
+def delete_teacher(request, teacher_id):
+    if request.method == 'POST':
+        try:
+            teacher = Teacher.objects.get(id=teacher_id)
+            teacher.delete()
+        except Teacher.DoesNotExist:
+            pass
+    return redirect('classes:teacher_list')

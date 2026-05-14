@@ -5,8 +5,8 @@
 {% block content %}
 <div class="container mx-auto px-4 py-8" x-data="{ showModal: {{ show_modal|yesno:'true,false' }} }" x-cloak>
     <h1 class="text-3xl font-bold text-primary-500 mb-6">Gestionar Clases</h1>
-
     <div class="mb-6">
+        
         <button
             @click.prevent="showModal = true"
             class="bg-primary-400 hover:bg-primary-600 text-white py-2 px-4 rounded-full font-bold transition-colors"
