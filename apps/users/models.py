@@ -24,6 +24,8 @@ class User(AbstractUser):
         max_length=20, choices=ESTADOS, default="PENDIENTE"
     )
 
+    REQUIRED_FIELDS = ["dni", "first_name", "last_name", "email"]
+
     # Django define email y username como parte del usuario por defecto
     # para evitar sobreescribir métodos y otros problemas,
     # manejamos username = email.
