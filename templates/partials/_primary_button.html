@@ -1,6 +1,7 @@
 <button
-	class="bg-primary-400 hover:bg-primary-600 text-white"
-	type="submit"
+	class="bg-primary-400 hover:bg-primary-600 hover:scale-105 active:scale-95 duration-500 text-white {{ class }}"
+	type="{{ type|default:'submit' }}"
+	{{ attrs|safe }}
 >
 	{{ label }}
 </button>

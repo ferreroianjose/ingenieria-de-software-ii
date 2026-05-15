@@ -27,6 +27,7 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
 
     path("users/", include("apps.users.urls")),
+    path("attendance/", include("apps.attendance.urls")),
     path("test-notifications/", TestNotificationView.as_view(), name="test-notifications"),
     path("classes/", include("apps.classes.urls")),
 

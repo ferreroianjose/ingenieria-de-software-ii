@@ -29,7 +29,7 @@ class CustomLoginView(LoginView):
 
         # si el usuario es un administrador
         user = self.request.user
-        if user.is_staff:
+        if user.rol == "ADMIN":
             # Generar código de 6 dígitos
             code = "".join(random.choices(string.digits, k=6))
 
@@ -62,7 +62,7 @@ class CustomLoginView(LoginView):
 def two_factor(request):
     user = request.user
 
-    if not user.is_staff:
+    if not user.rol == "ADMIN":
         return redirect("dashboard")
 
     if not request.session.get("is_2fa_pending"):

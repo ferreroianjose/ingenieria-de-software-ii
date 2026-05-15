@@ -1,0 +1,37 @@
+{% extends 'partials/_modal.html' %}
+
+{% block modal_title %}Agregar profesor{% endblock %}
+{% block modal_subtitle %}Ingresa los datos del nuevo profesor.{% endblock %}
+
+{% block modal_body %}
+<form id="teacher-form" action="{% url 'classes:teacher_list' %}" method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-6">
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <label>Nombre</label>
+            {{ form.nombre }}
+            {% for error in form.nombre.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Apellido</label>
+            {{ form.apellido }}
+            {% for error in form.apellido.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block modal_footer %}
+    {% include 'partials/_secondary_button.html' with label="Cancelar" type="button" attrs='@click.prevent="'|add:show_var|add:' = false"' class="px-8 py-3 border-white/20 text-white hover:bg-white/10" %}
+    {% include 'partials/_primary_button.html' with label="Confirmar" type="submit" attrs='form="teacher-form"' class="px-8 py-3 bg-primary-400 hover:bg-primary-500" %}
+{% endblock %}

@@ -11,12 +11,7 @@
         </div>
 
         <div class="flex justify-between items-center">
-            <button
-                @click.prevent="showModal = true"
-                class="bg-primary-400 hover:bg-primary-600 text-white py-2 px-4 rounded-full font-bold transition-colors"
-            >
-                Agregar profesor
-            </button>
+            {% include 'partials/_primary_button.html' with label="Agregar profesor" type="button" attrs='@click.prevent="showModal = true"' class="w-auto px-6 py-2" %}
         </div>
 
         <div class="bg-white shadow-fair-md rounded-lg overflow-hidden">
@@ -50,64 +45,6 @@
         </div>
     </div>
 
-    <div
-        x-show="showModal"
-        x-transition.opacity
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-    >
-        <div
-            @click.outside="showModal = false"
-            class="w-full max-w-md overflow-hidden rounded-[2rem] bg-white shadow-fair-xl"
-        >
-            <div class="border-b border-gray-200 px-6 py-5">
-                <div>
-                    <h2 class="text-2xl font-bold text-primary-500">Agregar profesor</h2>
-                    <p class="mt-1 text-sm text-gray-600">Ingresa los datos del nuevo profesor.</p>
-                </div>
-            </div>
-
-            <form action="{% url 'classes:teacher_list' %}" method="post" class="space-y-6 px-6 py-6">
-                {% csrf_token %}
-                {% if form.non_field_errors %}
-                <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                    {{ form.non_field_errors }}
-                </div>
-                {% endif %}
-
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                        <label class="text-sm font-semibold text-gray-700">Nombre</label>
-                        {{ form.nombre }}
-                        {% for error in form.nombre.errors %}
-                        <p class="text-sm text-red-600">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-sm font-semibold text-gray-700">Apellido</label>
-                        {{ form.apellido }}
-                        {% for error in form.apellido.errors %}
-                        <p class="text-sm text-red-600">{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:justify-end">
-                    <button
-                        type="button"
-                        @click.prevent="showModal = false"
-                        class="rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        class="rounded-full bg-primary-400 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-600"
-                    >
-                        Confirmar
-                    </button>
-                </div>
-            </form>
-        </div>
+    {% include 'partials/classes/_teacher_modal.html' %}
     </div>
-</div>
-{% endblock %}
+    {% endblock %}

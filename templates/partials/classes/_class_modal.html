@@ -1,0 +1,66 @@
+{% extends 'partials/_modal.html' %}
+
+{% block modal_max_width %}max-w-3xl{% endblock %}
+{% block modal_title %}Crear nueva clase{% endblock %}
+{% block modal_subtitle %}Completa los datos para agregar la clase al cronograma.{% endblock %}
+
+{% block modal_body %}
+<form id="class-form" action="{% url 'classes:class_list' %}" method="post">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 mb-6">
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700">Disciplina</label>
+            {{ form.disciplina }}
+            {% for error in form.disciplina.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700">Sala</label>
+            {{ form.sala }}
+            {% for error in form.sala.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2 md:col-span-2">
+            <label class="text-sm font-semibold text-gray-700">Profesor</label>
+            {{ form.profesor }}
+            {% for error in form.profesor.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700">Inicio</label>
+            {{ form.inicio }}
+            {% for error in form.inicio.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700">Duración</label>
+            {{ form.duracion }}
+            {% for error in form.duracion.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2 md:col-span-2">
+            <label class="text-sm font-semibold text-gray-700">Cupo máximo</label>
+            {{ form.cupo_maximo }}
+            {% for error in form.cupo_maximo.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block modal_footer %}
+    {% include 'partials/_secondary_button.html' with label="Cancelar" type="button" attrs='@click.prevent="'|add:show_var|add:' = false"' class="px-8 py-3 border-white/20 text-white hover:bg-white/10" %}
+    {% include 'partials/_primary_button.html' with label="Confirmar" type="submit" attrs='form="class-form"' class="px-8 py-3 bg-primary-400 hover:bg-primary-500" %}
+{% endblock %}

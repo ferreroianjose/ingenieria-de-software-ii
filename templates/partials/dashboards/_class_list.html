@@ -1,0 +1,24 @@
+{% comment %}
+Usage:
+    {% include 'partials/dashboards/_class_list.html' with name="Yoga" sessions=yoga_sessions %}
+    
+    Where sessions is a list of objects/dicts: [{'day': 'Lunes', 'time': '08:00'}]
+{% endcomment %}
+<div class="p-4 bg-white/10 rounded-4xl border border-white/20 hover:border-primary-300/75 transition-colors group/item backdrop-blur-xl min-w-0">
+    
+    <h4 class="text-primary-400 text-lg sm:text-xl flex items-center gap-3 mb-2 title-impact group-hover/item:translate-x-1 transition-transform min-w-0">
+        <span class="text-xl text-secondary-300 flex-shrink-0">▶</span> 
+        <span class="truncate">{{ name }}</span>
+    </h4>
+    
+    <ul class="text-xs sm:text-sm font-bold space-y-2 text-gray-300 ml-4">
+        {% for session in sessions %}
+        <li class="flex items-center gap-2 text-white min-w-0">
+            <span class="size-1.5 rounded-full bg-secondary-300 shadow-[0_0_8px_rgba(92,225,230,0.8)] flex-shrink-0"></span>
+            <span class="truncate">{{ session.day }} - {{ session.time }}</span>
+        </li>
+        {% empty %}
+        <li class="text-gray-500 italic">No hay clases programadas</li>
+        {% endfor %}
+    </ul>
+</div>
