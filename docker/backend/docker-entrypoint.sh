@@ -8,8 +8,11 @@ uv run python manage.py migrate --noinput
 if [ "$DJANGO_DEBUG" = "True" ] || [ "$DJANGO_DEBUG" = "true" ]; then
     echo "Development mode detected (DJANGO_DEBUG=True). Loading initial data..."
     
-    echo "Loading initial data for users..."
+    echo "Loading initial data for users module..."
     uv run python manage.py load_initial_users
+
+    echo "Loading initial data for classes module..."
+    uv run python manage.py load_initial_classes
 
     # Agregá más comandos de carga acá cuando sea necesario
 else

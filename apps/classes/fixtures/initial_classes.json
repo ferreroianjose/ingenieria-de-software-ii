@@ -1,0 +1,48 @@
+{
+  "teachers": [
+    {
+      "nombre": "Carlos",
+      "apellido": "Sánchez"
+    },
+    {
+      "nombre": "Ana",
+      "apellido": "Martínez"
+    },
+    {
+      "nombre": "Roberto",
+      "apellido": "García"
+    }
+  ],
+  "classes": [
+    {
+      "disciplina": "Yoga",
+      "sala": "A",
+      "teacher_nombre": "Carlos",
+      "teacher_apellido": "Sánchez",
+      "inicio": "2026-06-01T09:00:00Z",
+      "duracion_minutos": 60,
+      "cupo_maximo": 15,
+      "estado": "disponible"
+    },
+    {
+      "disciplina": "Pilates",
+      "sala": "B",
+      "teacher_nombre": "Ana",
+      "teacher_apellido": "Martínez",
+      "inicio": "2026-06-01T10:00:00Z",
+      "duracion_minutos": 45,
+      "cupo_maximo": 10,
+      "estado": "disponible"
+    },
+    {
+      "disciplina": "Funcional",
+      "sala": "A",
+      "teacher_nombre": "Roberto",
+      "teacher_apellido": "García",
+      "inicio": "2026-06-01T18:00:00Z",
+      "duracion_minutos": 60,
+      "cupo_maximo": 20,
+      "estado": "disponible"
+    }
+  ]
+}
