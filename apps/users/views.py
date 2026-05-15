@@ -32,12 +32,14 @@ class CustomLoginView(LoginView):
         if user.is_staff:
             # Generar código de 6 dígitos
             code = "".join(random.choices(string.digits, k=6))
-            
+
             # Enviar notificación
             notification_service.notify(
                 recipient=user,
                 subject="Tu código de seguridad GYMFlow",
-                message=f"Hola {user.first_name}, tu código de verificación es: {code}. No compartas este código con nadie."
+                message=f"Hola {user.first_name}, tu código de verificación es: {code}. No compartas este código con nadie.",
+                template_name="two_factor",
+                context={"user": user, "code": code}
             )
 
             next_url = (

@@ -3,6 +3,8 @@ from typing import Any
 
 from django.conf import settings
 from django.core.mail import get_connection, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.template.exceptions import TemplateDoesNotExist
 
 from .base import NotificationAdapter
 
@@ -17,7 +19,20 @@ class BaseEmailAdapter(NotificationAdapter):
         recipient_address = self.get_recipient_address(recipient)
         try:
             from_email = kwargs.get("from_email", settings.DEFAULT_FROM_EMAIL)
+            
+            # Allow explicit html_message or render dynamically from template_name
             html_message = kwargs.get("html_message")
+            template_name = kwargs.get("template_name")
+            context = kwargs.get("context", {})
+
+            if not html_message and template_name:
+                try:
+                    html_message = render_to_string(
+                        f"notifications/email/{template_name}.html", 
+                        context
+                    )
+                except TemplateDoesNotExist:
+                    logger.warning(f"Email template notifications/email/{template_name}.html not found.")
             
             # Obtenemos la conexión específica para este adaptador
             connection = get_connection(self.backend)
