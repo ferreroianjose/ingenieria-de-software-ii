@@ -36,6 +36,7 @@ services:
     environment:
       POSTGRES_HOST: db
       DJANGO_DEBUG: "True"
+      RUN_MIGRATIONS: "True"
     depends_on:
       db:
         condition: service_healthy
