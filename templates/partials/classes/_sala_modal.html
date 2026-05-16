@@ -1,0 +1,45 @@
+{% extends 'partials/_modal.html' %}
+
+{% block modal_title %}Agregar Sala{% endblock %}
+{% block modal_subtitle %}Ingresa los datos de la nueva sala.{% endblock %}
+
+{% block modal_body %}
+<form id="sala-form" action="{% url 'classes:infrastructure_list' %}" method="post" class="space-y-6">
+    {% csrf_token %}
+    <input type="hidden" name="form_type" value="sala">
+    
+    {% if sala_form.non_field_errors %}
+    <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        {{ sala_form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <label>Nombre</label>
+            {{ sala_form.nombre }}
+            {% for error in sala_form.nombre.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Capacidad</label>
+            {{ sala_form.capacidad }}
+            {% for error in sala_form.capacidad.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Sede</label>
+            {{ sala_form.sede }}
+            {% for error in sala_form.sede.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block modal_footer %}
+    {% include 'partials/_primary_button.html' with label="Confirmar" type="submit" attrs='form="sala-form"' class="px-8 py-3 bg-primary-400 hover:bg-primary-500" %}
+{% endblock %}

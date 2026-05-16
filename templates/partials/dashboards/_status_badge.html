@@ -1,0 +1,20 @@
+<style>
+@keyframes tilt-shaking {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(1deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-1deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.animate-tilt-shaking {
+  animation:_tilt-shaking_0.5s_infinite;
+}
+</style>
+<div class="flex items-center gap-3 py-2 px-4 transition duration-300 bg-white/50 rounded-full border border-white/45 cursor-pointer group-hover:[animation:_tilt-shaking_0.5s_infinite] group-hover:scale-102 hover:scale-105 hover:animate-none hover:bg-white/85 hover:shadow-sm group">
+    <div class="size-2 rounded-full bg-primary-400 animate-pulse"></div>
+    <div>
+        <p class="font-black text-secondary-900 text-sm uppercase">{{ label }}</p>
+        <p class="text-[10px] font-bold text-secondary-700 uppercase opacity-70 tracking-tighter">{{ subtitle }}</p>
+    </div>
+</div>

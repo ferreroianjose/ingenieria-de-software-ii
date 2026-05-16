@@ -3,6 +3,8 @@ from typing import Any
 
 from django.conf import settings
 from django.core.mail import get_connection, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.template.exceptions import TemplateDoesNotExist
 
 from .base import NotificationAdapter
 
@@ -13,13 +15,25 @@ class BaseEmailAdapter(NotificationAdapter):
     """Base class for Django-based email adapters."""
     backend = None
 
-    def send(self, recipient: Any, subject: str, message: str, **kwargs: Any) -> bool:
+    def _perform_send(self, recipient: Any, subject: str, message: str, **kwargs: Any) -> bool:
+        """Implementación física del envío de email."""
         recipient_address = self.get_recipient_address(recipient)
         try:
             from_email = kwargs.get("from_email", settings.DEFAULT_FROM_EMAIL)
-            html_message = kwargs.get("html_message")
             
-            # Obtenemos la conexión específica para este adaptador
+            html_message = kwargs.get("html_message")
+            template_name = kwargs.get("template_name")
+            context = kwargs.get("context", {})
+
+            if not html_message and template_name:
+                try:
+                    html_message = render_to_string(
+                        f"notifications/email/{template_name}.html", 
+                        context
+                    )
+                except TemplateDoesNotExist:
+                    logger.warning(f"Email template notifications/email/{template_name}.html not found.")
+            
             connection = get_connection(self.backend)
             
             email = EmailMultiAlternatives(
@@ -47,6 +61,7 @@ class EmailNotificationAdapter(BaseEmailAdapter):
         return "email"
     
     backend = "django.core.mail.backends.smtp.EmailBackend"
+    default_async = True
 
 
 class FakeEmailNotificationAdapter(BaseEmailAdapter):
@@ -56,3 +71,4 @@ class FakeEmailNotificationAdapter(BaseEmailAdapter):
         return "fake_email"
     
     backend = "django.core.mail.backends.console.EmailBackend"
+    default_async = False

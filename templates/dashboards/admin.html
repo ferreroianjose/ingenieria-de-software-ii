@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de Administración{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto space-y-12">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+            <h1 class="text-4xl font-black uppercase tracking-tighter text-secondary-900">Admin Dashboard</h1>
+            <p class="text-gray-500 font-medium">Gestión global del centro deportivo</p>
+        </div>
+        <div class="flex gap-3">
+             {% include 'partials/_secondary_button.html' with label="Configuración" class="w-auto px-6 py-2" %}
+             {% include 'partials/_primary_button.html' with label="Descargar Reporte" class="w-auto px-6 py-2" %}
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-8 rounded-4xl shadow-fair-lg border border-gray-100">
+            <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Socios Activos</p>
+            <h2 class="text-4xl font-black text-secondary-900">1,240</h2>
+            <p class="text-green-500 text-sm font-bold mt-2">↑ 12% este mes</p>
+        </div>
+        <div class="bg-white p-8 rounded-4xl shadow-fair-lg border border-gray-100">
+            <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Ingresos Mes</p>
+            <h2 class="text-4xl font-black text-secondary-900">$2.4M</h2>
+            <p class="text-green-500 text-sm font-bold mt-2">↑ 8% vs anterior</p>
+        </div>
+        <div class="bg-white p-8 rounded-4xl shadow-fair-lg border border-gray-100">
+            <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Clases Hoy</p>
+            <h2 class="text-4xl font-black text-secondary-900">24</h2>
+            <p class="text-gray-500 text-sm font-bold mt-2">4 pendientes</p>
+        </div>
+        <div class="bg-white p-8 rounded-4xl shadow-fair-lg border border-gray-100">
+            <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Ocupación Avg</p>
+            <h2 class="text-4xl font-black text-secondary-900">82%</h2>
+            <div class="w-full bg-gray-100 h-2 rounded-full mt-4 overflow-hidden">
+                <div class="bg-primary-400 h-full w-[82%]"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Quick Management -->
+        <div class="bg-secondary-950 p-8 lg:p-12 rounded-8xl text-white space-y-8">
+            <h3 class="text-3xl title-impact">Gestión Rápida</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <a href="{% url 'classes:class_list' %}" class="group p-6 bg-white/5 rounded-4xl border border-white/10 hover:bg-white/10 transition-all no-underline">
+                    <h4 class="text-primary-400 text-xl font-black uppercase tracking-tight mb-1">Clases</h4>
+                    <p class="text-gray-400 text-sm">Editar cronograma y cupos</p>
+                </a>
+                <a href="{% url 'classes:teacher_list' %}" class="group p-6 bg-white/5 rounded-4xl border border-white/10 hover:bg-white/10 transition-all no-underline">
+                    <h4 class="text-primary-400 text-xl font-black uppercase tracking-tight mb-1">Profesores</h4>
+                    <p class="text-gray-400 text-sm">Gestionar staff y especialidades</p>
+                </a>
+                <div class="group p-6 bg-white/5 rounded-4xl border border-white/10 hover:bg-white/10 transition-all cursor-pointer">
+                    <h4 class="text-primary-400 text-xl font-black uppercase tracking-tight mb-1">Pagos</h4>
+                    <p class="text-gray-400 text-sm">Validar cobros pendientes</p>
+                </div>
+                <div class="group p-6 bg-white/5 rounded-4xl border border-white/10 hover:bg-white/10 transition-all cursor-pointer">
+                    <h4 class="text-primary-400 text-xl font-black uppercase tracking-tight mb-1">Usuarios</h4>
+                    <p class="text-gray-400 text-sm">Alta y baja de socios</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Mockup -->
+        <div class="bg-primary-50 p-8 lg:p-12 rounded-8xl border border-primary-100 space-y-8">
+            <h3 class="text-3xl title-impact text-secondary-900">Actividad Reciente</h3>
+            <div class="space-y-4">
+                {% for i in "1234"|make_list %}
+                <div class="flex items-center gap-4 p-4 bg-white rounded-3xl shadow-fair-sm">
+                    <div class="size-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold">
+                        {{ i }}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-black text-secondary-900 uppercase">Pago Confirmado #{{ 452|add:i }}</p>
+                        <p class="text-xs text-gray-500 font-bold">Socio: Juan Pérez • Hace 5 min</p>
+                    </div>
+                    <p class="text-sm font-black text-secondary-900">$25.000</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% include 'partials/_secondary_button.html' with label="Ver todo el historial" class="w-full py-3" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

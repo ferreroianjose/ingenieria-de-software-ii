@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 from . import views
-from apps.notifications.views import TestNotificationView
+from apps.notifications.views import TestNotificationView, TaskStatusView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -27,7 +27,9 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
 
     path("users/", include("apps.users.urls")),
+    path("attendance/", include("apps.attendance.urls")),
     path("test-notifications/", TestNotificationView.as_view(), name="test-notifications"),
+    path("task-status/<str:task_id>/", TaskStatusView.as_view(), name="task-status"),
     path("classes/", include("apps.classes.urls")),
 
     # Para el desarrollo

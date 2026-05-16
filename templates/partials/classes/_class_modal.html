@@ -1,0 +1,86 @@
+{% extends 'partials/_modal.html' %}
+
+{% block modal_max_width %}max-w-3xl{% endblock %}
+{% block modal_title %}Crear nueva clase{% endblock %}
+{% block modal_subtitle %}Completa los datos para agregar la clase al cronograma.{% endblock %}
+
+{% block modal_body %}
+<form id="class-form" action="{% url 'classes:class_list' %}" method="post" class="space-y-6">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+    <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        {{ form.non_field_errors }}
+    </div>
+    {% endif %}
+
+    <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-2">
+            <label>Sede</label>
+            {{ form.sede }}
+            {% for error in form.sede.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Disciplina</label>
+            {{ form.disciplina }}
+            {% for error in form.disciplina.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Sala</label>
+            {{ form.sala }}
+            {% for error in form.sala.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2 md:col-span-2">
+            <label>Profesor</label>
+            {{ form.profesor }}
+            {% for error in form.profesor.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Día de la semana</label>
+            {{ form.dia_semana }}
+            {% for error in form.dia_semana.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Hora</label>
+            {{ form.hora }}
+            {% for error in form.hora.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Minuto</label>
+            {{ form.minuto }}
+            {% for error in form.minuto.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2">
+            <label>Duración</label>
+            {{ form.duracion }}
+            {% for error in form.duracion.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+        <div class="space-y-2 md:col-span-2">
+            <label>Cupo máximo</label>
+            {{ form.cupo_maximo }}
+            {% for error in form.cupo_maximo.errors %}
+            <p class="text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block modal_footer %}
+    {% include 'partials/_primary_button.html' with label="Confirmar" type="submit" attrs='form="class-form"' class="px-8 py-3 bg-primary-400 hover:bg-primary-500" %}
+{% endblock %}

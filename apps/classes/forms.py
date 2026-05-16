@@ -11,14 +11,8 @@ class SedeForm(forms.ModelForm):
         model = Sede
         fields = ['nombre', 'direccion']
         widgets = {
-            'nombre': forms.TextInput(attrs={
-                'placeholder': 'Nombre de la sede',
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
-            'direccion': forms.TextInput(attrs={
-                'placeholder': 'Dirección',
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
+            'nombre': forms.TextInput(attrs={'placeholder': 'Nombre de la sede'}),
+            'direccion': forms.TextInput(attrs={'placeholder': 'Dirección'}),
         }
 
 
@@ -27,15 +21,8 @@ class DisciplinaForm(forms.ModelForm):
         model = Disciplina
         fields = ['nombre', 'descripcion']
         widgets = {
-            'nombre': forms.TextInput(attrs={
-                'placeholder': 'Nombre de la disciplina',
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
-            'descripcion': forms.Textarea(attrs={
-                'placeholder': 'Descripción',
-                'rows': 3,
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
+            'nombre': forms.TextInput(attrs={'placeholder': 'Nombre de la disciplina'}),
+            'descripcion': forms.Textarea(attrs={'placeholder': 'Descripción', 'rows': 3}),
         }
 
 
@@ -43,25 +30,15 @@ class SalaForm(forms.ModelForm):
     sede = forms.ModelChoiceField(
         queryset=Sede.objects.all(),
         label='Sede',
-        empty_label='Selecciona una sede',
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500'
-        })
+        empty_label='Selecciona una sede'
     )
 
     class Meta:
         model = Sala
         fields = ['nombre', 'capacidad', 'sede']
         widgets = {
-            'nombre': forms.TextInput(attrs={
-                'placeholder': 'Nombre de la sala',
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
-            'capacidad': forms.NumberInput(attrs={
-                'placeholder': 'Capacidad máxima',
-                'min': 1,
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
+            'nombre': forms.TextInput(attrs={'placeholder': 'Nombre de la sala'}),
+            'capacidad': forms.NumberInput(attrs={'placeholder': 'Capacidad máxima', 'min': 1}),
         }
 
 
@@ -77,83 +54,56 @@ class ClassForm(forms.ModelForm):
     sede = forms.ModelChoiceField(
         queryset=Sede.objects.all(),
         label='Sede',
-        empty_label='Selecciona una sede',
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500'
-        })
+        empty_label='Selecciona una sede'
     )
 
     disciplina = forms.ModelChoiceField(
         queryset=Disciplina.objects.all(),
         label='Disciplina',
-        empty_label='Selecciona una disciplina',
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500'
-        })
+        empty_label='Selecciona una disciplina'
     )
 
     sala = forms.ModelChoiceField(
         queryset=Sala.objects.all(),
         label='Sala',
-        empty_label='Selecciona una sala',
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500'
-        })
+        empty_label='Selecciona una sala'
     )
 
     profesor = forms.ModelChoiceField(
         queryset=Teacher.objects.all(),
         label='Profesor',
-        empty_label='Selecciona un profesor',
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500'
-        })
+        empty_label='Selecciona un profesor'
     )
 
     dia_semana = forms.ChoiceField(
         choices=WEEKDAY_CHOICES,
-        label='Día de la semana',
-        widget=forms.Select(attrs={
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500'
-        })
+        label='Día de la semana'
     )
 
     hora = forms.IntegerField(
         min_value=0,
         max_value=23,
         label='Hora',
-        widget=forms.NumberInput(attrs={
-            'placeholder': 'HH',
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-        })
+        widget=forms.NumberInput(attrs={'placeholder': 'HH'})
     )
 
     minuto = forms.IntegerField(
         min_value=0,
         max_value=59,
         label='Minuto',
-        widget=forms.NumberInput(attrs={
-            'placeholder': 'MM',
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-        })
+        widget=forms.NumberInput(attrs={'placeholder': 'MM'})
     )
 
     duracion = forms.IntegerField(
         min_value=1,
         label='Duración (minutos)',
-        widget=forms.NumberInput(attrs={
-            'placeholder': 'Ej. 45',
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-        })
+        widget=forms.NumberInput(attrs={'placeholder': 'Ej. 45'})
     )
 
     cupo_maximo = forms.IntegerField(
         min_value=1,
         label='Cupo máximo',
-        widget=forms.NumberInput(attrs={
-            'placeholder': 'Ej. 20',
-            'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-        })
+        widget=forms.NumberInput(attrs={'placeholder': 'Ej. 20'})
     )
 
     class Meta:
@@ -266,14 +216,8 @@ class TeacherForm(forms.ModelForm):
         model = Teacher
         fields = ['nombre', 'apellido']
         widgets = {
-            'nombre': forms.TextInput(attrs={
-                'placeholder': 'Nombre del profesor',
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
-            'apellido': forms.TextInput(attrs={
-                'placeholder': 'Apellido del profesor',
-                'class': 'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-primary-500 focus:ring-primary-500'
-            }),
+            'nombre': forms.TextInput(attrs={'placeholder': 'Nombre del profesor'}),
+            'apellido': forms.TextInput(attrs={'placeholder': 'Apellido del profesor'}),
         }
 
     def clean(self):

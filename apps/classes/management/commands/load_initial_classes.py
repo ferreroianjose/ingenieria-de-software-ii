@@ -12,6 +12,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         Teacher = apps.get_model("classes", "Teacher")
         Class = apps.get_model("classes", "Class")
+        Sede = apps.get_model("classes", "Sede")
+        Disciplina = apps.get_model("classes", "Disciplina")
+        Sala = apps.get_model("classes", "Sala")
         
         classes_path = apps.get_app_config("classes").path
         fixtures_path = os.path.join(classes_path, "fixtures", "initial_classes.json")
@@ -27,6 +30,12 @@ class Command(BaseCommand):
 
         teachers_data = data.get("teachers", [])
         classes_data = data.get("classes", [])
+
+        # Ensure a default Sede exists
+        default_sede, _ = Sede.objects.get_or_create(
+            nombre="Sede Central",
+            defaults={"direccion": "Dirección Principal 123"}
+        )
 
         # Load Teachers
         teachers_created = 0
@@ -49,6 +58,8 @@ class Command(BaseCommand):
             teacher_nombre = c_data.pop("teacher_nombre")
             teacher_apellido = c_data.pop("teacher_apellido")
             duracion_minutos = c_data.pop("duracion_minutos")
+            disciplina_nombre = c_data.pop("disciplina")
+            sala_nombre = c_data.pop("sala")
             inicio_str = c_data["inicio"]
             
             try:
@@ -61,13 +72,23 @@ class Command(BaseCommand):
 
             inicio = parse_datetime(inicio_str)
             
-            if Class.objects.filter(disciplina=c_data["disciplina"], inicio=inicio, sala=c_data["sala"]).exists():
+            # Get or create infrastructure objects
+            disciplina, _ = Disciplina.objects.get_or_create(nombre=disciplina_nombre)
+            sala, _ = Sala.objects.get_or_create(
+                nombre=sala_nombre,
+                sede=default_sede,
+                defaults={"capacidad": c_data.get("cupo_maximo", 20)}
+            )
+            
+            if Class.objects.filter(disciplina=disciplina, inicio=inicio, sala=sala).exists():
                 classes_skipped += 1
                 continue
 
             c_data["profesor"] = teacher
             c_data["inicio"] = inicio
             c_data["duracion"] = timedelta(minutes=duracion_minutos)
+            c_data["disciplina"] = disciplina
+            c_data["sala"] = sala
             
             Class.objects.create(**c_data)
             classes_created += 1
