@@ -32,8 +32,8 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 {% for clase in classes %}
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ clase.disciplina }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.sala }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ clase.disciplina.nombre }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.sala.nombre }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.profesor.nombre }} {{ clase.profesor.apellido }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.inicio|date:"d/m/Y H:i" }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.duracion_minutos }} min</td>
@@ -84,6 +84,13 @@
 
                 <div class="grid gap-4 md:grid-cols-2">
                     <div class="space-y-2">
+                        <label class="text-sm font-semibold text-gray-700">Sede</label>
+                        {{ form.sede }}
+                        {% for error in form.sede.errors %}
+                        <p class="text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div class="space-y-2">
                         <label class="text-sm font-semibold text-gray-700">Disciplina</label>
                         {{ form.disciplina }}
                         {% for error in form.disciplina.errors %}
@@ -105,9 +112,23 @@
                         {% endfor %}
                     </div>
                     <div class="space-y-2">
-                        <label class="text-sm font-semibold text-gray-700">Inicio</label>
-                        {{ form.inicio }}
-                        {% for error in form.inicio.errors %}
+                        <label class="text-sm font-semibold text-gray-700">Día de la semana</label>
+                        {{ form.dia_semana }}
+                        {% for error in form.dia_semana.errors %}
+                        <p class="text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold text-gray-700">Hora</label>
+                        {{ form.hora }}
+                        {% for error in form.hora.errors %}
+                        <p class="text-sm text-red-600">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold text-gray-700">Minuto</label>
+                        {{ form.minuto }}
+                        {% for error in form.minuto.errors %}
                         <p class="text-sm text-red-600">{{ error }}</p>
                         {% endfor %}
                     </div>
