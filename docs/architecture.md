@@ -3,6 +3,7 @@
 ## Software Stack
 
 - **Backend:** Django 6
+- **Task Queue:** Django Q
 - **Frontend CSS:** Tailwind CSS
 - **Frontend Interactivity:** HTMX
 - **Frontend State/UI:** Alpine.js
