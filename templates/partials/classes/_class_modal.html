@@ -1,86 +1,74 @@
 {% extends 'partials/_modal.html' %}
 
 {% block modal_max_width %}max-w-3xl{% endblock %}
-{% block modal_title %}Crear nueva clase{% endblock %}
-{% block modal_subtitle %}Completa los datos para agregar la clase al cronograma.{% endblock %}
+{% block modal_title %}Nueva Clase{% endblock %}
+{% block modal_subtitle %}Ingresa los datos de la nueva clase y presiona "Publicar clase" para guardar.{% endblock %}
 
 {% block modal_body %}
-<form id="class-form" action="{% url 'classes:class_list' %}" method="post" class="space-y-6">
-    {% csrf_token %}
-    {% if form.non_field_errors %}
-    <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-        {{ form.non_field_errors }}
-    </div>
-    {% endif %}
-
-    <div class="grid gap-4 md:grid-cols-2">
-        <div class="space-y-2">
-            <label>Sede</label>
-            {{ form.sede }}
-            {% for error in form.sede.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Disciplina</label>
-            {{ form.disciplina }}
-            {% for error in form.disciplina.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Sala</label>
-            {{ form.sala }}
-            {% for error in form.sala.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2 md:col-span-2">
-            <label>Profesor</label>
-            {{ form.profesor }}
-            {% for error in form.profesor.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Día de la semana</label>
-            {{ form.dia_semana }}
-            {% for error in form.dia_semana.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Hora</label>
-            {{ form.hora }}
-            {% for error in form.hora.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Minuto</label>
-            {{ form.minuto }}
-            {% for error in form.minuto.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Duración</label>
-            {{ form.duracion }}
-            {% for error in form.duracion.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2 md:col-span-2">
-            <label>Cupo máximo</label>
-            {{ form.cupo_maximo }}
-            {% for error in form.cupo_maximo.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
+<div class="space-y-8 [&>div>h3]:text-lg [&>div>h3]:font-black [&>div>h3]:uppercase [&>div>h3]:tracking-wide [&>div>h3]:text-primary-400 [&>div>h3]:pl-0 [&>div>h3]:p-1 [&>div>h3]:bg-gradient-to-l [&>div>h3]:transparent [&>div>h3]:to-transparent [&>div>h3]:via-25% [&>div>h3]:via-secondary-300/50 [&>div>h3]:rounded-sm">
+    <!-- Sección: Lugar -->
+    <div class="space-y-4">
+        <h3>Lugar</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+	        <div>
+	            <label>Sede</label>
+	            {{ modal_form.sede }}
+	        </div>
+            <div>
+                <label>Disciplina</label>
+                {{ modal_form.disciplina }}
+            </div>
+            <div>
+                <label>Sala</label>
+                {{ modal_form.sala }}
+            </div>
+            <div>
+                <label>Cupo máximo</label>
+                {{ modal_form.cupo_maximo }}
+            </div>
         </div>
     </div>
-</form>
-{% endblock %}
 
-{% block modal_footer %}
-    {% include 'partials/_primary_button.html' with label="Confirmar" type="submit" attrs='form="class-form"' class="px-8 py-3 bg-primary-400 hover:bg-primary-500" %}
+    <!-- Sección: instructor -->
+    <div class="space-y-4">
+        <h3>Instructor</h3>
+        <div>
+            <label>Profesor asignado</label>
+            {{ modal_form.profesor }}
+        </div>
+    </div>
+
+    <!-- Sección: Horario -->
+    <div class="space-y-4">
+        <h3>Cronograma</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+            <!-- Columna Horario -->
+            <div class="space-y-4">
+                <div>
+                    <label>Día de la semana</label>
+                    {{ modal_form.dia_semana }}
+                </div>
+                <div class="flex items-end gap-3">
+                    <div class="flex-1">
+                        <label>Hora</label>
+                        {{ modal_form.hora }}
+                    </div>
+                    <div class="mb-2 text-2xl font-black text-gray-300">:</div>
+                    <div class="flex-1">
+                        <label>Minuto</label>
+                        {{ modal_form.minuto }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Detalles -->
+            <div class="space-y-4">
+                <div>
+                    <label>Duración (minutos)</label>
+                    {{ modal_form.duracion }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

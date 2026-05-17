@@ -4,35 +4,14 @@
 {% block modal_subtitle %}Ingresa los datos de la nueva sede.{% endblock %}
 
 {% block modal_body %}
-<form id="sede-form" action="{% url 'classes:infrastructure_list' %}" method="post" class="space-y-6">
-    {% csrf_token %}
-    <input type="hidden" name="form_type" value="sede">
-    
-    {% if sede_form.non_field_errors %}
-    <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-        {{ sede_form.non_field_errors }}
+<div class="space-y-4">
+    <div>
+        <label>Nombre</label>
+        {{ modal_form.nombre }}
     </div>
-    {% endif %}
-
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <label>Nombre</label>
-            {{ sede_form.nombre }}
-            {% for error in sede_form.nombre.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Dirección</label>
-            {{ sede_form.direccion }}
-            {% for error in sede_form.direccion.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
+    <div>
+        <label>Dirección</label>
+        {{ modal_form.direccion }}
     </div>
-</form>
-{% endblock %}
-
-{% block modal_footer %}
-    {% include 'partials/_primary_button.html' with label="Confirmar" type="submit" attrs='form="sede-form"' class="px-8 py-3 bg-primary-400 hover:bg-primary-500" %}
+</div>
 {% endblock %}

@@ -6,7 +6,16 @@ from django.core.exceptions import ValidationError
 from .models import Class, Teacher, Sede, Sala, Disciplina
 
 
-class SedeForm(forms.ModelForm):
+class BaseStyledForm(forms.ModelForm):
+    """Base form to handle custom required error messages with labels"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if field.required:
+                field.error_messages['required'] = f'El campo "{field.label}" es obligatorio.'
+
+
+class SedeForm(BaseStyledForm):
     class Meta:
         model = Sede
         fields = ['nombre', 'direccion']
@@ -16,7 +25,7 @@ class SedeForm(forms.ModelForm):
         }
 
 
-class DisciplinaForm(forms.ModelForm):
+class DisciplinaForm(BaseStyledForm):
     class Meta:
         model = Disciplina
         fields = ['nombre', 'descripcion']
@@ -26,7 +35,7 @@ class DisciplinaForm(forms.ModelForm):
         }
 
 
-class SalaForm(forms.ModelForm):
+class SalaForm(BaseStyledForm):
     sede = forms.ModelChoiceField(
         queryset=Sede.objects.all(),
         label='Sede',
@@ -42,7 +51,7 @@ class SalaForm(forms.ModelForm):
         }
 
 
-class ClassForm(forms.ModelForm):
+class ClassForm(BaseStyledForm):
     WEEKDAY_CHOICES = [
         (0, 'Lunes'),
         (1, 'Martes'),
@@ -211,7 +220,7 @@ class ClassForm(forms.ModelForm):
         return instance
 
 
-class TeacherForm(forms.ModelForm):
+class TeacherForm(BaseStyledForm):
     class Meta:
         model = Teacher
         fields = ['nombre', 'apellido']

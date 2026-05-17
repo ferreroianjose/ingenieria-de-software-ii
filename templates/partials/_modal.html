@@ -1,93 +1,116 @@
-{% comment %} Modal Base utilizando Herencia de Templates. Basado en el patrón
-de _auth_card.html, este componente centraliza la estructura, animaciones
-(Alpine.js) y estilos base de todos los modales del sistema. USO: {% extends
-'partials/_modal.html' %} PARÁMETROS: - modal_show_var: (Opcional) Nombre de la
-variable de Alpine.js que controla la visibilidad. Por defecto es 'showModal'.
-BLOCKS DISPONIBLES: - modal_max_width: Clase de Tailwind para el ancho (default:
-'max-w-md'). - modal_title: Título principal (renderizado con .title-impact). -
-modal_subtitle: Texto descriptivo bajo el título. - modal_body: Contenido
-principal del modal. - modal_footer: Acciones (botones) o información al pie,
-con fondo oscuro. NOTAS: - Utiliza x-teleport="body" para asegurar que el modal
-se renderice fuera de layouts restrictivos. - x-cloak es requerido en el layout
-base para evitar parpadeos durante la carga. {% endcomment %}
-
+{% with show_id=modal_show_var|default:"showModal" %}
 <template x-teleport="body">
-	{% with show_var=modal_show_var|default:"showModal" %}
 	<div
-		x-show="{{ show_var }}"
-		@keydown.escape.window="{{ show_var }} = false"
+		x-show="{{ show_id }}"
+		@keydown.escape.window="{{ show_id }} = false"
 		class="relative z-[100]"
 		x-cloak
 	>
 		<!-- Backdrop -->
 		<div
-			x-show="{{ show_var }}"
+			x-show="{{ show_id }}"
 			x-transition:enter="ease-out duration-350"
 			x-transition:enter-start="opacity-0"
 			x-transition:enter-end="opacity-100"
 			x-transition:leave="ease-in duration-300"
 			x-transition:leave-start="opacity-100"
 			x-transition:leave-end="opacity-0"
-			class="fixed inset-0 bg-black/75 transition-opacity"
+			class="fixed inset-0 bg-black/75 transition-opacity z-[100]"
 		></div>
 
 		<!-- Modal Content -->
 		<div
-			x-show="{{ show_var }}"
-			class="fixed inset-0 z-10 w-screen overflow-y-auto"
+			x-show="{{ show_id }}"
+			class="fixed inset-0 z-[110] w-screen overflow-y-auto border"
 		>
-			<div
-				class="flex min-h-full items-center justify-center text-center sm:p-0"
-			>
+			<div class="flex min-h-full items-center justify-center text-center p-4 sm:p-0 border-3">
 				<div
-					x-show="{{ show_var }}"
+					x-show="{{ show_id }}"
 					x-transition:enter="ease-out duration-300"
 					x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
 					x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
 					x-transition:leave="ease-in duration-200"
 					x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
 					x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-					@click.outside="{{ show_var }} = false"
-					class="relative transform overflow-hidden rounded-8xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full {% block modal_max_width %}max-w-md{% endblock %}"
+					@click.outside="{{ show_id }} = false"
+					class="relative transform overflow-hidden outline-1 outline-white/25 rounded-8xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full {% block modal_max_width %}max-w-md{% endblock %}"
 				>
-					<!-- Header -->
-					<div
-						class="flex items-start justify-between p-8 lg:p-12 pb-0 lg:pb-0"
-					>
-						<div class="space-y-2">
-							<h1
-								class="text-3xl lg:text-4xl title-impact text-secondary-900 leading-tight"
-							>
-								{% block modal_title %}{% endblock %}
-							</h1>
-							<p class="text-md text-gray-600 font-medium">
-								{% block modal_subtitle %}{% endblock %}
-							</p>
-						</div>
-						<button
-							@click="{{ show_var }} = false"
-							class="rounded-full bg-gray-200 text-gray-800 hover:bg-gray-100 hover:text-primary-400 shadow-fair-md hover:scale-105 transition-colors w-auto p-2 border-none"
+					<div id="{{ show_id }}-container" class="flex flex-col h-full [&_label]:block [&_label]:mb-2 [&_label]:text-sm [&_label]:font-bold [&_label]:text-gray-700">
+						{% block modal_form_container %}
+						<form 
+							id="{{ show_id }}-form"
+							hx-post="{% block modal_action_url %}{{ request.path }}{% endblock %}"
+							hx-target="#{{ show_id }}-container"
+							hx-select="#{{ show_id }}-container"
+							hx-swap="outerHTML"
+							class="contents"
 						>
-							<svg class="size-8" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" >
-								<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-							</svg>
-						</button>
-					</div>
+							{% csrf_token %}
+							{% if modal_form_type %}
+								<input type="hidden" name="form_type" value="{{ modal_form_type }}">
+							{% endif %}
 
-					<!-- Body -->
-					<div class="w-full p-8 lg:p-12">
-						{% block modal_body %}{% endblock %}
-					</div>
+							{% block modal_content %}
+								<!-- Header -->
+								<div class="flex items-start justify-between p-6 sm:p-8 lg:p-12 pb-0 sm:pb-0 lg:pb-0">
+									<div class="space-y-2">
+										{% if modal_form.errors %}
+											<h1 class="text-3xl lg:text-4xl title-impact text-red-500 leading-tight">
+												¡Hay un problema!
+											</h1>
+											<div class="text-red-600 text-sm font-medium">
+												<ul class="space-y-1">
+													{% for field in modal_form %}
+														{% for error in field.errors %}
+															<li>{{ error }}</li>
+														{% endfor %}
+													{% endfor %}
+													{% for error in modal_form.non_field_errors %}
+														<li>{{ error }}</li>
+													{% endfor %}
+												</ul>
+											</div>
+										{% else %}
+											<h1 class="text-3xl lg:text-4xl title-impact text-secondary-900 leading-tight">
+												{% block modal_title %}{% endblock %}
+											</h1>
+											<p class="text-md text-gray-600 font-medium">
+												{% block modal_subtitle %}{% endblock %}
+											</p>
+										{% endif %}
+									</div>
+									<button
+										type="button"
+										@click="{{ show_id }} = false"
+										class="ml-8 rounded-full bg-gray-200 text-gray-800 hover:bg-gray-100 hover:text-primary-400 shadow-fair-md hover:scale-105 transition-colors w-auto p-2 border-none"
+									>
+										<svg class="size-8" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" >
+											<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+										</svg>
+									</button>
+								</div>
 
-					<!-- Footer -->
-					<div
-						class="flex flex-col gap-4 bg-gradient-to-b from-secondary-900 via-secondary-950 via-50% to-black p-8 lg:p-12 justify-end items-center"
-					>
-						{% block modal_footer %}{% endblock %}
+								<!-- Body -->
+								<div class="w-full p-6 pt-4 sm:p-8 sm:pt-6 lg:p-12 lg:pt-8">
+									{% block modal_body %}{% endblock %}
+								</div>
+
+								<!-- Footer -->
+								<div class="modal-footer flex flex-col gap-4 bg-gradient-to-b from-secondary-900 via-secondary-950 via-50% to-black p-6 sm:p-8 lg:p-12 justify-end items-center relative overflow-hidden isolate [transform:translateZ(0)] [-webkit-radial-gradient(white,black)] 
+									">
+									<div class="absolute -top-24 -right-16 w-48 h-32 bg-secondary-200/45 blur-3xl rounded-full z-0"></div>
+									<div class="absolute -bottom-24 -left-24 w-64 h-64 bg-primary-300/25 blur-3xl z-0 rounded-full"></div>
+									{% block modal_footer %}
+										{% include 'partials/_primary_button.html' with label=modal_button_label|default:"Confirmar" type="submit" attrs='form="'|add:show_id|add:'-form"' %}
+									{% endblock %}
+								</div>
+							{% endblock %}
+						</form>
+						{% endblock %}
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-	{% endwith %}
 </template>
+{% endwith %}

@@ -3,10 +3,10 @@
 {% block title %}Gestionar Clases{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8" x-data="{ showModal: {{ show_modal|yesno:'true,false' }} }" x-cloak>
+<div class="container mx-auto px-4 py-8" x-data="{ showModal: {{ show_modal|yesno:'true,false' }} }">
     <h1 class="text-3xl font-bold text-primary-500 mb-6">Gestionar Clases</h1>
     <div class="mb-6">
-        {% include 'partials/_primary_button.html' with label="Crear Clase" type="button" attrs='@click.prevent="showModal = true"' class="w-auto px-6 py-2" %}
+        {% include 'partials/_primary_button.html' with label="Crear clase" type="button" attrs='@click.prevent="showModal = true"' class="w-auto px-6 py-2" %}
     </div>
 
     <div class="bg-white shadow-fair-md rounded-lg overflow-hidden">
@@ -52,6 +52,7 @@
         </table>
     </div>
 
-    {% include 'partials/classes/_class_modal.html' %}
-    </div>
+    <!-- Modals -->
+    {% include 'partials/classes/_class_modal.html' with modal_form=form modal_button_label="Publicar clase" %}
+</div>
 {% endblock %}

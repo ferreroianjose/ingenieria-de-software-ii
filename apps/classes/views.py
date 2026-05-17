@@ -30,6 +30,10 @@ def infrastructure_list(request):
                 sede_form.save()
                 return redirect('classes:infrastructure_list')
             show_sede_modal = True
+            if request.headers.get('HX-Request'):
+                return render(request, 'partials/classes/_sede_modal.html', {
+                    'modal_form': sede_form, 'modal_show_var': 'showSedeModal'
+                })
         
         elif form_type == 'sala':
             sala_form = SalaForm(request.POST)
@@ -37,6 +41,10 @@ def infrastructure_list(request):
                 sala_form.save()
                 return redirect('classes:infrastructure_list')
             show_sala_modal = True
+            if request.headers.get('HX-Request'):
+                return render(request, 'partials/classes/_sala_modal.html', {
+                    'modal_form': sala_form, 'modal_show_var': 'showSalaModal'
+                })
         
         elif form_type == 'disciplina':
             disciplina_form = DisciplinaForm(request.POST)
@@ -44,6 +52,10 @@ def infrastructure_list(request):
                 disciplina_form.save()
                 return redirect('classes:infrastructure_list')
             show_disciplina_modal = True
+            if request.headers.get('HX-Request'):
+                return render(request, 'partials/classes/_disciplina_modal.html', {
+                    'modal_form': disciplina_form, 'modal_show_var': 'showDisciplinaModal'
+                })
         
         elif form_type == 'teacher':
             teacher_form = TeacherForm(request.POST)
@@ -51,6 +63,11 @@ def infrastructure_list(request):
                 teacher_form.save()
                 return redirect('classes:infrastructure_list')
             show_teacher_modal = True
+            if request.headers.get('HX-Request'):
+                return render(request, 'partials/classes/_teacher_modal.html', {
+                    'modal_form': teacher_form, 'modal_show_var': 'showTeacherModal',
+                    'form_type': 'teacher', 'action_url': request.path
+                })
 
     # Obtener datos optimizados
     sedes = Sede.objects.all().order_by('nombre')
@@ -133,12 +150,15 @@ def class_list(request):
         form = ClassForm(request.POST)
         if form.is_valid():
             new_class = form.save(commit=False)
-            new_class.estado = 'disponible'
             new_class.save()
             return redirect('classes:class_list')
         show_modal = True
+        if request.headers.get('HX-Request'):
+            return render(request, 'partials/classes/_class_modal.html', {
+                'modal_form': form, 'modal_show_var': 'showModal'
+            })
 
-    classes = Class.objects.all()
+    classes = Class.objects.all().order_by('-inicio')
     return render(
         request,
         'classes/class_list.html',
@@ -157,8 +177,12 @@ def teacher_list(request):
             form.save()
             return redirect('classes:teacher_list')
         show_modal = True
+        if request.headers.get('HX-Request'):
+            return render(request, 'partials/classes/_teacher_modal.html', {
+                'modal_form': form, 'modal_show_var': 'showModal'
+            })
 
-    teachers = Teacher.objects.all()
+    teachers = Teacher.objects.all().order_by('nombre', 'apellido')
     return render(
         request,
         'classes/teacher_list.html',

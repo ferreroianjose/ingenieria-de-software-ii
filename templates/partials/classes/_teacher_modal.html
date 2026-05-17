@@ -4,37 +4,16 @@
 {% block modal_subtitle %}Ingresa los datos del nuevo profesor.{% endblock %}
 
 {% block modal_body %}
-<form id="teacher-form" action="{{ action_url|default:request.path }}" method="post" class="space-y-6">
-    {% csrf_token %}
-    {% if form_type %}
-    <input type="hidden" name="form_type" value="{{ form_type }}">
-    {% endif %}
-
-    {% if form.non_field_errors %}
-    <div class="rounded-3xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-        {{ form.non_field_errors }}
+<div class="space-y-4">
+    <div>
+        <label>Nombre</label>
+        {{ modal_form.nombre }}
     </div>
-    {% endif %}
-
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <label>Nombre</label>
-            {{ form.nombre }}
-            {% for error in form.nombre.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
-        <div class="space-y-2">
-            <label>Apellido</label>
-            {{ form.apellido }}
-            {% for error in form.apellido.errors %}
-            <p class="text-sm text-red-600">{{ error }}</p>
-            {% endfor %}
-        </div>
+    <div>
+        <label>Apellido</label>
+        {{ modal_form.apellido }}
     </div>
-</form>
+</div>
 {% endblock %}
 
-{% block modal_footer %}
-    {% include 'partials/_primary_button.html' with label="Confirmar" type="submit" attrs='form="teacher-form"' class="px-8 py-3 bg-primary-400 hover:bg-primary-500" %}
-{% endblock %}
+{% block modal_action_url %}{{ action_url|default:request.path }}{% endblock %}

@@ -20,6 +20,7 @@
     /* Cards */
     .dash-card {
         @apply rounded-6xl md:rounded-8xl p-8 lg:p-6 xl:p-8 flex flex-col justify-between transition-transform relative overflow-hidden shadow-fair-lg isolate;
+        transform: translateZ(0);
         -webkit-mask-image: -webkit-radial-gradient(white, black);
     }
     .dash-card-primary {
@@ -35,6 +36,7 @@
     /* Sections */
     .dash-section {
         @apply rounded-5xl md:rounded-8xl p-8 sm:p-12 shadow-fair-2xl border border-white/5 relative overflow-hidden isolate;
+        transform: translateZ(0);
         -webkit-mask-image: -webkit-radial-gradient(white, black);
     }
     .textured-bg {
@@ -210,10 +212,4 @@
     <!-- Modal del QR -->
     {% include 'partials/attendance/_qr_modal.html' with modal_show_var="showQrModal" %}
 </div>
-
-<style>
-    /* Utility for hiding scrolls while keeping functionality */
-    .hide-scroll::-webkit-scrollbar { display: none; }
-    .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-</style>
 {% endblock %}

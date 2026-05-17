@@ -8,7 +8,7 @@
     showSalaModal: {{ show_sala_modal|yesno:'true,false' }},
     showDisciplinaModal: {{ show_disciplina_modal|yesno:'true,false' }},
     showTeacherModal: {{ show_teacher_modal|yesno:'true,false' }}
-}" x-cloak>
+}">
     <div class="flex flex-col gap-6">
         <div>
             <h1 class="text-3xl font-bold text-primary-500 mb-2">Gestionar Infraestructura</h1>
@@ -186,9 +186,10 @@
         </div>
     </div>
 
-    {% include 'partials/classes/_sede_modal.html' with modal_show_var="showSedeModal" %}
-    {% include 'partials/classes/_sala_modal.html' with modal_show_var="showSalaModal" %}
-    {% include 'partials/classes/_disciplina_modal.html' with modal_show_var="showDisciplinaModal" %}
-    {% include 'partials/classes/_teacher_modal.html' with modal_show_var="showTeacherModal" form=teacher_form form_type="teacher" action_url=request.path %}
+    <!-- Modals -->
+    {% include 'partials/classes/_sede_modal.html' with modal_show_var="showSedeModal" modal_form=sede_form modal_form_type="sede" %}
+    {% include 'partials/classes/_sala_modal.html' with modal_show_var="showSalaModal" modal_form=sala_form modal_form_type="sala" %}
+    {% include 'partials/classes/_disciplina_modal.html' with modal_show_var="showDisciplinaModal" modal_form=disciplina_form modal_form_type="disciplina" %}
+    {% include 'partials/classes/_teacher_modal.html' with modal_show_var="showTeacherModal" modal_form=teacher_form modal_form_type="teacher" action_url=request.path %}
 </div>
 {% endblock %}

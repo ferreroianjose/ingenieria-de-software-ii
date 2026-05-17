@@ -3,7 +3,7 @@
 {% block title %}Gestionar Profesores{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8" x-data="{ showModal: {{ show_modal|yesno:'true,false' }} }" x-cloak>
+<div class="container mx-auto px-4 py-8" x-data="{ showModal: {{ show_modal|yesno:'true,false' }} }">
     <div class="flex flex-col gap-6">
         <div>
             <h1 class="text-3xl font-bold text-primary-500 mb-2">Gestionar Profesores</h1>
@@ -45,6 +45,7 @@
         </div>
     </div>
 
-    {% include 'partials/classes/_teacher_modal.html' %}
-    </div>
-    {% endblock %}
+    <!-- Modals -->
+    {% include 'partials/classes/_teacher_modal.html' with modal_form=form %}
+</div>
+{% endblock %}

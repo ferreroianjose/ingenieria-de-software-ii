@@ -118,7 +118,15 @@
 	      #auth-card p {
 	          @apply text-sm text-gray-500;
 	      }
-	    }
+
+	      [x-cloak] {
+	        display: none !important;
+	      }
+
+		  /* Utility for hiding scrolls while keeping functionality */
+	      .hide-scroll::-webkit-scrollbar { display: none; }
+	      .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+	      }
 		</style>
 
 		<!-- Alpine.js -->
@@ -139,6 +147,14 @@
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'css/favicon.svg' %}">
+
+	<script>
+		// Prevent FOUC
+		document.documentElement.style.visibility = 'hidden';
+		document.addEventListener('DOMContentLoaded', function() {
+			document.documentElement.style.visibility = 'visible';
+		});
+	</script>
 	</head>
 	<body x-data="{ mobileOpen: false }" class="min-h-screen flex flex-col overflow-x-hidden relative">
 		{% block header %}
