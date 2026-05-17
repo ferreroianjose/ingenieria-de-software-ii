@@ -1,0 +1,20 @@
+{# Parent Alpine scope must define `tab`. Pass view_tabs: [{id, label}, ...] #}
+<div
+	role="tablist"
+	class="admin-segmented"
+	aria-label="{{ aria_label|default:'Vista' }}"
+>
+	{% for t in view_tabs %}
+	<button
+		type="button"
+		role="tab"
+		@click="tab = '{{ t.id }}'"
+		:aria-selected="tab === '{{ t.id }}'"
+		:class="tab === '{{ t.id }}'
+			? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/[0.04]'
+			: 'text-gray-600 hover:text-gray-900'"
+	>
+		{{ t.label }}
+	</button>
+	{% endfor %}
+</div>

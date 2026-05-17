@@ -92,7 +92,7 @@
                 {% include 'partials/dashboards/_status_badge.html' with label="Yoga" subtitle="Desde Mar 2026" %}
             </div>
 
-            {% include 'partials/_primary_button.html' with label="Reinscripción en 4 días" class="self-end mb-0 mt-4 group-hover:scale-101" %}
+            {% include 'partials/ui/buttons/_primary_button.html' with label="Reinscripción en 4 días" class="self-end mb-0 mt-4 group-hover:scale-101" %}
         </div>
 
         <!-- Racha Actual --> 
@@ -117,7 +117,7 @@
                     <p class="text-7xl font-black italic tracking-tighter leading-none text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">12</p>
                     <p class="text-xl font-bold text-secondary-300 uppercase">Días</p>
                 </div>
-                <p class="text-lg font-bold text-gray-200 mt-2">¡Seguí así, {{ user.first_name }}!</p>
+                <p class="text-sm font-medium text-gray-400 mt-2 italic">Vista de ejemplo</p>
             </div>
         </div>
     </div>
@@ -134,7 +134,7 @@
                     <h2 class="text-5xl lg:text-6xl title-impact leading-[0.9] md:leading-[1.15] !text-white mb-2 lg:mb-4">
                         Tus<br>Próximas<br>Clases
                     </h2>
-                    <p class="text-gray-400 text-caption hidden sm:block">Mantené el ritmo esta semana</p>
+                    <p class="text-gray-400 text-caption hidden sm:block">Clases programadas · ejemplo</p>
                 </div>
                 
                 <div class="block lg:hidden w-full min-w-32 max-w-36 sm:max-w-42 md:ml-8 md:min-w-24 md:max-w-36 mb-auto ml-4 z-0">
@@ -163,7 +163,7 @@
         
         <div class="flex flex-row flex-nowrap sm:items-center mb-4 gap-4 relative z-10 justify-between">
             <h2 class="flex-1 text-3xl sm:text-4xl lg:text-5xl text-secondary-950 title-impact">Cartelera de Actividades</h2>
-            {% include 'partials/_primary_button.html' with label="Ver todas" class="flex-0 text-nowrap h-14 sm:h-auto self-start" %}
+            {% include 'partials/ui/buttons/_primary_button.html' with label="Ver todas" class="flex-0 text-nowrap h-14 sm:h-auto self-start" %}
         </div>
         
         <div class="flex gap-6 overflow-x-auto hide-scroll pb-6 relative z-10 -mx-4 px-4 sm:mx-0 sm:px-0">
@@ -185,7 +185,7 @@
                 {% include 'partials/dashboards/_payment_row.html' with month="Febrero 2024" method="Efectivo" amount="$12.500" %}
             </div>
 
-            {% include 'partials/_secondary_button.html' with label="Descargar último recibo" class="w-full" %}
+            {% include 'partials/ui/buttons/_secondary_button.html' with label="Descargar último recibo" class="w-full" %}
         </div>
 
         <!-- Ayuda / FAQ -->
@@ -202,8 +202,8 @@
             </div>
             
             <div class="flex flex-col sm:flex-row gap-4 z-10 relative">
-                {% include 'partials/_secondary_button.html' with label="FAQ" class="flex-1 border-white text-white hover:border-secondary-300 hover:bg-secondary-300" %}
-                {% include 'partials/_primary_button.html' with label="Contacto" class="flex-1 bg-secondary-300 hover:bg-secondary-400" %}
+                {% include 'partials/ui/buttons/_secondary_button.html' with label="FAQ" class="flex-1 border-white text-white hover:border-secondary-300 hover:bg-secondary-300" %}
+                {% include 'partials/ui/buttons/_primary_button.html' with label="Contacto" class="flex-1 bg-secondary-300 hover:bg-secondary-400" %}
             </div>
         </div>
 

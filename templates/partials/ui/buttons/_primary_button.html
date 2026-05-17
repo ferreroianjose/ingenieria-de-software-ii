@@ -1,0 +1,14 @@
+<button
+	class="btn-full {% if variant == 'secondary' %}bg-secondary-400 hover:bg-secondary-600 focus:ring-secondary-400/35{% else %}bg-primary-400 hover:bg-primary-600 focus:ring-primary-400/35{% endif %} hover:scale-102 active:scale-95 duration-500 text-white transition-[scale,transform,background-color,filter] disabled:saturate-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:scale-100 {{ class }}"
+	type="{{ type|default:'submit' }}"
+	{% if x_show %}x-show="{{ x_show }}" x-cloak{% endif %}
+	{% if click and hx_get %}@click="{{ click }}"{% elif click %}@click.prevent="{{ click }}"{% endif %}
+	{% if hx_get %}hx-get="{{ hx_get }}"{% endif %}
+	{% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
+	{% if hx_select %}hx-select="{{ hx_select }}"{% endif %}
+	{% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
+	{% if disabled_expr %}:disabled="{{ disabled_expr }}"{% endif %}
+	{{ attrs|safe }}
+>
+	{{ label }}
+</button>

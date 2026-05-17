@@ -1,4 +1,4 @@
-{% extends 'partials/_auth_card.html' %}
+{% extends 'partials/auth/_auth_card.html' %}
 
 {% block title %}Verificación de dos factores{% endblock %}
 
@@ -48,7 +48,7 @@
 {% endblock %}
 
 {% block auth_primary_button %}
-  {% include 'partials/_primary_button.html' with label="Verificar" %}
+  {% include 'partials/ui/buttons/_primary_button.html' with label="Verificar" %}
 {% endblock %}
 
 {% block auth_extra %}

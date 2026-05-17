@@ -1,0 +1,16 @@
+<div class="min-w-0 flex-1 space-y-1">
+	{% if modal_form.errors %}
+	<h1 class="title-impact text-red-500">¡Hay un problema!</h1>
+	<ul class="mt-2 space-y-1 text-sm font-medium text-red-600">
+		{% for field in modal_form %}
+			{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
+		{% endfor %}
+		{% for error in modal_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+	</ul>
+	{% else %}
+	<h1 class="title-impact">{{ modal_title }}</h1>
+	{% if modal_subtitle %}
+	<p class="text-sm text-gray-600 font-normal mt-1">{{ modal_subtitle }}</p>
+	{% endif %}
+	{% endif %}
+</div>

@@ -1,0 +1,19 @@
+{% url 'classes:delete_teacher' 0 as teacher_delete_url %}
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary"
+	@click.prevent="openSelectedTeacherModal()"
+	x-text="selectedTeacherId ? 'Editar' : 'Agregar profesor'"
+></button>
+<form x-ref="deleteTeacherForm" method="post" class="hidden" :action="selectedTeacherId ? adminActionUrl('{{ teacher_delete_url }}', selectedTeacherId) : ''">
+	{% csrf_token %}
+</form>
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
+	:disabled="!selectedTeacherId"
+	@click="if (selectedTeacherId && confirm('¿Eliminar este profesor?')) adminHtmxPost($refs.deleteTeacherForm)"
+>
+	Eliminar
+</button>

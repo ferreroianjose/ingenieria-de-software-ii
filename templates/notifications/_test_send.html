@@ -47,7 +47,7 @@
     </div>
 
     <div class="pt-2">
-        {% include 'partials/_primary_button.html' with label="Enviar notificación" attrs='id="submit-btn"' class="hover:scale-0" %}
+        {% include 'partials/ui/buttons/_primary_button.html' with label="Enviar notificación" attrs='id="submit-btn"' class="hover:scale-0" %}
     </div>
 </form>
 
@@ -74,9 +74,9 @@
                     </div>
                     <span class="flex items-center justify-center size-10 rounded-full shadow-fair-sm transition-transform duration-500 hover:scale-110 {% if result.value %}bg-secondary-300 text-white{% else %}bg-red-500 text-white{% endif %}">
                         {% if result.value %}
-                            {% include 'partials/_icon.html' with name="check-lg" class="size-5" %}
+                            {% include 'partials/ui/_icon.html' with name="check-lg" class="size-5" %}
                         {% else %}
-                            {% include 'partials/_icon.html' with name="x-lg" class="size-5" %}
+                            {% include 'partials/ui/_icon.html' with name="x-lg" class="size-5" %}
                         {% endif %}
                     </span>
                 </div>

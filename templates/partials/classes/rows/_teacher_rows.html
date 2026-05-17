@@ -1,0 +1,20 @@
+{% if not searched %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=3 message="Usá el buscador y presioná Buscar." %}
+{% elif not teachers %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=3 message="No se encontraron profesores." %}
+{% else %}
+{% for teacher in teachers %}
+<tr
+    class="admin-selectable-row"
+    @click="adminToggleItem($data, 'selectedTeacherId', 'selectedTeacherLabel', {{ teacher.id }}, '{{ teacher.nombre|escapejs }} {{ teacher.apellido|escapejs }}')"
+    :class="{ 'is-selected': selectedTeacherId === {{ teacher.id }} }"
+    :aria-selected="selectedTeacherId === {{ teacher.id }}"
+>
+    <td class="w-11 px-3 py-4">
+        {% include 'partials/admin/_admin_select_indicator.html' with item_id=teacher.id selected_expr='selectedTeacherId' %}
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ teacher.nombre }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ teacher.apellido }}</td>
+</tr>
+{% endfor %}
+{% endif %}

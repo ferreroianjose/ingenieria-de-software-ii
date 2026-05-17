@@ -1,0 +1,26 @@
+<div class="space-y-4">
+    <div>
+        <label>Nombre</label>
+        {{ modal_form.nombre }}
+    </div>
+    <div>
+        <label>Capacidad</label>
+        {{ modal_form.capacidad }}
+    </div>
+    {% if lock_sede %}
+    <div>
+        <label>Sede</label>
+        <p class="font-semibold text-gray-900" x-text="selectedSedeName"></p>
+        {% if selected_sede_id %}
+        <input type="hidden" name="sede" value="{{ selected_sede_id }}">
+        {% else %}
+        <input type="hidden" name="sede" :value="selectedSedeId">
+        {% endif %}
+    </div>
+    {% else %}
+    <div>
+        <label>Sede</label>
+        {{ modal_form.sede }}
+    </div>
+    {% endif %}
+</div>

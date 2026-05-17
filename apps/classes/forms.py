@@ -52,14 +52,6 @@ class SalaForm(BaseStyledForm):
 
 
 class ClassForm(BaseStyledForm):
-    WEEKDAY_CHOICES = [
-        (0, 'Lunes'),
-        (1, 'Martes'),
-        (2, 'Miércoles'),
-        (3, 'Jueves'),
-        (4, 'Viernes'),
-    ]
-
     sede = forms.ModelChoiceField(
         queryset=Sede.objects.all(),
         label='Sede',
@@ -75,7 +67,7 @@ class ClassForm(BaseStyledForm):
     sala = forms.ModelChoiceField(
         queryset=Sala.objects.all(),
         label='Sala',
-        empty_label='Selecciona una sala'
+        empty_label='Selecciona una sala',
     )
 
     profesor = forms.ModelChoiceField(
@@ -85,7 +77,7 @@ class ClassForm(BaseStyledForm):
     )
 
     dia_semana = forms.ChoiceField(
-        choices=WEEKDAY_CHOICES,
+        choices=Class.WEEKDAY_CHOICES,
         label='Día de la semana'
     )
 
@@ -103,7 +95,7 @@ class ClassForm(BaseStyledForm):
         widget=forms.NumberInput(attrs={'placeholder': 'MM'})
     )
 
-    duracion = forms.IntegerField(
+    duracion_minutos = forms.IntegerField(
         min_value=1,
         label='Duración (minutos)',
         widget=forms.NumberInput(attrs={'placeholder': 'Ej. 45'})
@@ -117,13 +109,49 @@ class ClassForm(BaseStyledForm):
 
     class Meta:
         model = Class
-        fields = ['disciplina', 'sala', 'profesor', 'cupo_maximo']
+        fields = ['disciplina', 'sala', 'profesor', 'dia_semana', 'cupo_maximo']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Inicializar sede si se proporciona via GET
-        if hasattr(self, 'initial') and 'sede' not in self.initial:
-            self.fields['sede'].initial = None
+        from django.urls import reverse
+        self.fields['sede'].widget.attrs.update({
+            'hx-get': reverse('classes:salas_por_sede'),
+            'hx-target': '#sala-field-container',
+            'hx-swap': 'innerHTML',
+            'hx-trigger': 'change',
+            'hx-include': 'this',
+            # Modal form sets hx-select="#showModal-container"; unset avoids empty swaps.
+            'hx-select': 'unset',
+        })
+
+        sede_id = self._resolve_sede_id()
+        if sede_id:
+            self.fields['sala'].queryset = Sala.objects.filter(
+                sede_id=sede_id
+            ).order_by('nombre')
+            if 'sede' not in self.initial and not self.data:
+                self.fields['sede'].initial = sede_id
+        else:
+            self.fields['sala'].queryset = Sala.objects.none()
+
+        if self.instance.pk and self.instance.duracion and not self.data:
+            self.fields['duracion_minutos'].initial = self.instance.duracion_minutos
+
+    def _resolve_sede_id(self):
+        if 'sede' in self.data:
+            try:
+                return int(self.data.get('sede'))
+            except (ValueError, TypeError):
+                return None
+        sede = self.initial.get('sede')
+        if sede is not None:
+            try:
+                return int(sede)
+            except (ValueError, TypeError):
+                return None
+        if self.instance.pk and self.instance.sala_id:
+            return self.instance.sala.sede_id
+        return None
 
     def clean_hora(self):
         hora = self.cleaned_data.get('hora')
@@ -145,75 +173,83 @@ class ClassForm(BaseStyledForm):
         profesor = cleaned_data.get('profesor')
         cupo_maximo = cleaned_data.get('cupo_maximo')
         dia_semana = cleaned_data.get('dia_semana')
+        sede = cleaned_data.get('sede')
+        duracion_min = cleaned_data.get('duracion_minutos')
 
-        # Crear una fecha dummy (próximo día de la semana) para validar
-        if hora is not None and minuto is not None and dia_semana is not None:
+        # Validate that the sala belongs to the selected sede
+        if sala and sede and sala.sede != sede:
+            raise ValidationError(f'La sala {sala.nombre} no pertenece a la sede {sede.nombre}.')
+
+        if hora is not None and minuto is not None and duracion_min is not None:
             try:
-                # Crear una fecha dummy para la validación
-                from datetime import timedelta as td
-                hoy = datetime.now().date()
-                dias_adelante = (int(dia_semana) - hoy.weekday()) % 7
-                if dias_adelante == 0:
-                    dias_adelante = 7
-                fecha_dummy = hoy + td(days=dias_adelante)
-                inicio = datetime.combine(fecha_dummy, time(hour=int(hora), minute=int(minuto)))
-                cleaned_data['inicio'] = inicio
-            except (ValueError, TypeError):
-                raise ValidationError('Datos de hora inválidos.')
+                hora_inicio = time(hour=int(hora), minute=int(minuto))
+                cleaned_data['hora_inicio'] = hora_inicio
+                # Calculate time overlap by creating dummy dates on the same day
+                dummy_date = datetime.today().date()
+                inicio_dt = datetime.combine(dummy_date, hora_inicio)
+                fin_dt = inicio_dt + timedelta(minutes=duracion_min)
+                cleaned_data['inicio_dt'] = inicio_dt
+                cleaned_data['fin_dt'] = fin_dt
+            except ValueError:
+                raise ValidationError('Datos de hora o duración inválidos.')
 
-        # Validar que el cupo máximo no exceda la capacidad de la sala
         if sala and cupo_maximo:
             if cupo_maximo > sala.capacidad:
                 raise ValidationError(
                     f'El cupo máximo ({cupo_maximo}) no puede exceder la capacidad de la sala ({sala.capacidad}).'
                 )
 
-        # Validar que no haya clases que se superpongan
-        if cleaned_data.get('inicio') and sala and profesor and dia_semana is not None:
-            inicio = cleaned_data.get('inicio')
-            # Convertir de formato Python weekday (0-6) a Django iso_week_day (1-7)
-            iso_week_day = int(dia_semana) + 1
+        if cleaned_data.get('hora_inicio') and sala and profesor and dia_semana is not None:
+            dummy_date = datetime.today().date()
+            inicio_dt = cleaned_data.get('inicio_dt')
+            fin_dt = cleaned_data.get('fin_dt')
             
-            # Regla 1: No puede haber 2 clases en la misma sede, sala, día y hora
-            clases_conflictivas_sala = Class.objects.filter(
+            # Since TimeField logic is tricky, we can do it in python memory for that specific day, sala or professor
+            # Get all classes for the same day and sala
+            clases_mismo_dia_sala = Class.objects.filter(
                 sala=sala,
-                inicio__iso_week_day=iso_week_day,
-                inicio__hour=inicio.hour,
-                inicio__minute=inicio.minute
+                dia_semana=dia_semana
             )
-            
-            # Excluir la clase actual si es una edición
             if self.instance.pk:
-                clases_conflictivas_sala = clases_conflictivas_sala.exclude(pk=self.instance.pk)
+                clases_mismo_dia_sala = clases_mismo_dia_sala.exclude(pk=self.instance.pk)
+
+            for c in clases_mismo_dia_sala:
+                if not c.hora_inicio:
+                    continue
+                c_inicio = datetime.combine(dummy_date, c.hora_inicio)
+                c_fin = c_inicio + c.duracion
+                # Overlap check
+                if inicio_dt < c_fin and fin_dt > c_inicio:
+                    raise ValidationError(
+                        f'Superposición con otra clase en {sala.nombre} de {c.hora_inicio.strftime("%H:%M")} a {c_fin.strftime("%H:%M")}.'
+                    )
             
-            if clases_conflictivas_sala.exists():
-                raise ValidationError(
-                    f'Ya existe una clase en la sala {sala.nombre} el {dict(self.WEEKDAY_CHOICES)[int(dia_semana)]} a las {inicio.hour:02d}:{inicio.minute:02d}.'
-                )
-            
-            # Regla 2: No puede haber 2 clases con el mismo profesor en el mismo día y hora
-            clases_conflictivas_profesor = Class.objects.filter(
+            # Get all classes for the same day and professor
+            clases_mismo_dia_prof = Class.objects.filter(
                 profesor=profesor,
-                inicio__iso_week_day=iso_week_day,
-                inicio__hour=inicio.hour,
-                inicio__minute=inicio.minute
+                dia_semana=dia_semana
             )
-            
-            # Excluir la clase actual si es una edición
             if self.instance.pk:
-                clases_conflictivas_profesor = clases_conflictivas_profesor.exclude(pk=self.instance.pk)
-            
-            if clases_conflictivas_profesor.exists():
-                raise ValidationError(
-                    f'El profesor {profesor.nombre} {profesor.apellido} ya tiene una clase el {dict(self.WEEKDAY_CHOICES)[int(dia_semana)]} a las {inicio.hour:02d}:{inicio.minute:02d}.'
-                )
+                clases_mismo_dia_prof = clases_mismo_dia_prof.exclude(pk=self.instance.pk)
+
+            for c in clases_mismo_dia_prof:
+                if not c.hora_inicio:
+                    continue
+                c_inicio = datetime.combine(dummy_date, c.hora_inicio)
+                c_fin = c_inicio + c.duracion
+                if inicio_dt < c_fin and fin_dt > c_inicio:
+                    raise ValidationError(
+                        f'El profesor {profesor.nombre} {profesor.apellido} ya tiene una clase de {c.hora_inicio.strftime("%H:%M")} a {c_fin.strftime("%H:%M")}.'
+                    )
 
         return cleaned_data
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        instance.inicio = self.cleaned_data.get('inicio')
-        instance.duracion = timedelta(minutes=self.cleaned_data.get('duracion'))
+        instance.hora_inicio = self.cleaned_data.get('hora_inicio')
+        instance.duracion = timedelta(
+            minutes=self.cleaned_data['duracion_minutos']
+        )
         
         if commit:
             instance.save()

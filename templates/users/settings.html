@@ -14,7 +14,7 @@
   <div class="space-y-4">
 
     {% if user.rol == 'ADMIN' or user.rol == 'EMPLEADO' %}
-      {% include 'partials/_collapsible_section.html' with icon='bell' title='Notificaciones manuales' description='Enviá notificaciones de prueba o avisos individuales.' content_template='notifications/_test_send.html' %}
+      {% include 'partials/ui/_collapsible_section.html' with icon='bell' title='Notificaciones manuales' description='Enviá notificaciones de prueba o avisos individuales.' content_template='notifications/_test_send.html' %}
     {% endif %}
   </div>
 </div>

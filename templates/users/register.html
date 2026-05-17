@@ -1,4 +1,4 @@
-{% extends 'partials/_auth_card.html' %}
+{% extends 'partials/auth/_auth_card.html' %}
 
 {% block title %}Registrarse{% endblock %}
 
@@ -37,18 +37,18 @@
               <input id="dni" name="dni" type="text" required value="{{ form.dni.value|default:'' }}">
           </div>
           <div class="flex-0 w-fit">
-              {% include 'partials/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" min_age=14 required=True %}
+              {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" min_age=14 required=True %}
           </div>
       </div>
 
       <div class="relative">
           <label for="password1" class="flex items-center gap-2">
               Contraseña
-              {% include 'partials/_tooltip.html' with text=password_help_texts %}
+              {% include 'partials/ui/_tooltip.html' with text=password_help_texts %}
           </label>
           <div class="relative flex items-center">
               <input id="password1" name="password1" type="password" required x-model="pass1" class="pr-12 md:pr-10">
-              {% include 'partials/_status_indicator.html' with model='pass1' check='isPass1Valid' %}
+              {% include 'partials/ui/_status_indicator.html' with model='pass1' check='isPass1Valid' %}
           </div>
       </div>
 
@@ -56,14 +56,14 @@
           <label for="password2">Confirmar contraseña</label>
           <div class="relative flex items-center">
               <input id="password2" name="password2" type="password" required x-model="pass2" class="pr-12 md:pr-10">
-              {% include 'partials/_status_indicator.html' with model='pass2' check='passwordsMatch' %}
+              {% include 'partials/ui/_status_indicator.html' with model='pass2' check='passwordsMatch' %}
           </div>
       </div>
   </div>
 {% endblock %}
 
 {% block auth_primary_button %}
-  {% include 'partials/_primary_button.html' with label="Crear cuenta" %}
+  {% include 'partials/ui/buttons/_primary_button.html' with label="Crear cuenta" %}
 {% endblock %}
 
 {% block auth_extra %}

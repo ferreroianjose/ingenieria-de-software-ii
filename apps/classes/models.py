@@ -62,10 +62,21 @@ class Class(models.Model):
         ('pausada', 'Pausada'),
     ]
 
+    WEEKDAY_CHOICES = [
+        (0, 'Lunes'),
+        (1, 'Martes'),
+        (2, 'Miércoles'),
+        (3, 'Jueves'),
+        (4, 'Viernes'),
+        (5, 'Sábado'),
+        (6, 'Domingo'),
+    ]
+
     disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, null=True, blank=True)
-    sala = models.ForeignKey(Sala, on_delete=models.CASCADE, null=True, blank=True)
-    profesor = models.ForeignKey('Teacher', on_delete=models.CASCADE)
-    inicio = models.DateTimeField()
+    sala = models.ForeignKey(Sala, on_delete=models.PROTECT, null=True, blank=True)
+    profesor = models.ForeignKey('Teacher', on_delete=models.PROTECT)
+    dia_semana = models.PositiveSmallIntegerField(choices=WEEKDAY_CHOICES, default=0)
+    hora_inicio = models.TimeField(null=True, blank=True)
     duracion = models.DurationField()
     cupo_maximo = models.PositiveIntegerField(default=1)
     estado = models.CharField(
@@ -75,7 +86,7 @@ class Class(models.Model):
     )
 
     def __str__(self):
-        return f"{self.disciplina} - {self.profesor} - {self.inicio}"
+        return f"{self.disciplina} - {self.profesor} - {self.get_dia_semana_display()} {self.hora_inicio}"
 
     @property
     def duracion_minutos(self):

@@ -72,12 +72,42 @@
 		}
 
 	    @layer base {
-	    /* Títulos */
+	      /* Títulos — site-wide */
 	      h1 {
 	        @apply text-5xl lg:text-6xl font-black text-primary-400 uppercase text-pretty;
 	      }
 	      h2 {
 	        @apply text-3xl lg:text-4xl font-bold text-primary-400 uppercase;
+	      }
+
+	      .title-impact {
+	        @apply font-black uppercase tracking-tight lg:tracking-tighter xl:tracking-tight;
+	      }
+
+	      /* Admin / back-office: headings acordes a listas y tablas */
+	      .admin-page h1 {
+	        @apply text-3xl lg:text-4xl font-bold text-primary-500 mb-2 normal-case;
+	      }
+	      .admin-page h2 {
+	        @apply text-lg font-bold text-secondary-900 normal-case;
+	      }
+	      .admin-page header p {
+	        @apply text-sm text-gray-600 font-normal no-underline;
+	      }
+
+	      .admin-page-header__title h1 {
+	        @apply mb-0;
+	      }
+	      .admin-page-header__title p {
+	        @apply mt-1 mb-0;
+	      }
+
+	      /* Drawers y modales centrados */
+	      [role="dialog"] h1 {
+	        @apply text-3xl lg:text-4xl font-black text-secondary-900 leading-tight normal-case;
+	      }
+	      [role="dialog"] p {
+	        @apply text-base font-medium text-gray-600;
 	      }
 	      
 	      /* Botones */
@@ -87,8 +117,93 @@
 	      button {
 	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 w-full transition-colors font-bold cursor-pointer;
 	      }
+	      #auth-card button,
+	      .btn-full {
+	        @apply w-full;
+	      }
+	      .btn-auto,
+	      .admin-page button,
+	      #sidebar button,
+	      header button,
+	      table button,
+	      [role="dialog"] button {
+	        @apply w-auto;
+	      }
 	      a {
 	        @apply text-primary-500 visited:text-primary-600 font-bold underline underline-offset-2 hover:text-primary-400 transition-colors;
+	      }
+	      table a {
+	        @apply no-underline font-medium;
+	      }
+	      table td button {
+	        @apply w-auto py-0 px-0 rounded-none font-semibold bg-transparent shadow-none ring-0 hover:ring-0 focus:ring-0 focus:ring-offset-0;
+	      }
+
+	      /* Segmented control (after global button rules) */
+	      .admin-page [role="tablist"].admin-segmented {
+	        @apply flex w-full min-w-0 p-1 gap-0.5 rounded-full bg-gray-200/90 border border-black/[0.06] shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)];
+	      }
+	      .admin-page [role="tablist"].admin-segmented button {
+	        @apply w-auto min-w-0 flex-1 py-1.5 px-3 text-xs font-semibold leading-tight shadow-none rounded-full transition-all duration-200 ease-out whitespace-nowrap text-center focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0;
+	      }
+	      @media (min-width: 768px) {
+	        .admin-page [role="tablist"].admin-segmented {
+	          @apply inline-flex w-auto flex-none;
+	        }
+	        .admin-page [role="tablist"].admin-segmented button {
+	          @apply flex-none min-w-[4.25rem] px-4 text-sm;
+	        }
+	      }
+
+	      /* Admin selection (picker cards + tables) */
+	      .admin-picker-list {
+	        @apply w-full;
+	      }
+	      .admin-picker-item {
+	        @apply flex w-full min-w-0 cursor-pointer items-stretch overflow-hidden rounded-xl border-2 border-transparent transition-all duration-200;
+	      }
+	      .admin-picker-item:hover:not(.is-selected) {
+	        @apply border-gray-200 bg-gray-50/90;
+	      }
+	      .admin-picker-item.is-selected {
+	        @apply border-primary-400 bg-primary-400/[0.09] shadow-fair-sm;
+	      }
+	      .admin-picker-item .admin-picker-select {
+	        @apply flex w-full min-w-0 flex-1 items-center gap-3 bg-transparent py-3.5 px-4 text-left font-semibold shadow-none ring-0 hover:bg-transparent focus:ring-0 focus:ring-offset-0 rounded-none;
+	      }
+	      .admin-select-indicator {
+	        @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors duration-200;
+	      }
+	      .admin-select-indicator.is-active {
+	        @apply border-primary-400 bg-primary-400 text-white;
+	      }
+	      .admin-selectable-table tbody tr.admin-selectable-row {
+	        @apply cursor-pointer transition-colors;
+	      }
+	      .admin-selectable-table tbody tr.admin-selectable-row:hover:not(.is-selected) {
+	        @apply bg-gray-50/80;
+	      }
+	      .admin-selectable-table tbody tr.admin-selectable-row.is-selected {
+	        @apply bg-primary-400/[0.09] ring-2 ring-inset ring-primary-400/35;
+	      }
+	      .admin-selectable-table tbody tr.admin-selectable-row.is-selected td {
+	        @apply border-primary-200/30;
+	      }
+	      .admin-selection-toolbar-btn {
+	        @apply w-auto min-w-0 rounded-full px-4 py-2 text-sm font-bold shadow-none ring-0 focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-45;
+	      }
+	      .admin-selection-toolbar-btn--secondary {
+	        @apply bg-transparent text-secondary-600 ring-2 ring-inset ring-secondary-500 hover:bg-secondary-500 hover:text-white hover:ring-secondary-500 focus:ring-secondary-400/35;
+	      }
+	      .admin-selection-toolbar-btn--danger {
+	        @apply bg-transparent text-red-600 ring-2 ring-inset ring-red-500/80 hover:bg-red-500 hover:text-white hover:ring-red-500;
+	      }
+	      .admin-selection-toolbar-btn--primary {
+	        @apply bg-secondary-400 text-white hover:bg-secondary-600 focus:ring-secondary-400/35;
+	      }
+
+	      .modal-footer {
+	        @apply isolate;
 	      }
 	      
 	      /* Formularios */
@@ -111,6 +226,10 @@
 	      /* Auth */
 	      #auth-card h1 {
 	        font-size: clamp(var(--text-2xl),15cqw,var(--text-6xl)) !important;
+	        @apply font-black text-primary-400 uppercase text-pretty leading-tight;
+	      }
+	      #auth-card h1.text-red-500 {
+	        @apply text-red-500;
 	      }
 	      #auth-card a {
 	          @apply visited:text-primary-500;
@@ -158,10 +277,11 @@
 	</head>
 	<body x-data="{ mobileOpen: false }" class="min-h-screen flex flex-col overflow-x-hidden relative">
 		{% block header %}
-			{% include 'partials/_sidebar.html' %}
-			{% include 'partials/_topbar.html' %}
+			{% include 'partials/layout/_sidebar.html' %}
+			{% include 'partials/layout/_topbar.html' %}
 		{% endblock %}
 
+		<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
 		<main id="main-content" class="flex-1 flex flex-col">
 			<div class="flex-1 {% block main_class %}pt-24 md:pt-0 md:pl-72{% endblock %}">
 				{% block content %}
@@ -171,15 +291,19 @@
 
 			{% block footer %}
 				<div class="{% block footer_class %}md:pl-72{% endblock %}">
-					{% include 'partials/_footer.html' %}
+					{% include 'partials/layout/_footer.html' %}
 				</div>
 			{% endblock %}
 
-			<div
-				id="global-spinner"
-				class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"
-			></div>
-		</main>
+		<div
+			id="global-spinner"
+			class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"
+		></div>
+
+	</main>
+
+		{% block page_modals %}{% endblock %}
+		</div>
 
 		{% block other_footer_classes %}{% endblock %}
 

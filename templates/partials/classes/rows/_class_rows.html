@@ -1,0 +1,29 @@
+{% if not searched %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=8 message="Aplicá filtros (vacíos = todas las clases)." %}
+{% elif not classes %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=8 message="No se encontraron clases con ese criterio." %}
+{% else %}
+{% for clase in classes %}
+<tr
+    class="admin-selectable-row"
+    @click="toggleClassSelection({{ clase.pk }}, '{% if clase.disciplina %}{{ clase.disciplina.nombre|escapejs }}{% else %}Clase{% endif %} · {{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }}', '{{ clase.estado }}')"
+    :class="{ 'is-selected': selectedClassId === {{ clase.pk }} }"
+    :aria-selected="selectedClassId === {{ clase.pk }}"
+>
+    <td class="w-11 px-3 py-4">
+        {% include 'partials/admin/_admin_select_indicator.html' with item_id=clase.pk selected_expr='selectedClassId' %}
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ clase.disciplina.nombre }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.sala.nombre }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.profesor.nombre }} {{ clase.profesor.apellido }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.duracion_minutos }} min</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.cupo_maximo }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if clase.estado == 'disponible' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+            {{ clase.get_estado_display }}
+        </span>
+    </td>
+</tr>
+{% endfor %}
+{% endif %}

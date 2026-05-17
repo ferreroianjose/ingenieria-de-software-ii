@@ -1,0 +1,19 @@
+{% url 'classes:delete_disciplina' 0 as disciplina_delete_url %}
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary"
+	@click.prevent="openSelectedDisciplinaModal()"
+	x-text="selectedDisciplinaId ? 'Editar' : 'Agregar disciplina'"
+></button>
+<form x-ref="deleteDisciplinaForm" method="post" class="hidden" :action="selectedDisciplinaId ? adminActionUrl('{{ disciplina_delete_url }}', selectedDisciplinaId) : ''">
+	{% csrf_token %}
+</form>
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
+	:disabled="!selectedDisciplinaId"
+	@click="if (selectedDisciplinaId && confirm('¿Eliminar esta disciplina?')) adminHtmxPost($refs.deleteDisciplinaForm)"
+>
+	Eliminar
+</button>

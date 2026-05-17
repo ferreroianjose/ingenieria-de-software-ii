@@ -23,7 +23,7 @@ class SalaAdmin(admin.ModelAdmin):
 
 @admin.register(Class)
 class ClassAdmin(admin.ModelAdmin):
-    list_display = ('disciplina', 'sala', 'profesor', 'inicio', 'duracion', 'cupo_maximo', 'estado')
+    list_display = ('disciplina', 'sala', 'profesor', 'dia_semana', 'hora_inicio', 'duracion', 'cupo_maximo', 'estado')
 
 
 @admin.register(Teacher)

@@ -1,0 +1,14 @@
+<header class="md:hidden fixed top-4 left-4 right-4 z-30 bg-white shadow-fair-lg rounded-full flex flex-row justify-between items-center px-3 py-2">
+
+  {% include 'partials/layout/_brand.html' with class="" text_class="hidden" %}
+
+  <div class="flex-1"></div>
+  <button
+    @click="mobileOpen = true"
+    class="w-fit p-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
+    aria-label="Abrir menú"
+  >
+    {% include 'partials/ui/_icon.html' with name="list" class="size-8" %}
+  </button>
+
+</header>

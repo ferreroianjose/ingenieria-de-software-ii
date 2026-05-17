@@ -3,56 +3,67 @@
 {% block title %}Gestionar Clases{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8" x-data="{ showModal: {{ show_modal|yesno:'true,false' }} }">
-    <h1 class="text-3xl font-bold text-primary-500 mb-6">Gestionar Clases</h1>
-    <div class="mb-6">
-        {% include 'partials/_primary_button.html' with label="Crear clase" type="button" attrs='@click.prevent="showModal = true"' class="w-auto px-6 py-2" %}
+<div
+    class="admin-page container mx-auto px-4 py-8"
+    x-data="Object.assign(adminSelection({ idKey: 'selectedClassId', labelKey: 'selectedClassLabel', clearOnSwapTargets: ['class-rows-tbody'], extraClearKeys: ['selectedClassEstado'] }), {
+        selectedClassEstado: '',
+        classDrawerOpen: false,
+        tab: '{{ initial_tab }}',
+        classCreateUrl: '{% url 'classes:class_modal' %}',
+        classEditUrlPattern: '{% url 'classes:class_modal_edit' 0 %}',
+        toggleClassSelection(id, label, estado) {
+            if (this.selectedClassId === id) {
+                this.clearItemSelection();
+                return;
+            }
+            this.selectItem(id, label);
+            this.selectedClassEstado = estado || '';
+        },
+        openSelectedClassDrawer() {
+            const url = this.selectedClassId
+                ? adminActionUrl(this.classEditUrlPattern, this.selectedClassId)
+                : this.classCreateUrl;
+            openClassDrawer(url);
+        }
+    })"
+    x-init="initSelectionClear()"
+    @admin-modal-close.window="if ($event.detail === 'classDrawerOpen') classDrawerOpen = false"
+    @class-drawer-open.window="classDrawerOpen = true"
+>
+    <div class="flex flex-col gap-6">
+        {% include 'partials/admin/_admin_page_header.html' with title='Gestionar Clases' subtitle='Filtrá clases y administrá horarios, salas y profesores.' view_tabs=view_tabs aria_label='Clases' %}
+
+        <section x-show="tab === 'lista'" x-cloak class="flex flex-col gap-4">
+            {% include 'partials/classes/list/_class_filters_form.html' with filter_url=filter_url disciplinas=disciplinas sedes=sedes profesores=profesores weekday_choices=weekday_choices estado_choices=estado_choices %}
+
+            {% include 'partials/classes/list/_class_selection_toolbar.html' %}
+
+            <div class="bg-white shadow-fair-md rounded-lg overflow-hidden overflow-x-auto">
+                <table class="min-w-full table-auto admin-selectable-table">
+                    <thead class="bg-gray-50">
+                        <tr class="[&_th]:px-6 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider">
+                            <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                            <th>Disciplina</th>
+                            <th>Sala</th>
+                            <th>Profesor</th>
+                            <th>Fecha/Hora</th>
+                            <th>Duración</th>
+                            <th>Cupo</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="class-rows-tbody">
+                        {% include 'partials/admin/_table_placeholder.html' with colspan=8 message='Aplicá filtros (vacíos = todas las clases).' %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section x-show="tab === 'cronograma'" x-cloak class="flex flex-col gap-4">
+            {% include 'partials/classes/list/_class_cronogram_placeholder.html' %}
+        </section>
     </div>
 
-    <div class="bg-white shadow-fair-md rounded-lg overflow-hidden">
-        <table class="min-w-full table-auto">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disciplina</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sala</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesor</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha/Hora</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duración</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cupo</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-                {% for clase in classes %}
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ clase.disciplina.nombre }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.sala.nombre }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.profesor.nombre }} {{ clase.profesor.apellido }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.inicio|date:"d/m/Y H:i" }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.duracion_minutos }} min</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.cupo_maximo }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if clase.estado == 'disponible' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
-                            {{ clase.get_estado_display }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button class="text-indigo-600 hover:text-indigo-900 mr-2">Editar</button>
-                        <button class="text-red-600 hover:text-red-900 mr-2">Eliminar</button>
-                        <button class="text-yellow-600 hover:text-yellow-900">Pausar</button>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="px-6 py-4 text-center text-gray-500">No hay clases disponibles.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Modals -->
-    {% include 'partials/classes/_class_modal.html' with modal_form=form modal_button_label="Publicar clase" %}
+    {% include 'partials/classes/list/_class_drawer_shell.html' %}
 </div>
 {% endblock %}

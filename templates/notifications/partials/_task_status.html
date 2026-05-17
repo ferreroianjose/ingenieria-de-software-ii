@@ -23,11 +23,11 @@
             {% else %}bg-red-500 text-white{% endif %}">
             
             {% if not task %}
-                {% include 'partials/_icon.html' with name="arrow-repeat" class="size-5 animate-spin" %}
+                {% include 'partials/ui/_icon.html' with name="arrow-repeat" class="size-5 animate-spin" %}
             {% elif task.success %}
-                {% include 'partials/_icon.html' with name="check-lg" class="size-5" %}
+                {% include 'partials/ui/_icon.html' with name="check-lg" class="size-5" %}
             {% else %}
-                {% include 'partials/_icon.html' with name="x-lg" class="size-5" %}
+                {% include 'partials/ui/_icon.html' with name="x-lg" class="size-5" %}
             {% endif %}
         </span>
     </div>
