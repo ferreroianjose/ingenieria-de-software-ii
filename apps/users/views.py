@@ -4,9 +4,13 @@ from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import user_passes_test
+from django.template.loader import render_to_string
+from django.middleware.csrf import get_token
 
 from apps.notifications.services import notification_service
 from .forms import CustomUserCreationForm, TwoFactorForm
@@ -44,7 +48,6 @@ class CustomLoginView(LoginView):
             return HttpResponseRedirect(reverse("two_factor"))
 
         return response
-
 
 @login_required
 def two_factor(request):
@@ -93,3 +96,51 @@ def register(request):
         "form": form,
         "password_help_texts": "La contraseña debe tener 10 o más caracteres, incluyendo letras, números y al menos un carácter especial."
     })
+
+
+# --- Gestión de usuarios (solo admin) ---
+
+User = get_user_model()
+
+def admin_required(view_func):
+    return user_passes_test(lambda u: u.is_authenticated and u.is_staff)(view_func)
+
+@admin_required
+def user_list(request):
+    users = User.objects.all()
+    roles_choices = getattr(User, 'ROLES', [])
+    # Pasamos 'roles' para que el archivo partial pueda renderizar las opciones la primera vez
+    return render(request, "users/user_list.html", {"users": users, "roles": roles_choices})
+
+@admin_required
+def change_user_role(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+    roles_choices = getattr(User, 'ROLES', [])
+
+    if request.method == "POST":
+        new_role = request.POST.get("rol")
+        if new_role and new_role in dict(roles_choices):
+            user.rol = new_role
+            user.save()
+            
+            # SI LA PETICIÓN VIENE DE HTMX: Devolvemos únicamente el partial de la celda
+            if request.headers.get('HX-Request'):
+                context = {
+                    'user': user, 
+                    'roles': roles_choices, 
+                    'csrf_token': get_token(request) # Forzamos la regeneración segura del token para HTMX
+                }
+                html = render_to_string('users/user_role_cell.html', context, request=request)
+                return HttpResponse(html)
+                
+            return redirect("user_list")
+            
+    return redirect("user_list")
+
+@admin_required
+def delete_user(request, user_id):
+    user = get_object_or_404(User, pk=user_id)
+    if request.method == "POST":
+        user.delete()
+        return redirect("user_list")
+    return render(request, "users/delete_user.html", {"user": user})

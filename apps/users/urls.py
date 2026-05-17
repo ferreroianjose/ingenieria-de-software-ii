@@ -21,4 +21,9 @@ urlpatterns = [
 
 
     # TODO: agregar password reset, etc.
+
+    # Gestión de usuarios (solo admin)
+    path('gestion/', views.user_list, name='user_list'),
+    path('gestion/<int:user_id>/cambiar-rol/', views.change_user_role, name='change_user_role'),
+    path('gestion/<int:user_id>/eliminar/', views.delete_user, name='delete_user'),
 ]

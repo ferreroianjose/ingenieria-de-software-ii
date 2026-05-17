@@ -1,9 +1,9 @@
 {% comment %}
-  Navigation items: agregá acá nuevas secciones
-  Add new sections here
+Navigation items: agregá acá nuevas secciones
+Add new sections here
 {% endcomment %}
 <style type="text/tailwindcss">
-.nav-item {
+  .nav-item {
   @apply flex flex-row items-center gap-4 w-full p-4 rounded-full text-sm font-semibold text-gray-600 hover:bg-primary-400/10 hover:text-primary-500 transition-colors no-underline;
 }
 .nav-item-active {
@@ -13,22 +13,26 @@
 
 {% with url_name=request.resolver_match.url_name %}
 
-<a href="{% url 'dashboard' %}"
-   class="nav-item {% if url_name == 'dashboard' %}nav-item-active{% endif %}">
+<a href="{% url 'dashboard' %}" class="nav-item {% if url_name == 'dashboard' %}nav-item-active{% endif %}">
   {% include 'partials/_icon.html' with name="house-fill" class="size-5 shrink-0" %}
   Menú principal
 </a>
 
-<a href="#"
-   class="nav-item {% if url_name == 'reservas' %}nav-item-active{% endif %}">
+<a href="#" class="nav-item {% if url_name == 'reservas' %}nav-item-active{% endif %}">
   {% include 'partials/_icon.html' with name="calendar" class="size-5 shrink-0" %}
   Mis reservas
 </a>
 
-<a href="#"
-   class="nav-item {% if url_name == 'pagos' %}nav-item-active{% endif %}">
+<a href="#" class="nav-item {% if url_name == 'pagos' %}nav-item-active{% endif %}">
   {% include 'partials/_icon.html' with name="credit-card-2-front" class="size-5 shrink-0" %}
   Mis pagos
 </a>
+
+{% if request.user.is_authenticated and request.user.rol == 'ADMIN' %}
+<a href="{% url 'user_list' %}" class="nav-item {% if url_name == 'user_list' %}nav-item-active{% endif %}">
+  {% include 'partials/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+  Gestión de usuarios
+</a>
+{% endif %}
 
 {% endwith %}
