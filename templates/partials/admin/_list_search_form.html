@@ -5,7 +5,7 @@
     hx-target="{{ target_id }}"
     hx-swap="innerHTML"
     hx-trigger="submit"
-    hx-on::after-request="if (event.detail.successful) { this.setAttribute('data-searched', '1'); this.removeAttribute('data-show-all'); }"
+    hx-on::after-request="if (event.detail.successful) { this.setAttribute('data-searched', '1'); }"
 >
     <input
         type="search"

@@ -313,6 +313,7 @@ def class_list(request):
             "estado_choices": Class.ESTADO_CHOICES,
             "view_tabs": CLASS_LIST_VIEW_TABS,
             "initial_tab": tab,
+            "class_rows_searched": False,
         },
     )
 
@@ -399,13 +400,10 @@ def catalog(request):
 
 @staff_member_required
 def disciplina_rows(request):
-    if request.GET.get("all"):
-        disciplinas = Disciplina.objects.all().order_by("nombre")
-    else:
-        q = request.GET.get("q", "")
-        disciplinas = apply_text_search(
-            Disciplina.objects.all().order_by("nombre"), q, "nombre", "descripcion"
-        )
+    q = request.GET.get("q", "")
+    disciplinas = apply_text_search(
+        Disciplina.objects.all().order_by("nombre"), q, "nombre", "descripcion"
+    )
     return render(
         request,
         "partials/classes/rows/_disciplina_rows.html",
@@ -419,12 +417,10 @@ def disciplina_rows(request):
 
 @staff_member_required
 def teacher_rows(request):
-    if request.GET.get("all"):
-        teachers = Teacher.objects.all().order_by("nombre", "apellido")
-    else:
-        q = request.GET.get("q", "")
-        teachers = Teacher.objects.all().order_by("nombre", "apellido")
-        teachers = apply_text_search(teachers, q, "nombre", "apellido")
+    q = request.GET.get("q", "")
+    teachers = apply_text_search(
+        Teacher.objects.all().order_by("nombre", "apellido"), q, "nombre", "apellido"
+    )
     return render(
         request,
         "partials/classes/rows/_teacher_rows.html",

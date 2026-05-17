@@ -53,7 +53,7 @@
                         </tr>
                     </thead>
                     <tbody id="class-rows-tbody">
-                        {% include 'partials/admin/_table_placeholder.html' with colspan=8 message='Aplicá filtros (vacíos = todas las clases).' %}
+                        {% include 'partials/classes/rows/_class_rows.html' with searched=class_rows_searched only %}
                     </tbody>
                 </table>
             </div>

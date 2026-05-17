@@ -136,9 +136,6 @@ function adminSearchRefreshUrl(baseUrl, formId) {
 	if (!form || form.getAttribute("data-searched") !== "1") {
 		return null;
 	}
-	if (form.getAttribute("data-show-all") === "1") {
-		return `${baseUrl}?all=1`;
-	}
 	const params = new URLSearchParams(new FormData(form));
 	const qs = params.toString();
 	return qs ? `${baseUrl}?${qs}` : baseUrl;
