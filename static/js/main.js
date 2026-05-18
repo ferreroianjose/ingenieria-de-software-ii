@@ -21,24 +21,48 @@ const ADMIN_MODAL_CONTAINERS = {
 	"teacher-modal-container": "No se pudo cargar el formulario. Intentá de nuevo.",
 };
 
+function buildAdminFlashItem(message, level = "success") {
+	const isError = level === "error";
+	const item = document.createElement("div");
+	item.className = `admin-flash-item admin-flash-item--${isError ? "error" : "success"}`;
+	item.setAttribute("role", "status");
+
+	const text = document.createElement("p");
+	text.className = "flex-1 min-w-0 leading-snug";
+	text.textContent = message;
+
+	const btn = document.createElement("button");
+	btn.type = "button";
+	btn.className = "admin-flash-dismiss";
+	btn.setAttribute("aria-label", "Cerrar notificación");
+	btn.addEventListener("click", clearAdminFlash);
+	btn.innerHTML =
+		'<svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>';
+
+	item.append(text, btn);
+	return item;
+}
+
+function clearAdminFlash() {
+	const el = document.getElementById("admin-flash");
+	if (!el) return;
+	const item = el.querySelector(".admin-flash-item");
+	if (!item) {
+		el.replaceChildren();
+		return;
+	}
+	item.classList.add("is-leaving");
+	setTimeout(() => el.replaceChildren(), 280);
+}
+
 function showAdminFlash({ message, level = "success" }) {
 	const el = document.getElementById("admin-flash");
 	if (!el || !message) return;
-
-	const li = document.createElement("li");
-	li.className =
-		"rounded-lg px-4 py-2 text-sm font-medium " +
-		(level === "error"
-			? "bg-red-50 text-red-800"
-			: "bg-green-50 text-green-800");
-	li.textContent = message;
-
-	const ul = document.createElement("ul");
-	ul.className = "space-y-2";
-	ul.appendChild(li);
-	el.replaceChildren(ul);
+	el.replaceChildren(buildAdminFlashItem(message, level));
 	el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
+
+window.clearAdminFlash = clearAdminFlash;
 
 function closeAdminModal(modalVar) {
 	if (!modalVar) return;

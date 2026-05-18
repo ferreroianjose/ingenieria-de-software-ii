@@ -4,7 +4,7 @@
 
 {% block content %}
 <div
-    class="admin-page container mx-auto px-4 py-8"
+    class="admin-page admin-shell container mx-auto px-4 py-8"
     x-data="Object.assign(adminSelection({ idKey: 'selectedClassId', labelKey: 'selectedClassLabel', clearOnSwapTargets: ['class-rows-tbody'], extraClearKeys: ['selectedClassEstado'] }), {
         selectedClassEstado: '',
         classDrawerOpen: false,
@@ -34,28 +34,30 @@
         {% include 'partials/admin/_admin_page_header.html' with title='Gestionar Clases' subtitle='Filtrá clases y administrá horarios, salas y profesores.' view_tabs=view_tabs aria_label='Clases' %}
 
         <section x-show="tab === 'lista'" x-cloak class="flex flex-col gap-4">
-            {% include 'partials/classes/list/_class_filters_form.html' with filter_url=filter_url disciplinas=disciplinas sedes=sedes profesores=profesores weekday_choices=weekday_choices estado_choices=estado_choices %}
-
-            {% include 'partials/classes/list/_class_selection_toolbar.html' %}
-
-            <div class="bg-white shadow-fair-md rounded-lg overflow-hidden overflow-x-auto">
-                <table class="min-w-full table-auto admin-selectable-table">
-                    <thead class="bg-gray-50">
-                        <tr class="[&_th]:px-6 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-medium [&_th]:text-gray-500 [&_th]:uppercase [&_th]:tracking-wider">
-                            <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
-                            <th>Disciplina</th>
-                            <th>Sala</th>
-                            <th>Profesor</th>
-                            <th>Fecha/Hora</th>
-                            <th>Duración</th>
-                            <th>Cupo</th>
-                            <th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="class-rows-tbody">
-                        {% include 'partials/classes/rows/_class_rows.html' with searched=class_rows_searched only %}
-                    </tbody>
-                </table>
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar">
+                    {% include 'partials/classes/list/_class_filters_form.html' with filter_url=filter_url disciplinas=disciplinas sedes=sedes profesores=profesores weekday_choices=weekday_choices estado_choices=estado_choices %}
+                </div>
+                {% include 'partials/classes/list/_class_selection_toolbar.html' %}
+                <div class="admin-panel__table">
+                    <table class="min-w-full table-auto admin-selectable-table">
+                        <thead>
+                            <tr class="[&_th]:px-6 [&_th]:py-3 [&_th]:text-left">
+                                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                                <th>Disciplina</th>
+                                <th>Sala</th>
+                                <th>Profesor</th>
+                                <th>Fecha/Hora</th>
+                                <th>Duración</th>
+                                <th>Cupo</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="class-rows-tbody">
+                            {% include 'partials/classes/rows/_class_rows.html' with searched=class_rows_searched only %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 

@@ -18,8 +18,14 @@ urlpatterns = [
     # Ubicaciones (sedes/salas)
     path('locations/', views.locations_list, name='locations_list'),
     path('locations/salas/rows/', views.sala_rows, name='sala_rows'),
+    path('locations/sedes/modal/', views.sede_modal, name='sede_modal'),
+    path('locations/sedes/modal/<int:sede_id>/', views.sede_modal, name='sede_modal_edit'),
+    path('locations/salas/modal/', views.sala_modal, name='sala_modal'),
+    path('locations/salas/modal/<int:sala_id>/', views.sala_modal, name='sala_modal_edit'),
     path('locations/sedes/crear/', views.create_sede, name='create_sede'),
+    path('locations/sedes/<int:sede_id>/editar/', views.update_sede, name='update_sede'),
     path('locations/salas/crear/', views.create_sala, name='create_sala'),
+    path('locations/salas/<int:sala_id>/editar/', views.update_sala, name='update_sala'),
     path('locations/sedes/<int:sede_id>/delete/', views.delete_sede, name='delete_sede'),
     path('locations/salas/<int:sala_id>/delete/', views.delete_sala, name='delete_sala'),
 

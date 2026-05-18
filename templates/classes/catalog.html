@@ -6,7 +6,7 @@
 {% url 'classes:disciplina_rows' as disciplina_rows_url %}
 {% url 'classes:teacher_rows' as teacher_rows_url %}
 <div
-    class="admin-page container mx-auto px-4 py-8"
+    class="admin-page admin-shell container mx-auto px-4 py-8"
     x-data="{
         disciplinaModalOpen: false,
         teacherModalOpen: false,
@@ -47,44 +47,48 @@
         {% include 'partials/admin/_admin_page_header.html' with title='Catálogo' subtitle='Disciplinas y profesores usados al crear clases.' view_tabs=view_tabs aria_label='Catálogo' %}
 
         <section x-show="tab === 'disciplinas'" x-cloak class="flex flex-col gap-4">
-            {% include 'partials/admin/_list_search_form.html' with form_id='disciplinas-search-form' search_url=disciplina_rows_url target_id='#disciplinas-tbody' placeholder='Nombre o descripción…' %}
-
-            {% include 'partials/classes/catalog/_catalog_disciplina_selection_toolbar.html' %}
-
-            <div class="bg-white shadow-fair-md rounded-lg overflow-hidden overflow-x-auto">
-                <table class="min-w-full table-auto admin-selectable-table">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="disciplinas-tbody">
-                        {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Usá el buscador y presioná «Buscar».' %}
-                    </tbody>
-                </table>
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar">
+                    {% include 'partials/admin/_list_search_form.html' with form_id='disciplinas-search-form' search_url=disciplina_rows_url target_id='#disciplinas-tbody' placeholder='Nombre o descripción…' %}
+                </div>
+                {% include 'partials/classes/catalog/_catalog_disciplina_selection_toolbar.html' %}
+                <div class="admin-panel__table">
+                    <table class="min-w-full table-auto admin-selectable-table">
+                        <thead>
+                            <tr>
+                                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                                <th class="px-6 py-3 text-left">Nombre</th>
+                                <th class="px-6 py-3 text-left">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disciplinas-tbody">
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Usá el buscador y presioná «Buscar».' %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
         <section x-show="tab === 'profesores'" x-cloak class="flex flex-col gap-4">
-            {% include 'partials/admin/_list_search_form.html' with form_id='teachers-search-form' search_url=teacher_rows_url target_id='#teachers-tbody' placeholder='Nombre o apellido…' %}
-
-            {% include 'partials/classes/catalog/_catalog_teacher_selection_toolbar.html' %}
-
-            <div class="bg-white shadow-fair-md rounded-lg overflow-hidden overflow-x-auto">
-                <table class="min-w-full table-auto admin-selectable-table">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apellido</th>
-                        </tr>
-                    </thead>
-                    <tbody id="teachers-tbody">
-                        {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Usá el buscador y presioná «Buscar».' %}
-                    </tbody>
-                </table>
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar">
+                    {% include 'partials/admin/_list_search_form.html' with form_id='teachers-search-form' search_url=teacher_rows_url target_id='#teachers-tbody' placeholder='Nombre o apellido…' %}
+                </div>
+                {% include 'partials/classes/catalog/_catalog_teacher_selection_toolbar.html' %}
+                <div class="admin-panel__table">
+                    <table class="min-w-full table-auto admin-selectable-table">
+                        <thead>
+                            <tr>
+                                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                                <th class="px-6 py-3 text-left">Nombre</th>
+                                <th class="px-6 py-3 text-left">Apellido</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachers-tbody">
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Usá el buscador y presioná «Buscar».' %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </div>

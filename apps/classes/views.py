@@ -159,6 +159,87 @@ def _render_class_drawer(request, form, instance=None, status=200):
     )
 
 
+def _sede_modal_context(form, instance=None):
+    editing = instance is not None and instance.pk
+    if editing:
+        return {
+            "form": form,
+            "title": "Editar sede",
+            "subtitle": "Actualizá el nombre y la dirección.",
+            "button_label": "Guardar cambios",
+            "action_url": reverse("classes:update_sede", args=[instance.pk]),
+        }
+    return {
+        "form": form,
+        "title": "Agregar sede",
+        "subtitle": "Ingresá los datos de la nueva sede.",
+        "button_label": "Guardar sede",
+        "action_url": reverse("classes:create_sede"),
+    }
+
+
+def _render_sede_modal_panel(request, form, instance=None, status=200):
+    ctx = _sede_modal_context(form, instance)
+    return render(
+        request,
+        "partials/classes/modals/_sede_modal_panel.html",
+        {
+            "modal_form": ctx["form"],
+            "modal_title": ctx["title"],
+            "modal_subtitle": ctx["subtitle"],
+            "modal_button_label": ctx["button_label"],
+            "action_url": ctx["action_url"],
+        },
+        status=status,
+    )
+
+
+def _sala_modal_context(form, instance=None):
+    editing = instance is not None and instance.pk
+    if editing:
+        return {
+            "form": form,
+            "title": "Editar sala",
+            "subtitle": "Actualizá nombre, capacidad y sede.",
+            "button_label": "Guardar cambios",
+            "action_url": reverse("classes:update_sala", args=[instance.pk]),
+            "lock_sede": False,
+            "selected_sede_id": None,
+        }
+    return {
+        "form": form,
+        "title": "Agregar sala",
+        "subtitle": "Ingresá los datos de la nueva sala.",
+        "button_label": "Guardar sala",
+        "action_url": reverse("classes:create_sala"),
+        "lock_sede": True,
+        "selected_sede_id": None,
+    }
+
+
+def _render_sala_modal_panel(
+    request, form, instance=None, *, lock_sede=False, selected_sede_id=None, status=200
+):
+    ctx = _sala_modal_context(form, instance)
+    if instance is None:
+        ctx["lock_sede"] = lock_sede
+        ctx["selected_sede_id"] = selected_sede_id
+    return render(
+        request,
+        "partials/classes/modals/_sala_modal_panel.html",
+        {
+            "modal_form": ctx["form"],
+            "modal_title": ctx["title"],
+            "modal_subtitle": ctx["subtitle"],
+            "modal_button_label": ctx["button_label"],
+            "action_url": ctx["action_url"],
+            "lock_sede": ctx["lock_sede"],
+            "selected_sede_id": ctx["selected_sede_id"],
+        },
+        status=status,
+    )
+
+
 def _disciplina_modal_context(form, instance=None):
     editing = instance is not None and instance.pk
     if editing:
@@ -347,10 +428,6 @@ def locations_list(request):
         {
             "sedes": sedes,
             "selected_sede_id": selected_sede_id,
-            "sede_form": SedeForm(),
-            "sala_form": SalaForm(),
-            "create_sede_url": reverse("classes:create_sede"),
-            "create_sala_url": reverse("classes:create_sala"),
         },
     )
 
@@ -553,65 +630,126 @@ def update_class(request, class_id):
 
 
 @staff_member_required
-def create_sede(request):
-    if request.method == "POST":
-        form = SedeForm(request.POST)
-        if form.is_valid():
-            sede = form.save()
-            return _hx_ok_or_redirect(
-                request,
-                message=f"La sede «{sede.nombre}» fue creada.",
-                redirect_to="classes:locations_list",
-                close_modal="sedeModalOpen",
-                locations_reload=(
-                    reverse("classes:locations_list") + f"?sede_id={sede.pk}"
-                ),
-            )
+def sede_modal(request, sede_id=None):
+    if sede_id is not None:
+        instance = get_object_or_404(Sede, pk=sede_id)
+        form = SedeForm(instance=instance)
+    else:
+        instance = None
+        form = SedeForm()
+    return _render_sede_modal_panel(request, form, instance)
 
-        if request.headers.get("HX-Request"):
-            return _render_modal(
-                request,
-                body_template="partials/classes/modals/_sede_modal_body.html",
-                form=form,
-                title="Agregar sede",
-                subtitle="Ingresá los datos de la nueva sede.",
-                button_label="Guardar sede",
-                action_url=reverse("classes:create_sede"),
-                show_var="sedeModalOpen",
-                container_id="sede-modal",
-            )
+
+@staff_member_required
+def sala_modal(request, sala_id=None):
+    if sala_id is not None:
+        instance = get_object_or_404(Sala, pk=sala_id)
+        form = SalaForm(instance=instance)
+        return _render_sala_modal_panel(request, form, instance)
+    sede_id = request.GET.get("sede_id")
+    initial = {}
+    lock_sede = False
+    if sede_id:
+        try:
+            initial["sede"] = int(sede_id)
+            lock_sede = True
+        except (ValueError, TypeError):
+            pass
+    form = SalaForm(initial=initial)
+    return _render_sala_modal_panel(
+        request,
+        form,
+        lock_sede=lock_sede,
+        selected_sede_id=initial.get("sede"),
+    )
+
+
+@staff_member_required
+def create_sede(request):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    form = SedeForm(request.POST)
+    if form.is_valid():
+        sede = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sede «{sede.nombre}» fue creada.",
+            redirect_to="classes:locations_list",
+            close_modal="sedeModalOpen",
+            locations_reload=(
+                reverse("classes:locations_list") + f"?sede_id={sede.pk}"
+            ),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_sede_modal_panel(request, form)
+    return redirect("classes:locations_list")
+
+
+@staff_member_required
+def update_sede(request, sede_id):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    instance = get_object_or_404(Sede, pk=sede_id)
+    form = SedeForm(request.POST, instance=instance)
+    if form.is_valid():
+        sede = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sede «{sede.nombre}» fue actualizada.",
+            redirect_to="classes:locations_list",
+            close_modal="sedeModalOpen",
+            locations_reload=(
+                reverse("classes:locations_list") + f"?sede_id={sede.pk}"
+            ),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_sede_modal_panel(request, form, instance)
     return redirect("classes:locations_list")
 
 
 @staff_member_required
 def create_sala(request):
-    if request.method == "POST":
-        form = SalaForm(request.POST)
-        if form.is_valid():
-            sala = form.save()
-            sede = sala.sede
-            return _hx_ok_or_redirect(
-                request,
-                message=f"La sala «{sala.nombre}» fue creada.",
-                redirect_to="classes:locations_list",
-                close_modal="salaModalOpen",
-                refresh=_sala_rows_refresh(sede.pk),
-            )
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    form = SalaForm(request.POST)
+    if form.is_valid():
+        sala = form.save()
+        sede = sala.sede
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sala «{sala.nombre}» fue creada.",
+            redirect_to="classes:locations_list",
+            close_modal="salaModalOpen",
+            refresh=_sala_rows_refresh(sede.pk),
+        )
+    sede_id = request.POST.get("sede")
+    if request.headers.get("HX-Request"):
+        return _render_sala_modal_panel(
+            request,
+            form,
+            lock_sede=bool(sede_id),
+            selected_sede_id=int(sede_id) if sede_id and str(sede_id).isdigit() else None,
+        )
+    return redirect("classes:locations_list")
 
-        if request.headers.get("HX-Request"):
-            return _render_modal(
-                request,
-                body_template="partials/classes/modals/_sala_modal_body.html",
-                form=form,
-                title="Agregar sala",
-                subtitle="Ingresá los datos de la nueva sala.",
-                button_label="Guardar sala",
-                action_url=reverse("classes:create_sala"),
-                show_var="salaModalOpen",
-                container_id="sala-modal",
-                lock_sede=True,
-                selected_sede_id=request.POST.get("sede"),
-            )
+
+@staff_member_required
+def update_sala(request, sala_id):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    instance = get_object_or_404(Sala, pk=sala_id)
+    form = SalaForm(request.POST, instance=instance)
+    if form.is_valid():
+        sala = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sala «{sala.nombre}» fue actualizada.",
+            redirect_to="classes:locations_list",
+            close_modal="salaModalOpen",
+            refresh=_sala_rows_refresh(sala.sede_id),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_sala_modal_panel(request, form, instance)
     return redirect("classes:locations_list")
 
 

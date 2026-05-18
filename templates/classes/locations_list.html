@@ -3,10 +3,8 @@
 {% block title %}Sedes y salas{% endblock %}
 
 {% block content %}
-{% url 'classes:delete_sede' 0 as sede_delete_url %}
-{% url 'classes:delete_sala' 0 as sala_delete_url %}
 <div
-    class="admin-page container mx-auto px-4 py-8"
+    class="admin-page admin-shell container mx-auto px-4 py-8"
     x-data="{
         selectedSedeId: {{ selected_sede_id|default:'null' }},
         selectedSedeName: '',
@@ -15,6 +13,17 @@
         sedeModalOpen: false,
         salaModalOpen: false,
         salaRowsUrl: '{% url 'classes:sala_rows' %}',
+        sedeCreateUrl: '{% url 'classes:sede_modal' %}',
+        sedeEditUrlPattern: '{% url 'classes:sede_modal_edit' 0 %}',
+        salaCreateUrl: '{% url 'classes:sala_modal' %}',
+        salaEditUrlPattern: '{% url 'classes:sala_modal_edit' 0 %}',
+        openSedeModal() {
+            const url = this.selectedSedeId
+                ? adminActionUrl(this.sedeEditUrlPattern, this.selectedSedeId)
+                : this.sedeCreateUrl;
+            this.sedeModalOpen = true;
+            openCatalogModal(url, 'sede-modal-container');
+        },
         toggleSedeSelection(id, name, event) {
             if (this.selectedSedeId === id) {
                 this.selectedSedeId = null;
@@ -31,8 +40,15 @@
             htmx.trigger(event.currentTarget, 'sedeSelected');
         },
         openSalaModal() {
-            if (!this.selectedSedeId) return;
+            let url;
+            if (this.selectedSalaId) {
+                url = adminActionUrl(this.salaEditUrlPattern, this.selectedSalaId);
+            } else {
+                if (!this.selectedSedeId) return;
+                url = `${this.salaCreateUrl}?sede_id=${this.selectedSedeId}`;
+            }
             this.salaModalOpen = true;
+            openCatalogModal(url, 'sala-modal-container');
         }
     }"
     x-init="
@@ -57,9 +73,9 @@
             <aside class="flex flex-col gap-3 min-w-0">
                 {% include 'partials/admin/_admin_panel_header.html' with title='Sedes' actions_template='partials/classes/locations/_locations_sede_header_actions.html' %}
 
-                <div class="bg-white shadow-fair-md rounded-xl overflow-hidden flex-1 flex flex-col min-h-[16rem]">
+                <div class="admin-panel flex-1 flex flex-col min-h-[16rem] min-w-0">
                     {% if sedes %}
-                    <ul class="admin-picker-list flex flex-col gap-1.5 p-2 overflow-y-auto flex-1 w-full" role="listbox" aria-label="Sedes">
+                    <ul class="admin-picker-list" role="listbox" aria-label="Sedes">
                         {% for sede in sedes %}
                         <li
                             role="presentation"
@@ -95,44 +111,30 @@
                         {% endfor %}
                     </ul>
                     {% else %}
-                    <p class="p-6 text-sm text-gray-500 text-center">No hay sedes cargadas. Agregá la primera sede.</p>
+                    <div class="admin-empty-dashed min-h-[11rem]">No hay sedes cargadas. Agregá la primera sede.</div>
                     {% endif %}
-                </div>
-
-                <div
-                    x-show="selectedSedeId"
-                    x-cloak
-                    class="flex items-center justify-end gap-2 rounded-lg border border-gray-200/80 bg-gray-50/60 px-3 py-2"
-                >
-                    <form x-ref="deleteSedeForm" method="post" class="hidden" :action="selectedSedeId ? adminActionUrl('{{ sede_delete_url }}', selectedSedeId) : ''">
-                        {% csrf_token %}
-                    </form>
-                    <button
-                        type="button"
-                        class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger text-xs px-3 py-1.5"
-                        @click="if (selectedSedeId && confirm('¿Eliminar la sede «' + selectedSedeName + '» y sus salas?')) adminHtmxPost($refs.deleteSedeForm)"
-                    >
-                        Eliminar sede
-                    </button>
                 </div>
             </aside>
 
             <section class="flex flex-col gap-3 min-w-0">
                 {% include 'partials/admin/_admin_panel_header.html' with title='Salas' actions_template='partials/classes/locations/_locations_sala_header_actions.html' %}
-                <p class="text-sm text-gray-500 font-normal -mt-1" x-show="selectedSedeName" x-cloak>
+                <p class="text-sm text-gray-500 font-normal -mt-1" x-show="selectedSedeName && !selectedSalaLabel" x-cloak>
                     Sede activa: <span class="font-semibold text-primary-600" x-text="selectedSedeName"></span>
+                </p>
+                <p class="text-sm text-gray-500 font-normal -mt-1" x-show="selectedSalaLabel" x-cloak>
+                    Sala seleccionada: <span class="font-semibold text-primary-600" x-text="selectedSalaLabel"></span>
                 </p>
                 <p class="text-sm text-gray-500 font-normal -mt-1" x-show="!selectedSedeId" x-cloak>
                     Seleccioná una sede para ver sus salas.
                 </p>
 
-                <div class="bg-white shadow-fair-md rounded-lg overflow-hidden flex-1 overflow-x-auto max-w-4xl">
+                <div class="admin-panel admin-panel__table flex-1 min-w-0 max-w-4xl">
                     <table class="min-w-full table-auto admin-selectable-table">
-                        <thead class="bg-gray-50">
+                        <thead>
                             <tr>
                                 <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capacidad</th>
+                                <th class="px-6 py-3 text-left">Nombre</th>
+                                <th class="px-6 py-3 text-left">Capacidad</th>
                             </tr>
                         </thead>
                         <tbody
@@ -151,32 +153,11 @@
                         </tbody>
                     </table>
                 </div>
-
-                <div
-                    x-show="selectedSalaId"
-                    x-cloak
-                    class="flex max-w-4xl items-center justify-between gap-3 rounded-lg border border-gray-200/80 bg-gray-50/60 px-3 py-2"
-                >
-                    <p class="text-sm text-gray-600 min-w-0 truncate">
-                        <span class="text-gray-500">Sala:</span>
-                        <span class="font-semibold text-primary-700" x-text="selectedSalaLabel"></span>
-                    </p>
-                    <form x-ref="deleteSalaForm" method="post" class="hidden" :action="selectedSalaId ? adminActionUrl('{{ sala_delete_url }}', selectedSalaId) : ''">
-                        {% csrf_token %}
-                    </form>
-                    <button
-                        type="button"
-                        class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger shrink-0 text-xs px-3 py-1.5"
-                        @click="if (selectedSalaId && confirm('¿Eliminar esta sala?')) adminHtmxPost($refs.deleteSalaForm)"
-                    >
-                        Eliminar sala
-                    </button>
-                </div>
             </section>
         </div>
     </div>
 
-    {% include 'partials/ui/modals/_modal.html' with modal_variant='center' modal_show_var='sedeModalOpen' modal_container_id='sede-modal' modal_body_template='partials/classes/modals/_sede_modal_body.html' modal_form=sede_form modal_title='Agregar sede' modal_subtitle='Ingresa los datos de la nueva sede.' modal_button_label='Guardar sede' action_url=create_sede_url %}
-    {% include 'partials/ui/modals/_modal.html' with modal_variant='center' modal_show_var='salaModalOpen' modal_container_id='sala-modal' modal_body_template='partials/classes/modals/_sala_modal_body.html' modal_form=sala_form modal_title='Agregar sala' modal_subtitle='Ingresa los datos de la nueva sala.' modal_button_label='Guardar sala' lock_sede=True selected_sede_id=selected_sede_id action_url=create_sala_url %}
+    {% include 'partials/ui/modals/_center_modal_shell.html' with modal_open_var='sedeModalOpen' container_id='sede-modal' %}
+    {% include 'partials/ui/modals/_center_modal_shell.html' with modal_open_var='salaModalOpen' container_id='sala-modal' %}
 </div>
 {% endblock %}

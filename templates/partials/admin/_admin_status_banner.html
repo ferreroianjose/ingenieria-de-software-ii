@@ -1,15 +1,9 @@
 {% if messages %}
-<ul class="space-y-2">
+<div class="space-y-2">
 	{% for message in messages %}
-	<li class="rounded-lg px-4 py-2 text-sm font-medium {% if message.tags == 'error' %}bg-red-50 text-red-800{% else %}bg-green-50 text-green-800{% endif %}">
-		{{ message }}
-	</li>
+	{% include 'partials/admin/_admin_flash_item.html' with text=message level=message.tags %}
 	{% endfor %}
-</ul>
+</div>
 {% elif status_message %}
-<ul class="space-y-2">
-	<li class="rounded-lg px-4 py-2 text-sm font-medium {% if status_level == 'error' %}bg-red-50 text-red-800{% else %}bg-green-50 text-green-800{% endif %}">
-		{{ status_message }}
-	</li>
-</ul>
+{% include 'partials/admin/_admin_flash_item.html' with text=status_message level=status_level|default:'success' %}
 {% endif %}
