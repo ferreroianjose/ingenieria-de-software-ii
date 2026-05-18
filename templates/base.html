@@ -183,8 +183,11 @@
 	      }
 	      .admin-panel__actions,
 	      .admin-selection-toolbar {
-	        @apply flex flex-col gap-3 px-4 py-3 sm:px-6 sm:flex-row sm:items-center sm:justify-between;
+	        @apply flex flex-col gap-3 px-4 py-3 lg:px-6 lg:flex-row items-end justify-between my-auto xl:min-h-8 lg:min-h-16 sm:min-h-28 min-h-34;
 	      }
+	      .admin-selection-toolbar p {
+          @apply w-full min-w-0 my-auto xl:line-clamp-1 line-clamp-2 sm:text-left text-center overflow-ellipsis;
+        }
 	      .admin-panel__table {
 	        @apply overflow-x-auto;
 	      }
@@ -229,8 +232,9 @@
 	      	@apply cursor-pointer;
 	      }
 	      button {
-	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 w-full transition-colors font-bold cursor-pointer;
+	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 transition-colors font-bold cursor-pointer;
 	      }
+
 	      #auth-card button,
 	      .btn-full {
 	        @apply w-full;
@@ -299,11 +303,9 @@
 	        @apply bg-gray-50/90;
 	      }
 	      .admin-selectable-table tbody tr.admin-selectable-row.is-selected {
-	        @apply bg-primary-50/80 ring-1 ring-inset ring-primary-300/50;
+	        @apply bg-primary-50/80;
 	      }
-	      .admin-selectable-table tbody tr.admin-selectable-row.is-selected td {
-	        @apply border-gray-100;
-	      }
+
         /* #TODO: reemplazar con partial de botones */
 	      .admin-selection-toolbar-btn {
 	        @apply w-auto min-w-0 rounded-full px-4 py-2 text-sm font-bold shadow-none ring-0 focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-45;

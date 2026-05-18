@@ -57,7 +57,7 @@
         {% if page_obj.has_previous %}
         <button
             type="button"
-            class="btn-auto rounded-full border border-gray-200 bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger btn-auto"
             hx-get="{% url 'user_rows' %}?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}"
             hx-target="#users-table-panel"
             hx-swap="innerHTML"

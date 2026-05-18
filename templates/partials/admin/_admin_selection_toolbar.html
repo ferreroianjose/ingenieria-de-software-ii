@@ -1,7 +1,7 @@
 {# selected_expr, label_expr (Alpine identifiers); empty_hint; actions_template #}
 <div class="admin-selection-toolbar">
-	<p class="text-sm text-gray-500 min-w-0" x-show="!{{ selected_expr }}" x-cloak>{{ empty_hint }}</p>
-	<p class="text-sm text-gray-600 min-w-0 truncate" x-show="{{ selected_expr }}" x-cloak>
+	<p class="text-sm text-gray-500" x-show="!{{ selected_expr }}" x-cloak>{{ empty_hint }}</p>
+	<p class="text-sm text-gray-600" x-show="{{ selected_expr }}" x-cloak>
 		<span class="text-gray-500">Seleccionado:</span>
 		<span class="font-semibold text-primary-700" x-text="{{ label_expr }}"></span>
 		<span class="text-gray-400"> · clic de nuevo para deseleccionar</span>

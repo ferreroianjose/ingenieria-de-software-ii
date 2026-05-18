@@ -7,9 +7,9 @@
     hx-trigger="submit"
     hx-on::after-request="if (event.detail.successful) this.setAttribute('data-searched', '1')"
 >
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 [&>div]:grid [&>div]:grid-cols-1 [&>div]:justify-between [&>div]:gap-0">
         <div>
-            <label for="filter-q" class="!mb-1">Buscar</label>
+            <label for="filter-q">Buscar</label>
             <input
                 id="filter-q"
                 type="search"
@@ -21,7 +21,7 @@
             />
         </div>
         <div>
-            <label for="filter-disciplina" class="!mb-1">Disciplina</label>
+            <label for="filter-disciplina">Disciplina</label>
             <select id="filter-disciplina" name="disciplina" class="!py-2 !px-4 text-sm">
                 <option value="">Todas</option>
                 {% for d in disciplinas %}
@@ -30,7 +30,7 @@
             </select>
         </div>
         <div>
-            <label for="filter-sede" class="!mb-1">Sede</label>
+            <label for="filter-sede">Sede</label>
             <select id="filter-sede" name="sede" class="!py-2 !px-4 text-sm">
                 <option value="">Todas</option>
                 {% for s in sedes %}
@@ -39,7 +39,7 @@
             </select>
         </div>
         <div>
-            <label for="filter-profesor" class="!mb-1">Profesor</label>
+            <label for="filter-profesor">Profesor</label>
             <select id="filter-profesor" name="profesor" class="!py-2 !px-4 text-sm">
                 <option value="">Todos</option>
                 {% for t in profesores %}
@@ -48,7 +48,7 @@
             </select>
         </div>
         <div>
-            <label for="filter-dia" class="!mb-1">Día</label>
+            <label for="filter-dia">Día</label>
             <select id="filter-dia" name="dia_semana" class="!py-2 !px-4 text-sm">
                 <option value="">Todos</option>
                 {% for value, label in weekday_choices %}
@@ -57,7 +57,7 @@
             </select>
         </div>
         <div>
-            <label for="filter-estado" class="!mb-1">Estado</label>
+            <label for="filter-estado">Estado</label>
             <select id="filter-estado" name="estado" class="!py-2 !px-4 text-sm">
                 <option value="">Todos</option>
                 {% for value, label in estado_choices %}
