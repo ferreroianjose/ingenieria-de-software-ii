@@ -31,7 +31,9 @@ class Command(BaseCommand):
             if not email:
                 continue
 
-            if User.objects.filter(email=email).exists():
+            existing = User.objects.filter(email=email).first()
+            if existing:
+                existing.save()
                 skipped_count += 1
                 continue
 

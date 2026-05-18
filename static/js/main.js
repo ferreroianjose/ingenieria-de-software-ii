@@ -2,6 +2,52 @@
  * @fileOverview Custom client-side JavaScript
  */
 
+/** Ref-counted scroll lock while modals/drawers are open (supports multiple overlays). */
+const modalScrollLock = (() => {
+	let count = 0;
+	let scrollY = 0;
+
+	function apply() {
+		const root = document.documentElement;
+		if (count > 0) {
+			if (!root.classList.contains("modal-scroll-lock")) {
+				scrollY = window.scrollY;
+				root.classList.add("modal-scroll-lock");
+				document.body.style.position = "fixed";
+				document.body.style.top = `-${scrollY}px`;
+				document.body.style.width = "100%";
+			}
+			return;
+		}
+		root.classList.remove("modal-scroll-lock");
+		document.body.style.position = "";
+		document.body.style.top = "";
+		document.body.style.width = "";
+		window.scrollTo(0, scrollY);
+	}
+
+	return {
+		acquire() {
+			count += 1;
+			apply();
+		},
+		release() {
+			count = Math.max(0, count - 1);
+			apply();
+		},
+		reset() {
+			count = 0;
+			apply();
+		},
+	};
+})();
+
+window.modalScrollLock = modalScrollLock;
+
+document.body.addEventListener("htmx:beforeSwap", () => {
+	modalScrollLock.reset();
+});
+
 htmx.config.globalViewTransitions = false;
 htmx.config.selfRequestsOnly = false;
 

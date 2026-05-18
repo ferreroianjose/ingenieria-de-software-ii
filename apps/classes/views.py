@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
+from GYMFlow.access import admin_required
 from django.db.models import ProtectedError
 from django.http import HttpResponse
 from django.urls import reverse
@@ -377,7 +377,7 @@ CATALOG_VIEW_TABS = [
 ]
 
 
-@staff_member_required
+@admin_required
 def class_list(request):
     tab = request.GET.get("tab", "lista")
     if tab not in {t["id"] for t in CLASS_LIST_VIEW_TABS}:
@@ -399,7 +399,7 @@ def class_list(request):
     )
 
 
-@staff_member_required
+@admin_required
 def class_rows(request):
     return render(
         request,
@@ -408,7 +408,7 @@ def class_rows(request):
     )
 
 
-@staff_member_required
+@admin_required
 def locations_list(request):
     sedes = Sede.objects.all().order_by("nombre")
     selected_sede_id = request.GET.get("sede_id")
@@ -432,7 +432,7 @@ def locations_list(request):
     )
 
 
-@staff_member_required
+@admin_required
 def sala_rows(request):
     sede_id = request.GET.get("sede_id")
     if not sede_id:
@@ -456,7 +456,7 @@ def sala_rows(request):
     )
 
 
-@staff_member_required
+@admin_required
 def catalog(request):
     tab = request.GET.get("tab", "disciplinas")
     if tab not in ("disciplinas", "profesores"):
@@ -475,7 +475,7 @@ def catalog(request):
     )
 
 
-@staff_member_required
+@admin_required
 def disciplina_rows(request):
     q = request.GET.get("q", "")
     disciplinas = apply_text_search(
@@ -492,7 +492,7 @@ def disciplina_rows(request):
     )
 
 
-@staff_member_required
+@admin_required
 def teacher_rows(request):
     q = request.GET.get("q", "")
     teachers = apply_text_search(
@@ -509,7 +509,7 @@ def teacher_rows(request):
     )
 
 
-@staff_member_required
+@admin_required
 def class_modal(request, class_id=None):
     if class_id is not None:
         instance = get_object_or_404(
@@ -523,7 +523,7 @@ def class_modal(request, class_id=None):
     return _render_class_drawer(request, form, instance)
 
 
-@staff_member_required
+@admin_required
 def salas_por_sede(request):
     sede_id = request.GET.get("sede")
     sala_id = request.GET.get("sala")
@@ -547,7 +547,7 @@ def salas_por_sede(request):
     return render(request, "partials/classes/shared/_sala_field.html", {"form": form})
 
 
-@staff_member_required
+@admin_required
 def create_class(request):
     if request.method != "POST":
         return redirect("classes:class_list")
@@ -566,7 +566,7 @@ def create_class(request):
     return redirect("classes:class_list")
 
 
-@staff_member_required
+@admin_required
 def delete_class(request, class_id):
     if request.method != "POST":
         return redirect("classes:class_list")
@@ -589,7 +589,7 @@ def delete_class(request, class_id):
         )
 
 
-@staff_member_required
+@admin_required
 def toggle_class_pause(request, class_id):
     if request.method != "POST":
         return redirect("classes:class_list")
@@ -609,7 +609,7 @@ def toggle_class_pause(request, class_id):
     )
 
 
-@staff_member_required
+@admin_required
 def update_class(request, class_id):
     if request.method != "POST":
         return redirect("classes:class_list")
@@ -629,7 +629,7 @@ def update_class(request, class_id):
     return redirect("classes:class_list")
 
 
-@staff_member_required
+@admin_required
 def sede_modal(request, sede_id=None):
     if sede_id is not None:
         instance = get_object_or_404(Sede, pk=sede_id)
@@ -640,7 +640,7 @@ def sede_modal(request, sede_id=None):
     return _render_sede_modal_panel(request, form, instance)
 
 
-@staff_member_required
+@admin_required
 def sala_modal(request, sala_id=None):
     if sala_id is not None:
         instance = get_object_or_404(Sala, pk=sala_id)
@@ -664,7 +664,7 @@ def sala_modal(request, sala_id=None):
     )
 
 
-@staff_member_required
+@admin_required
 def create_sede(request):
     if request.method != "POST":
         return redirect("classes:locations_list")
@@ -685,7 +685,7 @@ def create_sede(request):
     return redirect("classes:locations_list")
 
 
-@staff_member_required
+@admin_required
 def update_sede(request, sede_id):
     if request.method != "POST":
         return redirect("classes:locations_list")
@@ -707,7 +707,7 @@ def update_sede(request, sede_id):
     return redirect("classes:locations_list")
 
 
-@staff_member_required
+@admin_required
 def create_sala(request):
     if request.method != "POST":
         return redirect("classes:locations_list")
@@ -733,7 +733,7 @@ def create_sala(request):
     return redirect("classes:locations_list")
 
 
-@staff_member_required
+@admin_required
 def update_sala(request, sala_id):
     if request.method != "POST":
         return redirect("classes:locations_list")
@@ -753,7 +753,7 @@ def update_sala(request, sala_id):
     return redirect("classes:locations_list")
 
 
-@staff_member_required
+@admin_required
 def disciplina_modal(request, disciplina_id=None):
     if disciplina_id is not None:
         instance = get_object_or_404(Disciplina, pk=disciplina_id)
@@ -764,7 +764,7 @@ def disciplina_modal(request, disciplina_id=None):
     return _render_disciplina_modal_panel(request, form, instance)
 
 
-@staff_member_required
+@admin_required
 def create_disciplina(request):
     if request.method != "POST":
         return redirect(reverse("classes:catalog") + "?tab=disciplinas")
@@ -783,7 +783,7 @@ def create_disciplina(request):
     return redirect(reverse("classes:catalog") + "?tab=disciplinas")
 
 
-@staff_member_required
+@admin_required
 def update_disciplina(request, disciplina_id):
     if request.method != "POST":
         return redirect(reverse("classes:catalog") + "?tab=disciplinas")
@@ -803,7 +803,7 @@ def update_disciplina(request, disciplina_id):
     return redirect(reverse("classes:catalog") + "?tab=disciplinas")
 
 
-@staff_member_required
+@admin_required
 def teacher_modal(request, teacher_id=None):
     if teacher_id is not None:
         instance = get_object_or_404(Teacher, pk=teacher_id)
@@ -814,7 +814,7 @@ def teacher_modal(request, teacher_id=None):
     return _render_teacher_modal_panel(request, form, instance)
 
 
-@staff_member_required
+@admin_required
 def create_teacher(request):
     if request.method != "POST":
         return redirect(reverse("classes:catalog") + "?tab=profesores")
@@ -833,7 +833,7 @@ def create_teacher(request):
     return redirect(reverse("classes:catalog") + "?tab=profesores")
 
 
-@staff_member_required
+@admin_required
 def update_teacher(request, teacher_id):
     if request.method != "POST":
         return redirect(reverse("classes:catalog") + "?tab=profesores")
@@ -853,7 +853,7 @@ def update_teacher(request, teacher_id):
     return redirect(reverse("classes:catalog") + "?tab=profesores")
 
 
-@staff_member_required
+@admin_required
 def delete_sede(request, sede_id):
     if request.method != "POST":
         return redirect("classes:locations_list")
@@ -876,7 +876,7 @@ def delete_sede(request, sede_id):
         )
 
 
-@staff_member_required
+@admin_required
 def delete_sala(request, sala_id):
     if request.method != "POST":
         return redirect("classes:locations_list")
@@ -900,7 +900,7 @@ def delete_sala(request, sala_id):
         )
 
 
-@staff_member_required
+@admin_required
 def delete_disciplina(request, disciplina_id):
     if request.method != "POST":
         return redirect(reverse("classes:catalog") + "?tab=disciplinas")
@@ -923,7 +923,7 @@ def delete_disciplina(request, disciplina_id):
         )
 
 
-@staff_member_required
+@admin_required
 def delete_teacher(request, teacher_id):
     if request.method != "POST":
         return redirect(reverse("classes:catalog") + "?tab=profesores")

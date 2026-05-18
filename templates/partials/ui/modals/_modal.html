@@ -4,6 +4,7 @@
 <div
 	x-cloak
 	x-show="{{ show_var }}"
+	x-init="$watch('{{ show_var }}', open => open ? modalScrollLock.acquire() : modalScrollLock.release())"
 	class="relative z-[200]"
 	@keydown.escape.window="{{ show_var }} = false"
 >

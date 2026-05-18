@@ -30,7 +30,7 @@
     "username": "empleado@siempregym.com",
     "raw_password": "empleado123",
     "is_superuser": false,
-    "is_staff": true,
+    "is_staff": false,
     "rol": "EMPLEADO",
     "dni": "11111111",
     "first_name": "Empleado",
@@ -39,8 +39,8 @@
     "estado_constancia": "APROBADA"
   },
   {
-    "email": "enrique@mail.com",
-    "username": "enrique@mail.com",
+    "email": "enrique@email.com",
+    "username": "enrique@email.com",
     "raw_password": "enrique123",
     "is_superuser": false,
     "is_staff": false,
@@ -52,8 +52,8 @@
     "estado_constancia": "APROBADA"
   },
   {
-    "email": "guadalupe@mail.com",
-    "username": "guadalupe@mail.com",
+    "email": "guadalupe@email.com",
+    "username": "guadalupe@email.com",
     "raw_password": "guadalupe123",
     "is_superuser": false,
     "is_staff": false,

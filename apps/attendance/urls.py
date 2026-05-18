@@ -5,4 +5,5 @@ app_name = 'attendance'
 
 urlpatterns = [
     path('generate-qr/', views.generate_qr, name='generate_qr'),
+    path('manage/', views.staff_asistencia, name='manage'),
 ]

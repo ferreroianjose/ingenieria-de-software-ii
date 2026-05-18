@@ -7,13 +7,13 @@
   <div class="mb-8">
     <h1 class="font-semibold">Configuración</h1>
     <p class="mt-1 text-sm text-muted-foreground">
-      Administrá las preferencias de tu cuenta{% if user.rol == 'ADMIN' or user.rol == 'EMPLEADO' %} y del sistema{% endif %}.
+      Administrá las preferencias de tu cuenta{% if user.rol == 'ADMIN' %} y del sistema{% endif %}.
     </p>
   </div>
 
   <div class="space-y-4">
 
-    {% if user.rol == 'ADMIN' or user.rol == 'EMPLEADO' %}
+    {% if user.rol == 'ADMIN' %}
       {% include 'partials/ui/_collapsible_section.html' with icon='bell' title='Notificaciones manuales' description='Enviá notificaciones de prueba o avisos individuales.' content_template='notifications/_test_send.html' %}
     {% endif %}
   </div>

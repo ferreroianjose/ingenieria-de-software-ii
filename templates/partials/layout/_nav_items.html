@@ -15,6 +15,7 @@
      @htmx:after-settle.window="currentPath = window.location.pathname"
      class="flex flex-col gap-1 w-full">
 
+  <!-- PÁGINAS DE USUARIO -->
   <a href="{% url 'dashboard' %}"
      class="nav-item"
      :class="currentPath === '{% url 'dashboard' %}' ? 'nav-item-active' : ''">
@@ -22,41 +23,67 @@
     Menú principal
   </a>
 
+  {% if user.rol == 'CLIENTE' %}
   <a href="#"
      class="nav-item"
      :class="currentPath === '/reservas/' ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="calendar" class="size-5 shrink-0" %}
+    {% include 'partials/ui/_icon.html' with name="calendar-fill" class="size-5 shrink-0" %}
     Mis reservas
   </a>
 
   <a href="#"
      class="nav-item"
      :class="currentPath === '/pagos/' ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="credit-card-2-front" class="size-5 shrink-0" %}
+    {% include 'partials/ui/_icon.html' with name="credit-card-fill" class="size-5 shrink-0" %}
     Mis pagos
   </a>
+  {% endif %}
 
-
-  {% if user.is_staff %}
+  <!-- PÁGINAS DE ADMIN -->
+  {% if user.rol == 'ADMIN' %}
   <a href="{% url 'classes:class_list' %}"
      class="nav-item"
      :class="currentPath.startsWith('/classes/list') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="list" class="size-5 shrink-0" %}
+    {% include 'partials/ui/_icon.html' with name="kanban-fill" class="size-5 shrink-0" %}
     Gestionar clases
   </a>
 
   <a href="{% url 'classes:locations_list' %}"
      class="nav-item"
      :class="currentPath.startsWith('/classes/locations') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="geo-alt-fill" class="size-5 shrink-0" %}
+    {% include 'partials/ui/_icon.html' with name="building-fill" class="size-5 shrink-0" %}
     Sedes y salas
   </a>
 
   <a href="{% url 'classes:catalog' %}"
      class="nav-item"
      :class="currentPath.startsWith('/classes/catalog') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+    {% include 'partials/ui/_icon.html' with name="person-arms-up" class="size-5 shrink-0" %}
     Catálogo
+  </a>
+  {% endif %}
+
+  <!-- PÁGINAS DE EMPLEADO (y admin) -->
+  {% if user.rol == 'EMPLEADO' or user.rol == 'ADMIN' %}
+  <a href="{% url 'manage' %}"
+     class="nav-item"
+     :class="currentPath.startsWith('/users/manage') ? 'nav-item-active' : ''">
+    {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+    Clientes
+  </a>
+
+  <a href="{% url 'payments:manage' %}"
+     class="nav-item"
+     :class="currentPath.startsWith('/payments/manage') ? 'nav-item-active' : ''">
+    {% include 'partials/ui/_icon.html' with name="credit-card-fill" class="size-5 shrink-0" %}
+    Pagos
+  </a>
+
+  <a href="{% url 'attendance:manage' %}"
+     class="nav-item"
+     :class="currentPath.startsWith('/attendance/manage') ? 'nav-item-active' : ''">
+    {% include 'partials/ui/_icon.html' with name="clipboard2-heart-fill" class="size-5 shrink-0" %}
+    Asistencia
   </a>
   {% endif %}
 

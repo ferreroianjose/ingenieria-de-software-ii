@@ -278,16 +278,16 @@
 	        @apply flex w-full min-w-0 cursor-pointer items-stretch overflow-hidden rounded-3xl border border-transparent transition-colors duration-150;
 	      }
 	      .admin-picker-item:hover:not(.is-selected) {
-	        @apply border-gray-200 bg-gray-50;
+	        @apply ring-1 ring-primary-200/50 bg-primary-50/25;
 	      }
 	      .admin-picker-item.is-selected {
-	        @apply rounded-3xl border-primary-400 bg-white shadow-fair-sm ring-2 ring-primary-400/30;
+	        @apply rounded-3xl bg-white shadow-fair-sm ring-2 ring-primary-400/50;
 	      }
 	      .admin-picker-item .admin-picker-select {
 	        @apply flex w-full min-w-0 flex-1 items-center gap-3 rounded-3xl bg-transparent px-4 py-3 text-left font-semibold shadow-none ring-0 hover:bg-transparent focus:ring-0 focus:ring-offset-0;
 	      }
 	      .admin-select-indicator {
-	        @apply inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors duration-200;
+	        @apply flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors duration-200;
 	      }
 	      .admin-select-indicator.is-active {
 	        @apply border-primary-400 bg-primary-400 text-white;
@@ -357,6 +357,10 @@
 	        display: none !important;
 	      }
 
+	      html.modal-scroll-lock {
+	        overflow: hidden;
+	      }
+
 		  /* Utility for hiding scrolls while keeping functionality */
 	      .hide-scroll::-webkit-scrollbar { display: none; }
 	      .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
@@ -369,6 +373,9 @@
 			src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
 		></script>
 
+    <!-- Alpine Plugins -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+
 		<!-- HTMX -->
 		<script
 			src="https://cdn.jsdelivr.net/npm/htmx.org@2.0/dist/htmx.min.js"
@@ -380,7 +387,7 @@
 		<link rel="stylesheet" href="{% static 'css/global.css' %}" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'css/favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.svg' %}">
 
 	<script>
 		// Prevent FOUC

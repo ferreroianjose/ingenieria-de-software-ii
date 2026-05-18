@@ -21,6 +21,7 @@ urlpatterns = [
 
     path('settings/', views.settings_view, name='settings'),
 
+    path('manage/', views.staff_clientes, name='manage'),
 
     # TODO: agregar password reset, etc.
 ]

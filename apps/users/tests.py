@@ -121,7 +121,7 @@ class UserViewsTests(TestCase):
             username="staff@example.com",
             password="password123",
             dni="111",
-            is_staff=True,
+            rol="ADMIN",
         )
         self.client_user = User.objects.create_user(
             email="client@example.com",

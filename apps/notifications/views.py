@@ -10,7 +10,10 @@ class TaskStatusView(UserPassesTestMixin, View):
     Vista para consultar el estado de una tarea de fondo (polling).
     """
     def test_func(self):
-        return self.request.user.is_authenticated and self.request.user.is_staff
+        return (
+            self.request.user.is_authenticated
+            and self.request.user.rol == "ADMIN"
+        )
 
     def get(self, request, task_id):
         # Buscamos la tarea en los registros de Django Q
@@ -26,8 +29,11 @@ class TestNotificationView(UserPassesTestMixin, View):
     template_name = 'notifications/test_send.html'
 
     def test_func(self):
-        """Solo permite el acceso a administradores o staff."""
-        return self.request.user.is_authenticated and self.request.user.is_staff
+        """Solo permite el acceso a administradores."""
+        return (
+            self.request.user.is_authenticated
+            and self.request.user.rol == "ADMIN"
+        )
 
     def get(self, request):
         context = {
