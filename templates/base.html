@@ -206,11 +206,14 @@
 	      .admin-panel__table:has(.admin-table-empty) {
 	        @apply overflow-hidden;
 	      }
+	      .admin-panel__table:has(.admin-table-empty) table {
+          @apply size-full;
+        }
 	      .admin-selectable-table:has(.admin-table-empty) tbody tr.admin-table-empty td {
 	        @apply border-0 bg-transparent p-3;
 	      }
 	      .admin-empty-dashed {
-	        @apply box-border m-3 flex flex-1 flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-gray-400/50 bg-gray-100/50 px-6 py-16 text-center text-sm text-gray-700;
+	        @apply box-border m-3 flex flex-1 flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-gray-400/50 bg-gray-100/50 px-6 py-16 text-center text-sm text-gray-700 size-full;
 	      }
 
 	      /* Drawers y modales centrados */
