@@ -86,7 +86,7 @@
 
 	      /* Admin shell, panels, color & depth */
           .internal-page {
-            @apply px-4 py-8 relative z-[1];
+            @apply mx-auto px-4 lg:px-8 md:px-4 py-8 relative z-[1];
           }
           .internal-page::before {
             content: '';
@@ -368,14 +368,11 @@
 	      }
 		</style>
 
-		<!-- Alpine.js -->
-		<script
-			defer
-			src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-		></script>
+    	<!-- Alpine Plugins -->
+    	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 
-    <!-- Alpine Plugins -->
-    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+		<!-- Alpine.js -->
+		<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 		<!-- HTMX -->
 		<script

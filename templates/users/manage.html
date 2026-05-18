@@ -1,10 +1,37 @@
 {% extends 'base.html' %}
 
-{% block title %}Clientes{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="internal-page container">
-  {% include 'partials/admin/_admin_page_header.html' with title='Clientes' subtitle='Próximamente: aprobación de constancias para menores y búsqueda de clientes.' view_tabs=view_tabs aria_label='Catálogo' %}
-  {% include 'partials/admin/_table_placeholder.html' with message='Próximamente: registro manual de asistencia.' %}
+<div
+    class="internal-page container"
+    x-data="{
+        userDrawerOpen: false,
+        userDrawerUrlPattern: '{% url 'user_detail_drawer' 0 %}',
+        openUserRow(id) {
+            const url = adminActionUrl(this.userDrawerUrlPattern, id);
+            if (url) openUserDrawer(url);
+        }
+    }"
+    @admin-modal-close.window="if ($event.detail === 'userDrawerOpen') userDrawerOpen = false"
+    @user-drawer-open.window="userDrawerOpen = true"
+>
+    <div class="flex flex-col gap-6">
+        {% include 'partials/admin/_admin_page_header.html' with title=page_title subtitle=page_subtitle %}
+
+        <section class="flex flex-col gap-4">
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar">
+                    {% url 'user_rows' as user_rows_url %}
+                    {% include 'partials/admin/_list_search_form.html' with form_id='users-search-form' search_url=user_rows_url target_id='#users-table-panel' placeholder=search_placeholder %}
+                </div>
+                <div id="users-table-panel">
+                    {% include 'users/_user_table_panel.html' with searched=False can_manage=can_manage empty_search_message=empty_search_message %}
+                </div>
+            </div>
+        </section>
+    </div>
+
+    {% include 'partials/ui/modals/_drawer_shell.html' with modal_open_var='userDrawerOpen' container_id='user-drawer' %}
 </div>
 {% endblock %}

@@ -9,8 +9,10 @@ const modalScrollLock = (() => {
 
 	function apply() {
 		const root = document.documentElement;
+		const locked = root.classList.contains("modal-scroll-lock");
+
 		if (count > 0) {
-			if (!root.classList.contains("modal-scroll-lock")) {
+			if (!locked) {
 				scrollY = window.scrollY;
 				root.classList.add("modal-scroll-lock");
 				document.body.style.position = "fixed";
@@ -19,6 +21,11 @@ const modalScrollLock = (() => {
 			}
 			return;
 		}
+
+		if (!locked) {
+			return;
+		}
+
 		root.classList.remove("modal-scroll-lock");
 		document.body.style.position = "";
 		document.body.style.top = "";
@@ -45,7 +52,9 @@ const modalScrollLock = (() => {
 window.modalScrollLock = modalScrollLock;
 
 document.body.addEventListener("htmx:beforeSwap", () => {
-	modalScrollLock.reset();
+	if (document.documentElement.classList.contains("modal-scroll-lock")) {
+		modalScrollLock.reset();
+	}
 });
 
 htmx.config.globalViewTransitions = false;
@@ -60,6 +69,7 @@ const MODAL_FORM_CONTAINERS = {
 
 const ADMIN_DRAWER_CONTAINERS = {
 	"class-drawer-container": "No se pudo cargar el formulario. Intentá de nuevo.",
+	"user-drawer-container": "No se pudo cargar la ficha. Intentá de nuevo.",
 };
 
 const ADMIN_MODAL_CONTAINERS = {
@@ -114,7 +124,7 @@ function closeAdminModal(modalVar) {
 	if (!modalVar) return;
 	window.dispatchEvent(new CustomEvent("admin-modal-close", { detail: modalVar }));
 
-	if (modalVar === "classDrawerOpen") {
+	if (modalVar === "classDrawerOpen" || modalVar === "userDrawerOpen") {
 		return;
 	}
 
@@ -266,6 +276,23 @@ window.adminHtmxPost = function (formEl) {
 window.adminActionUrl = function (patternUrl, id) {
 	if (!id) return "";
 	return patternUrl.replace(/\/0(\/|$)/, `/${id}$1`);
+};
+
+/** Load user detail into the drawer, then open it when swapped. */
+window.openUserDrawer = function (url) {
+	if (!url) return;
+	window.dispatchEvent(new CustomEvent("user-drawer-open"));
+	const container = document.getElementById("user-drawer-container");
+	if (container) {
+		container.innerHTML =
+			'<div class="flex min-h-[12rem] flex-1 items-center justify-center p-8 text-sm font-medium text-gray-500">Cargando…</div>';
+	}
+	requestAnimationFrame(() => {
+		htmx.ajax("GET", url, {
+			target: "#user-drawer-container",
+			swap: "innerHTML",
+		});
+	});
 };
 
 /** Load class create/edit form into the drawer, then open it when swapped. */

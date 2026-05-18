@@ -1,0 +1,156 @@
+<div class="flex h-full min-h-0 flex-col">
+	{% if can_manage %}
+	<form
+		method="post"
+		action="{% url 'change_user_role' user.id %}"
+		hx-post="{% url 'change_user_role' user.id %}"
+		hx-target="#user-drawer-container"
+		hx-swap="innerHTML"
+		class="flex min-h-0 flex-1 flex-col overflow-hidden"
+	>
+		{% csrf_token %}
+
+		<header class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 p-6 sm:p-8">
+			<div class="min-w-0 flex-1 space-y-1">
+				<h1 class="title-impact">{{ user.get_full_name }}</h1>
+				<p class="text-sm font-normal text-gray-600">{{ user.email }}</p>
+				{% if role_updated %}
+				<p class="text-sm font-semibold text-green-600" role="status">Rol actualizado.</p>
+				{% endif %}
+			</div>
+			<button
+				type="button"
+				class="btn-auto shrink-0 rounded-full border-0 bg-gray-200 p-2 text-gray-800 shadow-fair-md hover:bg-gray-100 hover:text-primary-400"
+				@click="userDrawerOpen = false"
+				aria-label="Cerrar"
+			>
+				<svg class="size-7" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+		</header>
+
+		<div class="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8 [&_label]:mb-2 [&_label]:block [&_label]:text-sm [&_label]:font-bold [&_label]:text-gray-700">
+			<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">DNI</dt>
+					<dd class="mt-1 text-sm font-medium text-gray-900">{{ user.dni }}</dd>
+				</div>
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Fecha de nacimiento</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.fecha_nacimiento|date:'d/m/Y'|default:'—' }}</dd>
+				</div>
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Teléfono de emergencia</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.telefono_emergencia|default:'—' }}</dd>
+				</div>
+				{% if user.rol == 'CLIENTE' %}
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Constancia (menor)</dt>
+					<dd class="mt-1">
+						<span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
+							{% if user.estado_constancia == 'APROBADA' %}bg-green-100 text-green-800
+							{% elif user.estado_constancia == 'RECHAZADA' %}bg-red-100 text-red-800
+							{% else %}bg-amber-100 text-amber-800{% endif %}">
+							{{ user.get_estado_constancia_display }}
+						</span>
+					</dd>
+				</div>
+				<div class="sm:col-span-2">
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Archivo de constancia</dt>
+					<dd class="mt-1 text-sm">
+						{% if user.constancia_tutor %}
+						<a href="{{ user.constancia_tutor.url }}" class="font-semibold text-primary-500 hover:underline" target="_blank" rel="noopener">Ver constancia</a>
+						{% else %}
+						<span class="text-gray-500">Sin archivo cargado</span>
+						{% endif %}
+					</dd>
+				</div>
+				{% endif %}
+			</dl>
+
+			<div class="mt-8 max-w-md">
+				<label for="user-rol-select">Rol</label>
+				<select
+					id="user-rol-select"
+					name="rol"
+					class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20"
+				>
+					{% for value, label in roles %}
+					<option value="{{ value }}" {% if user.rol == value %}selected{% endif %}>{{ label }}</option>
+					{% endfor %}
+				</select>
+			</div>
+		</div>
+
+		<footer class="modal-footer relative flex shrink-0 flex-col items-center sm:items-start justify-end gap-4 overflow-hidden bg-gradient-to-b from-secondary-900 via-secondary-950 via-50% to-black p-6 sm:p-8 isolate [transform:translateZ(0)]">
+			{% include 'partials/ui/modals/_modal_footer_glows.html' %}
+			<div class="relative z-10 flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+				<button
+					type="submit"
+					class="btn-auto bg-primary-400 px-8 py-2.5 font-bold text-white hover:bg-primary-600"
+				>Guardar rol</button>
+				<a
+					href="{% url 'delete_user' user.id %}"
+					class="no-underline btn-auto rounded-full bg-red-500 px-8 py-2.5 text-center text-sm font-bold text-white hover:bg-red-600"
+				>Eliminar usuario</a>
+			</div>
+		</footer>
+	</form>
+	{% else %}
+		<header class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 p-6 sm:p-8">
+			<div class="min-w-0 flex-1 space-y-1">
+				<h1 class="title-impact">{{ user.get_full_name }}</h1>
+				<p class="text-sm font-normal text-gray-600">{{ user.email }}</p>
+			</div>
+			<button
+				type="button"
+				class="btn-auto shrink-0 rounded-full border-0 bg-gray-200 p-2 text-gray-800 shadow-fair-md hover:bg-gray-100 hover:text-primary-400"
+				@click="userDrawerOpen = false"
+				aria-label="Cerrar"
+			>
+				<svg class="size-7" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+		</header>
+
+		<div class="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8">
+			<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">DNI</dt>
+					<dd class="mt-1 text-sm font-medium text-gray-900">{{ user.dni }}</dd>
+				</div>
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Fecha de nacimiento</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.fecha_nacimiento|date:'d/m/Y'|default:'—' }}</dd>
+				</div>
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Teléfono de emergencia</dt>
+					<dd class="mt-1 text-sm text-gray-900">{{ user.telefono_emergencia|default:'—' }}</dd>
+				</div>
+				<div>
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Constancia (menor)</dt>
+					<dd class="mt-1">
+						<span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
+							{% if user.estado_constancia == 'APROBADA' %}bg-green-100 text-green-800
+							{% elif user.estado_constancia == 'RECHAZADA' %}bg-red-100 text-red-800
+							{% else %}bg-amber-100 text-amber-800{% endif %}">
+							{{ user.get_estado_constancia_display }}
+						</span>
+					</dd>
+				</div>
+				<div class="sm:col-span-2">
+					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Archivo de constancia</dt>
+					<dd class="mt-1 text-sm">
+						{% if user.constancia_tutor %}
+						<a href="{{ user.constancia_tutor.url }}" class="font-semibold text-primary-500 hover:underline" target="_blank" rel="noopener">Ver constancia</a>
+						{% else %}
+						<span class="text-gray-500">Sin archivo cargado</span>
+						{% endif %}
+					</dd>
+				</div>
+			</dl>
+		</div>
+	{% endif %}
+</div>

@@ -8,43 +8,39 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import user_passes_test
-from django.template.loader import render_to_string
-from django.middleware.csrf import get_token
+from django.core.paginator import Paginator
 
 from apps.notifications.services import notification_service
-from GYMFlow.access import staff_required
+from GYMFlow.access import admin_required, staff_required
 from .forms import CustomUserCreationForm, TwoFactorForm
+from .search import USER_PAGE_SIZE, filter_users_queryset
+
+User = get_user_model()
+
 
 @login_required
 def settings_view(request):
-    # Contexto para el partial de notificaciones (si el usuario tiene permisos)
     context = {}
     if request.user.rol == "ADMIN":
         context["adapters"] = notification_service.adapters
-        
     return render(request, "users/settings.html", context)
 
 
 # Custom LoginView that forces admins through a 2FA step
 class CustomLoginView(LoginView):
     def form_valid(self, form):
-        # invocar login y obtener respuesta de redirección estándar
         response = super().form_valid(form)
 
-        # si el usuario es un administrador
         user = self.request.user
         if user.rol == "ADMIN":
-            # Generar código de 6 dígitos
             code = "".join(random.choices(string.digits, k=6))
 
-            # Enviar notificación
             notification_service.notify(
                 recipient=user,
                 subject="Tu código de seguridad GYMFlow",
                 message=f"Hola {user.first_name}, tu código de verificación es: {code}. No compartas este código con nadie.",
                 template_name="two_factor",
-                context={"user": user, "code": code}
+                context={"user": user, "code": code},
             )
 
             next_url = (
@@ -52,8 +48,7 @@ class CustomLoginView(LoginView):
                 if response.has_header("Location")
                 else settings.LOGIN_REDIRECT_URL
             )
-            
-            # Guardar en sesión
+
             self.request.session["is_2fa_pending"] = True
             self.request.session["2fa_code"] = code
             self.request.session["post_login_next"] = next_url
@@ -61,6 +56,7 @@ class CustomLoginView(LoginView):
             return HttpResponseRedirect(reverse("two_factor"))
 
         return response
+
 
 @login_required
 def two_factor(request):
@@ -87,10 +83,15 @@ def two_factor(request):
         form = TwoFactorForm(expected_code=expected_code)
 
     next_url = request.session.get("post_login_next", "")
-    return render(request, "users/two_factor.html", {
-        "form": form,
-        "next": next_url
-    })
+    return render(
+        request,
+        "users/two_factor.html",
+        {
+            "form": form,
+            "next": next_url,
+        },
+    )
+
 
 def register(request):
     if request.user.is_authenticated:
@@ -105,58 +106,122 @@ def register(request):
     else:
         form = CustomUserCreationForm()
 
-    return render(request, "users/register.html", {
-        "form": form,
-        "password_help_texts": "La contraseña debe tener 10 o más caracteres, incluyendo letras, números y al menos un carácter especial."
-    })
+    return render(
+        request,
+        "users/register.html",
+        {
+            "form": form,
+            "password_help_texts": "La contraseña debe tener 10 o más caracteres, incluyendo letras, números y al menos un carácter especial.",
+        },
+    )
+
+
+def _staff_users_queryset(request):
+    qs = User.objects.order_by("last_name", "first_name", "email")
+    if request.user.rol == "EMPLEADO":
+        qs = qs.filter(rol="CLIENTE")
+    return qs
+
+
+def get_staff_user(request, user_id):
+    user = get_object_or_404(_staff_users_queryset(request), pk=user_id)
+    return user
+
+
+def _user_rows_context(request):
+    q = (request.GET.get("q") or "").strip()
+    qs = filter_users_queryset(_staff_users_queryset(request), q)
+    page_obj = Paginator(qs, USER_PAGE_SIZE).get_page(request.GET.get("page") or 1)
+    is_admin = request.user.rol == "ADMIN"
+    return {
+        "searched": True,
+        "q": q,
+        "page_obj": page_obj,
+        "can_manage": is_admin,
+        "empty_search_message": (
+            "Presioná «Buscar» para listar usuarios."
+            if is_admin
+            else "Presioná «Buscar» para listar clientes."
+        ),
+    }
+
+
+def _user_drawer_context(request, user, *, role_updated=False):
+    return {
+        "user": user,
+        "can_manage": request.user.rol == "ADMIN",
+        "roles": User.ROLES,
+        "role_updated": role_updated,
+    }
+
 
 @staff_required
 def staff_clientes(request):
-    return render(request, "users/manage.html")
+    is_admin = request.user.rol == "ADMIN"
+    return render(
+        request,
+        "users/manage.html",
+        {
+            "can_manage": is_admin,
+            "page_title": "Usuarios" if is_admin else "Clientes",
+            "page_subtitle": (
+                "Buscá usuarios, abrí la ficha, modificá sus roles o eliminalos."
+                if is_admin
+                else "Buscá clientes y abrí la ficha para ver sus datos y modificar su estado de constancia (#TODO)."
+            ),
+            "search_placeholder": (
+                "Nombre, email o DNI…"
+            ),
+            "empty_search_message": (
+                "Presioná «Buscar» para listar usuarios."
+                if is_admin
+                else "Presioná «Buscar» para listar clientes."
+            ),
+        },
+    )
 
-# --- Gestión de usuarios (solo admin) ---
 
-User = get_user_model()
+@staff_required
+def user_rows(request):
+    return render(request, "users/_user_table_panel.html", _user_rows_context(request))
 
-def admin_required(view_func):
-    return user_passes_test(lambda u: u.is_authenticated and u.is_staff)(view_func)
 
-@admin_required
-def user_list(request):
-    users = User.objects.all()
-    roles_choices = getattr(User, 'ROLES', [])
-    # Pasamos 'roles' para que el archivo partial pueda renderizar las opciones la primera vez
-    return render(request, "users/user_list.html", {"users": users, "roles": roles_choices})
+@staff_required
+def user_detail_drawer(request, user_id):
+    user = get_staff_user(request, user_id)
+    return render(
+        request,
+        "users/_user_detail_drawer_panel.html",
+        _user_drawer_context(request, user),
+    )
+
 
 @admin_required
 def change_user_role(request, user_id):
     user = get_object_or_404(User, pk=user_id)
-    roles_choices = getattr(User, 'ROLES', [])
 
     if request.method == "POST":
         new_role = request.POST.get("rol")
-        if new_role and new_role in dict(roles_choices):
+        if new_role and new_role in dict(User.ROLES):
             user.rol = new_role
             user.save()
 
-            # SI LA PETICIÓN VIENE DE HTMX: Devolvemos únicamente el partial de la celda
-            if request.headers.get('HX-Request'):
-                context = {
-                    'user': user, 
-                    'roles': roles_choices, 
-                    'csrf_token': get_token(request) # Forzamos la regeneración segura del token para HTMX
-                }
-                html = render_to_string('users/user_role_cell.html', context, request=request)
-                return HttpResponse(html)
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "users/_user_detail_drawer_panel.html",
+                _user_drawer_context(request, user, role_updated=True),
+            )
 
-            return redirect("user_list")
+        return redirect("manage")
 
-    return redirect("user_list")
+    return redirect("manage")
+
 
 @admin_required
 def delete_user(request, user_id):
     user = get_object_or_404(User, pk=user_id)
     if request.method == "POST":
         user.delete()
-        return redirect("user_list")
+        return redirect("manage")
     return render(request, "users/delete_user.html", {"user": user})

@@ -15,7 +15,6 @@
      @htmx:after-settle.window="currentPath = window.location.pathname"
      class="flex flex-col gap-1 w-full">
 
-  <!-- PÁGINAS DE USUARIO -->
   <a href="{% url 'dashboard' %}"
      class="nav-item"
      :class="currentPath === '{% url 'dashboard' %}' ? 'nav-item-active' : ''">
@@ -23,6 +22,7 @@
     Menú principal
   </a>
 
+  <!-- PÁGINAS DE CLIENTE -->
   {% if user.rol == 'CLIENTE' %}
   <a href="#"
      class="nav-item"
@@ -62,12 +62,6 @@
     Catálogo
   </a>
 
-  <a href="{% url 'user_list' %}" 
-    class="nav-item"
-    :class="currentPath.startsWith('/classes/catalog') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
-    Gestión de usuarios
-  </a>
   {% endif %}
 
   <!-- PÁGINAS DE EMPLEADO (y admin) -->
@@ -76,7 +70,7 @@
      class="nav-item"
      :class="currentPath.startsWith('/users/manage') ? 'nav-item-active' : ''">
     {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
-    Clientes
+    {% if user.rol == 'ADMIN' %}Usuarios{% else %}Clientes{% endif %}
   </a>
 
   <a href="{% url 'payments:manage' %}"
