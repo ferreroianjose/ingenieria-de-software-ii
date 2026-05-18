@@ -85,30 +85,30 @@
 	      }
 
 	      /* Admin shell, panels, color & depth */
-	      .admin-shell {
-	        @apply relative z-[1];
-	      }
-	      .admin-shell::before {
-	        content: '';
-	        @apply pointer-events-none absolute inset-x-0 -z-10 bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
-	        top: -6rem;
-	        height: calc(20rem + 6rem);
-	      }
-	      @media (min-width: 768px) {
-	        .admin-shell::before {
-	          top: 0;
-	          height: 20rem;
-	        }
-	      }
-	      @media (max-width: 767px) {
-	        #main-content:has(.admin-shell)::before {
-	          content: '';
-	          @apply pointer-events-none fixed inset-x-0 top-0 -z-10 h-[22rem] bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
-	        }
-	        .admin-shell::before {
-	          @apply hidden;
-	        }
-	      }
+          .internal-page {
+            @apply px-4 py-8 relative z-[1];
+          }
+          .internal-page::before {
+            content: '';
+            @apply pointer-events-none absolute inset-x-0 -z-10 bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
+            top: -6rem;
+            height: calc(20rem + 6rem);
+          }
+          @media (min-width: 768px) {
+            .internal-page::before {
+              top: 0;
+              height: 20rem;
+            }
+          }
+          @media (max-width: 767px) {
+            #main-content:has(.internal-page)::before {
+              content: '';
+              @apply pointer-events-none fixed inset-x-0 top-0 -z-10 h-[22rem] bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
+            }
+            .internal-page::before {
+              @apply hidden;
+            }
+          }
 
 	      /* Informa el estado de la op CRUD al usuario */
 	      #admin-flash {
@@ -154,24 +154,24 @@
 	          padding: 0;
 	        }
 	      }
-	      .admin-page-header {
+	      .internal-page-header {
 	        @apply relative isolate;
 	      }
 
-	      .admin-page h1 {
+	      .internal-page h1 {
 	        @apply text-3xl lg:text-4xl font-bold text-primary-500 mb-2;
 	      }
-	      .admin-page h2 {
+	      .internal-page h2 {
 	        @apply text-lg font-bold text-secondary-900 normal-case;
 	      }
-	      .admin-page header p {
+	      .internal-page header p {
 	        @apply tracking-wide text-secondary-700/80 no-underline;
 	      }
 
-	      .admin-page-header__title h1 {
+	      .internal-page-header__title h1 {
 	        @apply mb-0;
 	      }
-	      .admin-page-header__title p {
+	      .internal-page-header__title p {
 	        @apply mt-1 mb-0;
 	      }
 
@@ -237,7 +237,7 @@
 	      }
 	      .btn-auto,
 	      .admin-flash-dismiss,
-	      .admin-page button,
+	      .internal-page button,
 	      #sidebar button,
 	      header button,
 	      table button,
@@ -255,17 +255,17 @@
 	      }
 
 	      /* Segmented control (after global button rules) */
-	      .admin-page [role="tablist"].admin-segmented {
+	      .internal-page [role="tablist"].admin-segmented {
 	        @apply flex w-full min-w-0 p-1 gap-0.5 rounded-full bg-gray-200/90 border border-black/[0.06] shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)];
 	      }
-	      .admin-page [role="tablist"].admin-segmented button {
+	      .internal-page [role="tablist"].admin-segmented button {
 	        @apply w-auto min-w-0 flex-1 py-1.5 px-3 text-xs font-semibold leading-tight shadow-none rounded-full transition-all duration-200 ease-out whitespace-nowrap text-center focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0;
 	      }
 	      @media (min-width: 768px) {
-	        .admin-page [role="tablist"].admin-segmented {
+	        .internal-page [role="tablist"].admin-segmented {
 	          @apply inline-flex w-auto flex-none;
 	        }
-	        .admin-page [role="tablist"].admin-segmented button {
+	        .internal-page [role="tablist"].admin-segmented button {
 	          @apply flex-none min-w-[4.25rem] px-4 text-sm;
 	        }
 	      }
@@ -304,6 +304,7 @@
 	      .admin-selectable-table tbody tr.admin-selectable-row.is-selected td {
 	        @apply border-gray-100;
 	      }
+        /* #TODO: reemplazar con partial de botones */
 	      .admin-selection-toolbar-btn {
 	        @apply w-auto min-w-0 rounded-full px-4 py-2 text-sm font-bold shadow-none ring-0 focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-45;
 	      }

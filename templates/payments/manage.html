@@ -1,18 +1,10 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ page_title }}{% endblock %}
+{% block title %}Pagos{% endblock %}
 
 {% block content %}
-<div class="mx-auto w-full max-w-4xl p-6">
-  <div class="mb-8">
-    <h1 class="font-semibold">{{ page_title }}</h1>
-    <p class="mt-1 text-sm text-muted-foreground">
-      {{ page_subtitle }}
-    </p>
-  </div>
-
-  <div class="p-4 border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center text-gray-400">
-    <p class="text-sm font-bold uppercase tracking-widest">{{ placeholder_message }}</p>
-  </div>
+<div class="internal-page container">
+  {% include 'partials/admin/_admin_page_header.html' with title='Pagos' subtitle='Registrá cobros en efectivo o presenciales en sucursal.' view_tabs=view_tabs aria_label='Catálogo' %}
+  {% include 'partials/admin/_table_placeholder.html' with message='Próximamente: registro de pagos en sucursal.' %}
 </div>
 {% endblock %}

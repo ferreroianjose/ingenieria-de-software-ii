@@ -107,27 +107,6 @@ def register(request):
         "password_help_texts": "La contraseña debe tener 10 o más caracteres, incluyendo letras, números y al menos un carácter especial."
     })
 
-
-def _staff_section(request, *, page_title, page_subtitle, placeholder_message):
-    return render(
-        request,
-        "staff/section.html",
-        {
-            "page_title": page_title,
-            "page_subtitle": page_subtitle,
-            "placeholder_message": placeholder_message,
-        },
-    )
-
-
 @staff_required
 def staff_clientes(request):
-    return render(
-        request,
-        "users/manage.html",
-        {
-            "page_title": "Clientes",
-            "page_subtitle": "Aprobá usuarios y filtrá el listado de clientes.",
-            "placeholder_message": "Próximamente: aprobación de constancias para menores y búsqueda de clientes.",
-        },
-    )
+    return render(request, "users/manage.html")

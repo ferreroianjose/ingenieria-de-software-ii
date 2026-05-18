@@ -24,13 +24,5 @@ def _staff_section(request, *, page_title, page_subtitle, placeholder_message):
 
 @staff_required
 def staff_asistencia(request):
-    return render(
-        request,
-        "attendance/manage.html",
-        {
-            "page_title": "Asistencia",
-            "page_subtitle": "Pasá asistencia manual cuando falle el código QR.",
-            "placeholder_message": "Próximamente: registro manual de asistencia.",
-        },
-    )
+    return render(request, "attendance/manage.html")
 
