@@ -22,10 +22,17 @@
     Menú principal
   </a>
 
-  <a href="#"
+  <a href="{% url 'classes:browse' %}"
      class="nav-item"
-     :class="currentPath === '/reservas/' ? 'nav-item-active' : ''">
-    {% include 'partials/_icon.html' with name="calendar" class="size-5 shrink-0" %}
+     :class="currentPath === '{% url 'classes:browse' %}' ? 'nav-item-active' : ''">
+    {% include 'partials/_icon.html' with name="calendar-week" class="size-5 shrink-0" %}
+    Ver clases
+  </a>
+
+  <a href="{% url 'classes:mis_reservas' %}"
+     class="nav-item"
+     :class="currentPath === '{% url 'classes:mis_reservas' %}' ? 'nav-item-active' : ''">
+    {% include 'partials/_icon.html' with name="calendar-check" class="size-5 shrink-0" %}
     Mis reservas
   </a>
 
@@ -45,11 +52,11 @@
     Gestionar clases
   </a>
 
-  <a href="{% url 'classes:teacher_list' %}"
+  <a href="{% url 'classes:infrastructure_list' %}"
      class="nav-item"
-     :class="currentPath === '/classes/teachers/' ? 'nav-item-active' : ''">
+     :class="currentPath === '/classes/infrastructure/' ? 'nav-item-active' : ''">
     {% include 'partials/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
-    Gestionar profesores
+    Gestionar infraestructura
   </a>
   {% endif %}
 

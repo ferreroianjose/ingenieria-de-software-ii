@@ -1,22 +1,29 @@
 {
-  "teachers": [
+  "sedes": [
     {
-      "nombre": "Carlos",
-      "apellido": "Sánchez"
-    },
-    {
-      "nombre": "Ana",
-      "apellido": "Martínez"
-    },
-    {
-      "nombre": "Roberto",
-      "apellido": "García"
+      "nombre": "Sede Central",
+      "direccion": "Av. Principal 1234"
     }
+  ],
+  "disciplinas": [
+    { "nombre": "Yoga", "descripcion": "" },
+    { "nombre": "Pilates", "descripcion": "" },
+    { "nombre": "Funcional", "descripcion": "" }
+  ],
+  "salas": [
+    { "nombre": "A", "capacidad": 20, "sede_nombre": "Sede Central" },
+    { "nombre": "B", "capacidad": 15, "sede_nombre": "Sede Central" }
+  ],
+  "teachers": [
+    { "nombre": "Carlos", "apellido": "Sánchez" },
+    { "nombre": "Ana", "apellido": "Martínez" },
+    { "nombre": "Roberto", "apellido": "García" }
   ],
   "classes": [
     {
-      "disciplina": "Yoga",
-      "sala": "A",
+      "disciplina_nombre": "Yoga",
+      "sala_nombre": "A",
+      "sala_sede_nombre": "Sede Central",
       "teacher_nombre": "Carlos",
       "teacher_apellido": "Sánchez",
       "inicio": "2026-06-01T09:00:00Z",
@@ -25,8 +32,9 @@
       "estado": "disponible"
     },
     {
-      "disciplina": "Pilates",
-      "sala": "B",
+      "disciplina_nombre": "Pilates",
+      "sala_nombre": "B",
+      "sala_sede_nombre": "Sede Central",
       "teacher_nombre": "Ana",
       "teacher_apellido": "Martínez",
       "inicio": "2026-06-01T10:00:00Z",
@@ -35,8 +43,9 @@
       "estado": "disponible"
     },
     {
-      "disciplina": "Funcional",
-      "sala": "A",
+      "disciplina_nombre": "Funcional",
+      "sala_nombre": "A",
+      "sala_sede_nombre": "Sede Central",
       "teacher_nombre": "Roberto",
       "teacher_apellido": "García",
       "inicio": "2026-06-01T18:00:00Z",
