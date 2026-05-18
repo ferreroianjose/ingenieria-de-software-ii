@@ -61,6 +61,13 @@
     {% include 'partials/ui/_icon.html' with name="person-arms-up" class="size-5 shrink-0" %}
     Catálogo
   </a>
+
+  <a href="{% url 'user_list' %}" 
+    class="nav-item"
+    :class="currentPath.startsWith('/classes/catalog') ? 'nav-item-active' : ''">
+    {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+    Gestión de usuarios
+  </a>
   {% endif %}
 
   <!-- PÁGINAS DE EMPLEADO (y admin) -->
