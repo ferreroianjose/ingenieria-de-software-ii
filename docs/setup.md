@@ -8,7 +8,8 @@ Si preferís correr el backend localmente sin Docker podés, mirá [instalar uv]
 
 ## Desarrollo con docker (recomendado)
 
-Esta es la forma más sencilla de levantar el proyecto. Incluye el servidor de Django con _live reload_ (*gymflow_web*), la base de datos PostgreSQL (*gymflow_db*) y pgAdmin (*gymflow_pgadmin*) para inspeccionar la BD. Los tres contenedores comparten la misma red (*gymflow_network*) para comunicarse entre sí.
+Esta es la forma más sencilla de levantar el proyecto. Incluye el servidor de Django con _live reload_ (*gymflow_web*), la base de datos PostgreSQL (*gymflow_db*) y Django Q (*gymflow_qcluster*) para ejecución asíncrona. Los contenedores comparten la misma red (*gymflow_network*) para comunicarse entre sí.
+
 
 1.  Para configurar las variables de entorno, copiá el archivo de ejemplo `.env.example` en `.env`, y modificalo:
 
@@ -24,16 +25,15 @@ Esta es la forma más sencilla de levantar el proyecto. Incluye el servidor de D
 
 1.  Para acceder:
     - App: [http://localhost:8000](http://localhost:8000)
-    - pgAdmin: [http://localhost:5050](http://localhost:5050)
 
 ## Desarrollo local (con `uv`)
 
 Si preferís no usar Docker para el servidor de Django:
 
-1.  Levantar solo la base de datos y pgadmin:
+1.  Levantar solo la base de datos:
 
     ```bash
-    docker compose up -d db pgadmin
+    docker compose up -d db
     ```
 
 2.  Sincronizá las dependencias:

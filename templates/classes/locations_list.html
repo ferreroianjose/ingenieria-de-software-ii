@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Sedes y salas{% endblock %}
+
+{% block content %}
+<div
+    class="internal-page"
+    x-data="{
+        selectedSedeId: {{ selected_sede_id|default:'null' }},
+        selectedSedeName: '',
+        selectedSalaId: null,
+        selectedSalaLabel: '',
+        sedeModalOpen: false,
+        salaModalOpen: false,
+        salaRowsUrl: '{% url 'classes:sala_rows' %}',
+        sedeCreateUrl: '{% url 'classes:sede_modal' %}',
+        sedeEditUrlPattern: '{% url 'classes:sede_modal_edit' 0 %}',
+        salaCreateUrl: '{% url 'classes:sala_modal' %}',
+        salaEditUrlPattern: '{% url 'classes:sala_modal_edit' 0 %}',
+        openSedeModal() {
+            const url = this.selectedSedeId
+                ? adminActionUrl(this.sedeEditUrlPattern, this.selectedSedeId)
+                : this.sedeCreateUrl;
+            this.sedeModalOpen = true;
+            openCatalogModal(url, 'sede-modal-container');
+        },
+        toggleSedeSelection(id, name, event) {
+            if (this.selectedSedeId === id) {
+                this.selectedSedeId = null;
+                this.selectedSedeName = '';
+                this.selectedSalaId = null;
+                this.selectedSalaLabel = '';
+                htmx.ajax('GET', this.salaRowsUrl, { target: '#salas-tbody', swap: 'innerHTML' });
+                return;
+            }
+            this.selectedSedeId = id;
+            this.selectedSedeName = name;
+            this.selectedSalaId = null;
+            this.selectedSalaLabel = '';
+            htmx.trigger(event.currentTarget, 'sedeSelected');
+        },
+        openSalaModal() {
+            let url;
+            if (this.selectedSalaId) {
+                url = adminActionUrl(this.salaEditUrlPattern, this.selectedSalaId);
+            } else {
+                if (!this.selectedSedeId) return;
+                url = `${this.salaCreateUrl}?sede_id=${this.selectedSedeId}`;
+            }
+            this.salaModalOpen = true;
+            openCatalogModal(url, 'sala-modal-container');
+        }
+    }"
+    x-init="
+        initAdminSelectionClears.call(this, [
+            { idKey: 'selectedSalaId', labelKey: 'selectedSalaLabel', targets: ['salas-tbody'] }
+        ]);
+        {% for sede in sedes %}
+        {% if sede.id == selected_sede_id %}
+        selectedSedeName = '{{ sede.nombre|escapejs }}';
+        {% endif %}
+        {% endfor %}
+    "
+    @admin-modal-close.window="
+        if ($event.detail === 'sedeModalOpen') sedeModalOpen = false;
+        if ($event.detail === 'salaModalOpen') salaModalOpen = false;
+    "
+>
+    <div class="flex flex-col gap-6">
+        {% include 'partials/admin/_admin_page_header.html' with title='Sedes y salas' subtitle='Elegí una sede para ver y administrar sus salas.' %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-[minmax(320px,38%)_1fr] gap-6 min-h-[28rem]">
+            <aside class="flex flex-col gap-3 min-w-0">
+                {% include 'partials/admin/_admin_panel_header.html' with title='Sedes' actions_template='partials/classes/locations/_locations_sede_header_actions.html' %}
+
+                <div class="admin-panel flex-1 flex flex-col min-h-[16rem] min-w-0">
+                    {% if sedes %}
+                    <ul class="admin-picker-list" role="listbox" aria-label="Sedes">
+                        {% for sede in sedes %}
+                        <li
+                            role="presentation"
+                            class="admin-picker-item w-full"
+                            :class="{ 'is-selected': selectedSedeId === {{ sede.id }} }"
+                        >
+                            <button
+                                type="button"
+                                role="option"
+                                class="admin-picker-select w-full"
+                                @click="toggleSedeSelection({{ sede.id }}, '{{ sede.nombre|escapejs }}', $event)"
+                                hx-get="{% url 'classes:sala_rows' %}?sede_id={{ sede.id }}"
+                                hx-target="#salas-tbody"
+                                hx-swap="innerHTML"
+                                hx-trigger="sedeSelected"
+                                :aria-selected="selectedSedeId === {{ sede.id }}"
+                            >
+                                {% include 'partials/admin/_admin_select_indicator.html' with item_id=sede.id selected_expr='selectedSedeId' %}
+                                <span class="min-w-0 flex-1 text-left">
+                                    <span
+                                        class="block truncate text-sm font-semibold transition-colors"
+                                        :class="selectedSedeId === {{ sede.id }} ? 'text-primary-700' : 'text-gray-900'"
+                                    >{{ sede.nombre }}</span>
+                                    {% if sede.direccion %}
+                                    <span
+                                        class="block truncate text-xs mt-0.5 transition-colors"
+                                        :class="selectedSedeId === {{ sede.id }} ? 'text-primary-600/70' : 'text-gray-500'"
+                                    >{{ sede.direccion }}</span>
+                                    {% endif %}
+                                </span>
+                            </button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <div class="admin-empty-dashed min-h-[11rem]">No hay sedes cargadas. Agregá la primera sede.</div>
+                    {% endif %}
+                </div>
+            </aside>
+
+            <section class="flex flex-col gap-3 min-w-0">
+                {% include 'partials/admin/_admin_panel_header.html' with title='Salas' actions_template='partials/classes/locations/_locations_sala_header_actions.html' %}
+                <p class="text-sm text-gray-500 font-normal -mt-1" x-show="selectedSedeName && !selectedSalaLabel" x-cloak>
+                    Sede activa: <span class="font-semibold text-primary-600" x-text="selectedSedeName"></span>
+                </p>
+                <p class="text-sm text-gray-500 font-normal -mt-1" x-show="selectedSalaLabel" x-cloak>
+                    Sala seleccionada: <span class="font-semibold text-primary-600" x-text="selectedSalaLabel"></span>
+                </p>
+                <p class="text-sm text-gray-500 font-normal -mt-1" x-show="!selectedSedeId" x-cloak>
+                    Seleccioná una sede para ver sus salas.
+                </p>
+
+                <div class="admin-panel admin-panel__table flex-1 min-w-0 max-w-4xl">
+                    <table class="min-w-full table-auto admin-selectable-table">
+                        <thead>
+                            <tr>
+                                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                                <th class="px-6 py-3 text-left">Nombre</th>
+                                <th class="px-6 py-3 text-left">Capacidad</th>
+                            </tr>
+                        </thead>
+                        <tbody
+                            id="salas-tbody"
+                            {% if selected_sede_id %}
+                            hx-get="{% url 'classes:sala_rows' %}?sede_id={{ selected_sede_id }}"
+                            hx-trigger="load"
+                            hx-swap="innerHTML"
+                            {% endif %}
+                        >
+                            {% if selected_sede_id %}
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Cargando salas…' %}
+                            {% else %}
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Agregá una sede para comenzar.' %}
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    {% include 'partials/ui/modals/_center_modal_shell.html' with modal_open_var='sedeModalOpen' container_id='sede-modal' %}
+    {% include 'partials/ui/modals/_center_modal_shell.html' with modal_open_var='salaModalOpen' container_id='sala-modal' %}
+</div>
+{% endblock %}

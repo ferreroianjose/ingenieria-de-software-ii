@@ -1,0 +1,20 @@
+{% if not sede %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=3 message="Seleccioná una sede para ver sus salas." %}
+{% elif not salas %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=3 message="Esta sede no tiene salas. Usá «Agregar sala» para crear una." %}
+{% else %}
+{% for sala in salas %}
+<tr
+    class="admin-selectable-row"
+    @click="adminToggleItem($data, 'selectedSalaId', 'selectedSalaLabel', {{ sala.id }}, '{{ sala.nombre|escapejs }}')"
+    :class="{ 'is-selected': selectedSalaId === {{ sala.id }} }"
+    :aria-selected="selectedSalaId === {{ sala.id }}"
+>
+    <td class="w-11 px-3 py-4">
+        {% include 'partials/admin/_admin_select_indicator.html' with item_id=sala.id selected_expr='selectedSalaId' %}
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ sala.nombre }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ sala.capacidad }}</td>
+</tr>
+{% endfor %}
+{% endif %}

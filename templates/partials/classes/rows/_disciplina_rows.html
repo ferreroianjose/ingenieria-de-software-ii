@@ -1,0 +1,20 @@
+{% if not searched %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=3 message="Usá el buscador y presioná «Buscar»." %}
+{% elif not disciplinas %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=3 message="No se encontraron disciplinas." %}
+{% else %}
+{% for disciplina in disciplinas %}
+<tr
+    class="admin-selectable-row"
+    @click="adminToggleItem($data, 'selectedDisciplinaId', 'selectedDisciplinaLabel', {{ disciplina.id }}, '{{ disciplina.nombre|escapejs }}')"
+    :class="{ 'is-selected': selectedDisciplinaId === {{ disciplina.id }} }"
+    :aria-selected="selectedDisciplinaId === {{ disciplina.id }}"
+>
+    <td class="w-11 px-3 py-4">
+        {% include 'partials/admin/_admin_select_indicator.html' with item_id=disciplina.id selected_expr='selectedDisciplinaId' %}
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ disciplina.nombre }}</td>
+    <td class="px-6 py-4 text-sm text-gray-500">{{ disciplina.descripcion|truncatewords:12 }}</td>
+</tr>
+{% endfor %}
+{% endif %}

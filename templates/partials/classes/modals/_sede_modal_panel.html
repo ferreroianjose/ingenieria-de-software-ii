@@ -1,0 +1,36 @@
+<form
+	id="sede-modal-form"
+	method="post"
+	action="{{ action_url }}"
+	hx-post="{{ action_url }}"
+	hx-target="#sede-modal-container"
+	hx-swap="innerHTML"
+	class="contents [&_label]:mb-2 [&_label]:block [&_label]:text-sm [&_label]:font-bold [&_label]:text-gray-700"
+>
+	{% csrf_token %}
+
+	<header class="flex items-start justify-between gap-4 p-6 pb-0 sm:p-8 sm:pb-0">
+		{% include 'partials/admin/_admin_modal_header.html' with modal_form=modal_form modal_title=modal_title modal_subtitle=modal_subtitle %}
+		<button
+			type="button"
+			class="btn-auto ml-4 shrink-0 rounded-full border-0 bg-gray-200 p-2 text-gray-800 shadow-fair-md hover:bg-gray-100 hover:text-primary-400"
+			@click="sedeModalOpen = false"
+			aria-label="Cerrar"
+		>
+			<svg class="size-7" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+			</svg>
+		</button>
+	</header>
+
+	<div class="w-full p-6 pt-4 sm:p-8 sm:pt-6">
+		{% include 'partials/classes/modals/_sede_modal_body.html' with modal_form=modal_form %}
+	</div>
+
+	<footer class="modal-footer relative flex flex-col items-center justify-end gap-4 overflow-hidden bg-gradient-to-b from-secondary-900 via-secondary-950 via-50% to-black p-6 sm:p-8 isolate [transform:translateZ(0)]">
+		{% include 'partials/ui/modals/_modal_footer_glows.html' %}
+		<button type="submit" class="btn-auto relative z-10 bg-primary-400 px-8 py-2.5 font-bold text-white hover:bg-primary-600">
+			{{ modal_button_label|default:"Guardar sede" }}
+		</button>
+	</footer>
+</form>

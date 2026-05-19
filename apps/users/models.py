@@ -33,6 +33,8 @@ class User(AbstractUser):
         self.username = self.email
         if self.is_superuser:
             self.rol = "ADMIN"
+        # is_staff controla solo el Django Admin (/admin/), no el panel de la app.
+        self.is_staff = self.rol == "ADMIN"
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -1,0 +1,82 @@
+{% with table_colspan=4 %}
+<div class="admin-panel__table">
+    <table class="min-w-full table-auto admin-selectable-table">
+        <thead>
+            <tr>
+                <th class="px-6 py-3 text-left">Nombre</th>
+                <th class="px-6 py-3 text-left">Email</th>
+                <th class="px-6 py-3 text-left">DNI</th>
+                <th class="px-6 py-3 text-left">Constancia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if not searched %}
+            {% include 'partials/admin/_table_placeholder.html' with colspan=table_colspan message=empty_search_message|default:'Presioná «Buscar» para listar clientes.' %}
+            {% elif not page_obj or not page_obj.object_list %}
+            {% include 'partials/admin/_table_placeholder.html' with colspan=table_colspan message='No se encontraron resultados.' %}
+            {% else %}
+            {% for user in page_obj %}
+            <tr
+                class="cursor-pointer transition-colors hover:bg-primary-50/40"
+                @click="openUserRow({{ user.id }})"
+            >
+                <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
+                    {{ user.get_full_name }}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">{{ user.email }}</td>
+                <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">{{ user.dni }}</td>
+                <td class="px-6 py-4 text-sm">
+                    {% if user.rol == 'CLIENTE' %}
+                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
+                        {% if user.estado_constancia == 'APROBADA' %}bg-green-100 text-green-800
+                        {% elif user.estado_constancia == 'RECHAZADA' %}bg-red-100 text-red-800
+                        {% else %}bg-amber-100 text-amber-800{% endif %}">
+                        {{ user.get_estado_constancia_display }}
+                    </span>
+                    {% else %}
+                    <span class="text-gray-400">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj and page_obj.paginator.count > 0 %}
+<nav
+    class="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+    aria-label="Paginación"
+>
+    <p class="text-sm text-gray-500">
+        {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+    </p>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex flex-wrap gap-2">
+        {% if page_obj.has_previous %}
+        <button
+            type="button"
+            class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger btn-auto"
+            hx-get="{% url 'user_rows' %}?q={{ q|urlencode }}&page={{ page_obj.previous_page_number }}"
+            hx-target="#users-table-panel"
+            hx-swap="innerHTML"
+        >Anterior</button>
+        {% endif %}
+        <span class="flex items-center px-2 text-sm font-medium text-gray-600">
+            Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+        {% if page_obj.has_next %}
+        <button
+            type="button"
+            class="btn-auto rounded-full bg-primary-400 px-4 py-1.5 text-sm font-bold text-white hover:bg-primary-600"
+            hx-get="{% url 'user_rows' %}?q={{ q|urlencode }}&page={{ page_obj.next_page_number }}"
+            hx-target="#users-table-panel"
+            hx-swap="innerHTML"
+        >Siguiente</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</nav>
+{% endif %}
+{% endwith %}

@@ -1,0 +1,24 @@
+<header class="internal-page-header flex flex-col gap-4">
+	<div class="internal-page-header__bar grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:gap-x-6 md:gap-y-3 lg:flex lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+		<div class="internal-page-header__title min-w-0 md:row-span-2 md:self-center lg:row-span-auto lg:flex-1">
+			<h1>{{ title }}</h1>
+			{% if subtitle %}
+			<p>{{ subtitle }}</p>
+			{% endif %}
+		</div>
+		{% if view_tabs %}
+		<div class="internal-page-header__tabs w-full md:col-start-2 md:row-start-1 md:w-auto md:justify-self-end lg:justify-self-auto">
+			{% include 'partials/admin/_admin_segmented_control.html' with view_tabs=view_tabs aria_label=aria_label %}
+		</div>
+		{% endif %}
+		{% if actions_template %}
+		<div class="internal-page-header__actions flex w-full shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center md:col-start-2 md:row-start-2 md:w-auto md:justify-self-end lg:justify-self-auto [&_.btn-auto]:w-full [&_.btn-auto]:sm:w-auto">
+			{% include actions_template %}
+		</div>
+		{% endif %}
+	</div>
+	<div id="admin-flash" class="w-full">
+		{% include 'partials/admin/_admin_status_banner.html' %}
+	</div>
+	{% if header_extra %}{{ header_extra|safe }}{% endif %}
+</header>

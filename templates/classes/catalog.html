@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Catálogo{% endblock %}
+
+{% block content %}
+{% url 'classes:disciplina_rows' as disciplina_rows_url %}
+{% url 'classes:teacher_rows' as teacher_rows_url %}
+<div
+    class="internal-page"
+    x-data="{
+        disciplinaModalOpen: false,
+        teacherModalOpen: false,
+        tab: '{{ initial_tab }}',
+        selectedDisciplinaId: null,
+        selectedDisciplinaLabel: '',
+        selectedTeacherId: null,
+        selectedTeacherLabel: '',
+        disciplinaCreateUrl: '{% url 'classes:disciplina_modal' %}',
+        disciplinaEditUrlPattern: '{% url 'classes:disciplina_modal_edit' 0 %}',
+        teacherCreateUrl: '{% url 'classes:teacher_modal' %}',
+        teacherEditUrlPattern: '{% url 'classes:teacher_modal_edit' 0 %}',
+        openSelectedDisciplinaModal() {
+            const url = this.selectedDisciplinaId
+                ? adminActionUrl(this.disciplinaEditUrlPattern, this.selectedDisciplinaId)
+                : this.disciplinaCreateUrl;
+            this.disciplinaModalOpen = true;
+            openCatalogModal(url, 'disciplina-modal-container');
+        },
+        openSelectedTeacherModal() {
+            const url = this.selectedTeacherId
+                ? adminActionUrl(this.teacherEditUrlPattern, this.selectedTeacherId)
+                : this.teacherCreateUrl;
+            this.teacherModalOpen = true;
+            openCatalogModal(url, 'teacher-modal-container');
+        }
+    }"
+    x-init="initAdminSelectionClears.call(this, [
+        { idKey: 'selectedDisciplinaId', labelKey: 'selectedDisciplinaLabel', targets: ['disciplinas-tbody'] },
+        { idKey: 'selectedTeacherId', labelKey: 'selectedTeacherLabel', targets: ['teachers-tbody'] }
+    ])"
+    @admin-modal-close.window="
+        if ($event.detail === 'disciplinaModalOpen') disciplinaModalOpen = false;
+        if ($event.detail === 'teacherModalOpen') teacherModalOpen = false;
+    "
+>
+    <div class="flex flex-col gap-6">
+        {% include 'partials/admin/_admin_page_header.html' with title='Catálogo' subtitle='Disciplinas y profesores usados al crear clases.' view_tabs=view_tabs aria_label='Catálogo' %}
+
+        <section x-show="tab === 'disciplinas'" x-cloak class="flex flex-col gap-4">
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar">
+                    {% include 'partials/admin/_list_search_form.html' with form_id='disciplinas-search-form' search_url=disciplina_rows_url target_id='#disciplinas-tbody' placeholder='Nombre o descripción…' %}
+                </div>
+                {% include 'partials/classes/catalog/_catalog_disciplina_selection_toolbar.html' %}
+                <div class="admin-panel__table">
+                    <table class="min-w-full table-auto admin-selectable-table">
+                        <thead>
+                            <tr>
+                                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                                <th class="px-6 py-3 text-left">Nombre</th>
+                                <th class="px-6 py-3 text-left">Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="disciplinas-tbody">
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Usá el buscador y presioná «Buscar».' %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section x-show="tab === 'profesores'" x-cloak class="flex flex-col gap-4">
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar">
+                    {% include 'partials/admin/_list_search_form.html' with form_id='teachers-search-form' search_url=teacher_rows_url target_id='#teachers-tbody' placeholder='Nombre o apellido…' %}
+                </div>
+                {% include 'partials/classes/catalog/_catalog_teacher_selection_toolbar.html' %}
+                <div class="admin-panel__table">
+                    <table class="min-w-full table-auto admin-selectable-table">
+                        <thead>
+                            <tr>
+                                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                                <th class="px-6 py-3 text-left">Nombre</th>
+                                <th class="px-6 py-3 text-left">Apellido</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachers-tbody">
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Usá el buscador y presioná «Buscar».' %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    {% include 'partials/classes/modals/_disciplina_modal_shell.html' %}
+    {% include 'partials/classes/modals/_teacher_modal_shell.html' %}
+</div>
+{% endblock %}

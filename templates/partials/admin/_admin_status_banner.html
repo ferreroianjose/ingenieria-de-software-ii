@@ -1,0 +1,9 @@
+{% if messages %}
+<div class="space-y-2">
+	{% for message in messages %}
+	{% include 'partials/admin/_admin_flash_item.html' with text=message level=message.tags %}
+	{% endfor %}
+</div>
+{% elif status_message %}
+{% include 'partials/admin/_admin_flash_item.html' with text=status_message level=status_level|default:'success' %}
+{% endif %}

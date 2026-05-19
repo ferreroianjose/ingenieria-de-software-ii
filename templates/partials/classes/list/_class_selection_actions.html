@@ -1,0 +1,32 @@
+{% url 'classes:toggle_class_pause' 0 as class_pause_url %}
+{% url 'classes:delete_class' 0 as class_delete_url %}
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary"
+	@click.prevent="openSelectedClassDrawer()"
+	x-text="selectedClassId ? 'Editar' : 'Crear clase'"
+></button>
+<form x-ref="pauseClassForm" method="post" class="hidden" :action="selectedClassId ? adminActionUrl('{{ class_pause_url }}', selectedClassId) : ''">
+	{% csrf_token %}
+</form>
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary"
+	:disabled="!selectedClassId"
+	x-text="selectedClassEstado === 'pausada' ? 'Reactivar' : 'Pausar'"
+	@click="if (selectedClassId) adminHtmxPost($refs.pauseClassForm)"
+>
+	Pausar
+</button>
+<form x-ref="deleteClassForm" method="post" class="hidden" :action="selectedClassId ? adminActionUrl('{{ class_delete_url }}', selectedClassId) : ''">
+	{% csrf_token %}
+</form>
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
+	:disabled="!selectedClassId"
+	@click="if (selectedClassId && confirm('¿Eliminar esta clase?')) adminHtmxPost($refs.deleteClassForm)"
+>
+	Eliminar
+</button>

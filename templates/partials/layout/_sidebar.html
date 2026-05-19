@@ -1,0 +1,38 @@
+{# ── Sidebar ── #}
+<aside
+  id="sidebar"
+  hx-boost="true"
+  hx-target="#main-content"
+  hx-select="#main-content"
+  hx-swap="outerHTML"
+  class="hidden md:flex fixed left-0 top-0 bottom-0 z-50 bg-gray-900 flex-col px-4 py-[clamp(calc(var(--spacing)*2),3lvh,calc(var(--spacing)*18))] gap-6 transition-all duration-350 ease-out @container items-center sidebar-w shadow-fair-md overflow-visible"
+>
+  {# Brand + desktop toggle #}
+  <div class="mt-4 z-0 flex items-center relative w-full justify-between">
+    {% include 'partials/layout/_brand.html' %}
+    <button
+      @click="desktopCollapsed = !desktopCollapsed"
+      class="absolute -right-8 -top-8 w-8 h-8 rounded-full flex items-center justify-center bg-gray-800 border border-gray-700 shadow-fair-sm hover:bg-gray-700 hover:text-primary-400 focus:ring-transparent focus:outline-none z-50 transition-colors text-gray-400 cursor-pointer"
+      aria-label="Alternar menú"
+    >
+      <span x-show="!desktopCollapsed" x-cloak class="flex items-center justify-center">
+        {% include 'partials/ui/_icon.html' with name="arrows-angle-contract" class="size-3.5" %}
+      </span>
+      <span x-show="desktopCollapsed" x-cloak class="flex items-center justify-center">
+        {% include 'partials/ui/_icon.html' with name="arrows-angle-expand" class="size-3.5" %}
+      </span>
+    </button>
+  </div>
+
+  {# Navigation #}
+  <nav class="flex flex-col flex-1 gap-1 w-full">
+    {% include 'partials/layout/_nav_items.html' %}
+  </nav>
+
+  {# User pill #}
+  <div class="absolute bottom-[clamp(calc(var(--spacing)*2),3lvh,calc(var(--spacing)*18))] left-4 right-4">
+  {% block _user_pill %}
+    {% include 'partials/layout/_user_pill.html' %}
+  {% endblock %}
+  </div>
+</aside>

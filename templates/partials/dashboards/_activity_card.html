@@ -1,0 +1,13 @@
+{% comment %}
+  Usage:
+    {% include 'partials/_activity_card.html' with image="..." badge="..." title="..." subtitle="..." %}
+{% endcomment %}
+<div class="min-w-[300px] h-[350px] bg-black rounded-4xl relative overflow-hidden group cursor-pointer shadow-fair-lg">
+    <img src="{{ image }}" class="absolute inset-0 size-full object-cover group-hover:scale-110 brightness-95 group-hover:brightness-105 transition duration-700">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/75 to-transparent from-0% via-25% to-50%"></div>
+    <div class="absolute bottom-8 left-8 right-8">
+        <span class="bg-primary-400 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg mb-4 inline-block shadow-lg">{{ badge }}</span>
+        <h3 class="text-white font-black text-3xl mb-1 uppercase tracking-tighter">{{ title }}</h3>
+        <p class="text-gray-300 text-xs font-bold uppercase tracking-widest">{{ subtitle }}</p>
+    </div>
+</div>

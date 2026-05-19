@@ -1,0 +1,78 @@
+<form
+    id="class-filters-form"
+    class="flex flex-col gap-4"
+    hx-get="{{ filter_url }}"
+    hx-target="#class-rows-tbody"
+    hx-swap="innerHTML"
+    hx-trigger="submit"
+    hx-on::after-request="if (event.detail.successful) this.setAttribute('data-searched', '1')"
+>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 [&>div]:grid [&>div]:grid-cols-1 [&>div]:justify-between [&>div]:gap-0">
+        <div>
+            <label for="filter-q">Buscar</label>
+            <input
+                id="filter-q"
+                type="search"
+                name="q"
+                value="{{ q|default:'' }}"
+                placeholder="Texto libre…"
+                class="!py-2 !px-4 text-sm"
+                autocomplete="off"
+            />
+        </div>
+        <div>
+            <label for="filter-disciplina">Disciplina</label>
+            <select id="filter-disciplina" name="disciplina" class="!py-2 !px-4 text-sm">
+                <option value="">Todas</option>
+                {% for d in disciplinas %}
+                <option value="{{ d.id }}" {% if filter_disciplina == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="filter-sede">Sede</label>
+            <select id="filter-sede" name="sede" class="!py-2 !px-4 text-sm">
+                <option value="">Todas</option>
+                {% for s in sedes %}
+                <option value="{{ s.id }}" {% if filter_sede == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="filter-profesor">Profesor</label>
+            <select id="filter-profesor" name="profesor" class="!py-2 !px-4 text-sm">
+                <option value="">Todos</option>
+                {% for t in profesores %}
+                <option value="{{ t.id }}" {% if filter_profesor == t.id|stringformat:"s" %}selected{% endif %}>{{ t.nombre }} {{ t.apellido }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="filter-dia">Día</label>
+            <select id="filter-dia" name="dia_semana" class="!py-2 !px-4 text-sm">
+                <option value="">Todos</option>
+                {% for value, label in weekday_choices %}
+                <option value="{{ value }}" {% if filter_dia == value|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="filter-estado">Estado</label>
+            <select id="filter-estado" name="estado" class="!py-2 !px-4 text-sm">
+                <option value="">Todos</option>
+                {% for value, label in estado_choices %}
+                <option value="{{ value }}" {% if filter_estado == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="flex flex-wrap gap-2 justify-end">
+        {% include 'partials/ui/buttons/_secondary_button.html' with label='Limpiar' type='button' class='btn-auto shrink-0 py-2 px-5 text-sm whitespace-nowrap' hx_get=filter_url|add:'?cleared=1' hx_target='#class-rows-tbody' hx_swap='innerHTML' onclick="const f=document.getElementById('class-filters-form'); f.reset(); f.removeAttribute('data-searched');" %}
+        <button
+            type="submit"
+            class="btn-auto shrink-0 bg-primary-400 hover:bg-primary-600 text-white py-2 px-6 rounded-full font-bold text-sm transition-colors"
+        >
+            Aplicar filtros
+        </button>
+    </div>
+</form>

@@ -36,25 +36,30 @@ services:
     environment:
       POSTGRES_HOST: db
       DJANGO_DEBUG: "True"
+      RUN_MIGRATIONS: "True"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - gymflow-network
 
-  pgadmin:
-    image: dpage/pgadmin4:9
-    container_name: gymflow_pgadmin
+  qcluster:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: gymflow_qcluster
     restart: unless-stopped
+    volumes:
+      - .:/app
     env_file:
       - .env
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      POSTGRES_HOST: db
+      DJANGO_DEBUG: "True"
+    command: uv run python manage.py qcluster
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       - gymflow-network
 

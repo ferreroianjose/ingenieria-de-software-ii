@@ -4,6 +4,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#FFFFFF">
 		<title>
 			SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
 		</title>
@@ -19,9 +20,9 @@
 		  --color-light-bg-500: #ffffff;
 		  --color-dark-bg-500: #101010;
 
-		  --color-secondary-50: oklch(0.321 0.055 204.14);
-		  --color-secondary-100: oklch(0.5 0.085 202.33);
-		  --color-secondary-200: oklch(0.87 0.148 202.86);
+		  --color-secondary-50: oklch(91% 27% 200deg);
+		  --color-secondary-100: oklch(89% 34% 200deg);
+		  --color-secondary-200: oklch(88% 37% 202deg);
 		  --color-secondary-300: oklch(0.778 0.133 202.83);
 		  --color-secondary-400: oklch(0.687 0.117 202.75);
 		  --color-secondary-500: oklch(0.592 0.101 202.63);
@@ -31,10 +32,10 @@
 		  --color-secondary-900: oklch(0.23 0.039 203.33);
 		  --color-secondary-950: oklch(0.174 0.03 202.83);
 
-		  --color-primary-50: oklch(0.22 0.101 328.37);
-		  --color-primary-100: oklch(0.284 0.131 328.37);
-		  --color-primary-200: oklch(0.423 0.195 328.37);
-		  --color-primary-300: oklch(0.56 0.257 328.37);
+		  --color-primary-50: oklch(95% 11% 326deg);
+		  --color-primary-100: oklch(91% 22% 326deg);
+		  --color-primary-200: oklch(82% 44% 327deg);
+		  --color-primary-300: oklch(76% 63% 328deg);
 		  --color-primary-400: oklch(0.702 0.322 328.37);
 		  --color-primary-500: oklch(0.606 0.279 328.37);
 		  --color-primary-600: oklch(0.516 0.237 328.37);
@@ -48,8 +49,8 @@
 		  --color-on-primary-500: #ffffff;
 
 		  /* Fonts */
-		  --font-serif: "Syne", "Georgia", "Times New Roman", "Times", "serif";
-		  --font-sans: "Inter", "Roboto", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", "sans-serif";
+		  --font-serif: "Syne", "Georgia", "Times New Roman", "Times", serif;
+		  --font-sans: "Inter", "Roboto", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Open Sans", "Helvetica Neue", sans-serif;
 
 		  /* Shadows */
 		  --shadow-fair-sm: 0 0px 4px rgba(0, 0, 0, 0.20);
@@ -72,12 +73,159 @@
 		}
 
 	    @layer base {
-	    /* Títulos */
+	      /* Títulos — site-wide */
 	      h1 {
 	        @apply text-5xl lg:text-6xl font-black text-primary-400 uppercase text-pretty;
 	      }
 	      h2 {
 	        @apply text-3xl lg:text-4xl font-bold text-primary-400 uppercase;
+	      }
+
+	      .title-impact {
+	        @apply font-black uppercase tracking-tight lg:tracking-tighter xl:tracking-tight;
+	      }
+
+	      /* Admin shell, panels, color & depth */
+          .internal-page {
+            @apply mx-auto w-full px-4 lg:px-8 md:px-4 py-8 relative z-[1];
+          }
+          .internal-page::before {
+            content: '';
+            @apply pointer-events-none absolute inset-x-0 -z-10 bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
+            top: -6rem;
+            height: calc(20rem + 6rem);
+          }
+          @media (min-width: 768px) {
+            .internal-page::before {
+              top: 0;
+              height: 20rem;
+            }
+          }
+          @media (max-width: 767px) {
+            #main-content:has(.internal-page)::before {
+              content: '';
+              @apply pointer-events-none fixed inset-x-0 top-0 -z-10 h-[22rem] bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
+            }
+            .internal-page::before {
+              @apply hidden;
+            }
+          }
+
+	      /* Informa el estado de la op CRUD al usuario */
+	      #admin-flash {
+	        @apply min-h-0 transition-[opacity,margin] duration-500 ease-out;
+	      }
+	      .admin-flash-item {
+	        @apply flex items-center gap-2 rounded-full p-2 pl-5 text-sm shadow-fair-sm ring-1 ring-white/35;
+	        animation: admin-flash-enter 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+	      }
+	      .admin-flash-item.is-leaving {
+	        animation: admin-flash-leave 0.4s ease-in forwards;
+	      }
+	      .admin-flash-item--success {
+	        @apply bg-green-50 text-green-900;
+	      }
+	      .admin-flash-item--error {
+	        @apply bg-red-50 text-red-900;
+	      }
+	      .admin-flash-dismiss {
+	        @apply w-auto shrink-0 rounded-full p-2 text-sm font-semibold transition-opacity hover:bg-black/10 focus:ring-0 focus:ring-offset-0;
+	      }
+	      @keyframes admin-flash-enter {
+	        from {
+	          opacity: 0;
+	          transform: translateY(-25vh);
+	        }
+	        to {
+	          opacity: 1;
+	          transform: translateY(0);
+	        }
+	      }
+	      @keyframes admin-flash-leave {
+	        from {
+	          opacity: 1;
+	          transform: translateY(0);
+	          max-height: 8rem;
+	        }
+	        to {
+	          opacity: 0;
+	          transform: translateY(-25vh);
+	          max-height: 0;
+	          margin: 0;
+	          padding: 0;
+	        }
+	      }
+	      .internal-page-header {
+	        @apply relative isolate;
+	      }
+
+	      .internal-page h1 {
+	        @apply text-3xl lg:text-4xl font-bold text-primary-500 mb-2;
+	      }
+	      .internal-page h2 {
+	        @apply text-lg font-bold text-secondary-900 normal-case;
+	      }
+	      .internal-page header p {
+	        @apply tracking-wide text-secondary-700/80 no-underline;
+	      }
+
+	      .internal-page-header__title h1 {
+	        @apply mb-0;
+	      }
+	      .internal-page-header__title p {
+	        @apply mt-1 mb-0;
+	      }
+
+	      .admin-panel {
+	        @apply bg-white rounded-4xl shadow-fair-lg border border-gray-200/90 overflow-hidden;
+	      }
+	      .admin-panel__toolbar {
+	        @apply p-4 sm:p-6 border-b border-gray-200/90 bg-gray-50/70;
+	      }
+	      .admin-panel__actions,
+	      .admin-selection-toolbar {
+	        @apply flex flex-col gap-3 px-4 py-3 lg:px-6 lg:flex-row items-end justify-between my-auto xl:min-h-8 lg:min-h-16 sm:min-h-28 min-h-34;
+	      }
+	      .admin-selection-toolbar p {
+          	@apply w-full min-w-0 my-auto xl:line-clamp-1 line-clamp-2 sm:text-left text-center overflow-ellipsis;
+          }
+	      .admin-panel__table {
+	        @apply overflow-x-auto;
+	      }
+	      .admin-selectable-table:has(tbody .admin-table-empty) thead {
+	        @apply hidden;
+	      }
+	      .admin-selectable-table thead {
+	        @apply border-b border-gray-200/90;
+	      }
+	      .admin-selectable-table thead th {
+	        @apply text-xs font-semibold uppercase tracking-wider text-gray-500;
+	      }
+	      .admin-selectable-table tbody td {
+	        @apply border-b border-gray-100;
+	      }
+	      .admin-selectable-table tbody tr:last-child td {
+	        @apply border-b-0;
+	      }
+	      .admin-panel__table:has(.admin-table-empty) {
+	        @apply overflow-hidden;
+	      }
+	      .admin-panel__table:has(.admin-table-empty) table {
+          @apply size-full;
+        }
+	      .admin-selectable-table:has(.admin-table-empty) tbody tr.admin-table-empty td {
+	        @apply border-0 bg-transparent p-3;
+	      }
+	      .admin-empty-dashed {
+	        @apply box-border m-3 flex flex-1 flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-gray-400/50 bg-gray-100/50 px-6 py-16 text-center text-sm text-gray-700 size-full;
+	      }
+
+	      /* Drawers y modales centrados */
+	      [role="dialog"] h1 {
+	        @apply text-3xl lg:text-4xl font-black text-secondary-900 leading-tight normal-case;
+	      }
+	      [role="dialog"] p {
+	        @apply text-base font-medium text-gray-600;
 	      }
 	      
 	      /* Botones */
@@ -85,10 +233,96 @@
 	      	@apply cursor-pointer;
 	      }
 	      button {
-	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 w-full transition-colors font-bold cursor-pointer;
+	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 transition-colors font-bold cursor-pointer;
+	      }
+
+	      #auth-card button,
+	      .btn-full {
+	        @apply w-full;
+	      }
+	      .btn-auto,
+	      .admin-flash-dismiss,
+	      .internal-page button,
+	      #sidebar button,
+	      header button,
+	      table button,
+	      [role="dialog"] button {
+	        @apply w-auto;
 	      }
 	      a {
 	        @apply text-primary-500 visited:text-primary-600 font-bold underline underline-offset-2 hover:text-primary-400 transition-colors;
+	      }
+	      table a {
+	        @apply no-underline font-medium;
+	      }
+	      table td button {
+	        @apply w-auto py-0 px-0 rounded-none font-semibold bg-transparent shadow-none ring-0 hover:ring-0 focus:ring-0 focus:ring-offset-0;
+	      }
+
+	      /* Segmented control (after global button rules) */
+	      .internal-page [role="tablist"].admin-segmented {
+	        @apply flex w-full min-w-0 p-1 gap-0.5 rounded-full bg-gray-200/90 border border-black/[0.06] shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)];
+	      }
+	      .internal-page [role="tablist"].admin-segmented button {
+	        @apply w-auto min-w-0 flex-1 py-1.5 px-3 text-xs font-semibold leading-tight shadow-none rounded-full transition-all duration-200 ease-out whitespace-nowrap text-center focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0;
+	      }
+	      @media (min-width: 768px) {
+	        .internal-page [role="tablist"].admin-segmented {
+	          @apply inline-flex w-auto flex-none;
+	        }
+	        .internal-page [role="tablist"].admin-segmented button {
+	          @apply flex-none min-w-[4.25rem] px-4 text-sm;
+	        }
+	      }
+
+	      /* Admin selection (picker cards + tables) */
+	      .admin-picker-list {
+	        @apply flex w-full min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3;
+	      }
+	      .admin-picker-item {
+	        @apply flex w-full min-w-0 cursor-pointer items-stretch overflow-hidden rounded-3xl border border-transparent transition-colors duration-150;
+	      }
+	      .admin-picker-item:hover:not(.is-selected) {
+	        @apply ring-1 ring-primary-200/50 bg-primary-50/25;
+	      }
+	      .admin-picker-item.is-selected {
+	        @apply rounded-3xl bg-white shadow-fair-sm ring-2 ring-primary-400/50;
+	      }
+	      .admin-picker-item .admin-picker-select {
+	        @apply flex w-full min-w-0 flex-1 items-center gap-3 rounded-3xl bg-transparent px-4 py-3 text-left font-semibold shadow-none ring-0 hover:bg-transparent focus:ring-0 focus:ring-offset-0;
+	      }
+	      .admin-select-indicator {
+	        @apply flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 bg-white transition-colors duration-200;
+	      }
+	      .admin-select-indicator.is-active {
+	        @apply border-primary-400 bg-primary-400 text-white;
+	      }
+	      .admin-selectable-table tbody tr.admin-selectable-row {
+	        @apply cursor-pointer transition-colors;
+	      }
+	      .admin-selectable-table tbody tr.admin-selectable-row:hover:not(.is-selected) {
+	        @apply bg-gray-50/90;
+	      }
+	      .admin-selectable-table tbody tr.admin-selectable-row.is-selected {
+	        @apply bg-primary-50/80;
+	      }
+
+        /* #TODO: reemplazar con partial de botones */
+	      .admin-selection-toolbar-btn {
+	        @apply w-auto min-w-0 rounded-full px-4 py-2 text-sm font-bold shadow-none ring-0 focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-45;
+	      }
+	      .admin-selection-toolbar-btn--secondary {
+	        @apply bg-transparent text-secondary-600 ring-2 ring-inset ring-secondary-500 hover:bg-secondary-500 hover:text-white hover:ring-secondary-500 focus:ring-secondary-400/35;
+	      }
+	      .admin-selection-toolbar-btn--danger {
+	        @apply bg-transparent text-red-600 ring-2 ring-inset ring-red-500/80 hover:bg-red-500 hover:text-white hover:ring-red-500;
+	      }
+	      .admin-selection-toolbar-btn--primary {
+	        @apply bg-secondary-400 text-white hover:bg-secondary-600 focus:ring-secondary-400/35;
+	      }
+
+	      .modal-footer {
+	        @apply isolate;
 	      }
 	      
 	      /* Formularios */
@@ -111,6 +345,10 @@
 	      /* Auth */
 	      #auth-card h1 {
 	        font-size: clamp(var(--text-2xl),15cqw,var(--text-6xl)) !important;
+	        @apply font-black text-primary-400 uppercase text-pretty leading-tight;
+	      }
+	      #auth-card h1.text-red-500 {
+	        @apply text-red-500;
 	      }
 	      #auth-card a {
 	          @apply visited:text-primary-500;
@@ -118,14 +356,59 @@
 	      #auth-card p {
 	          @apply text-sm text-gray-500;
 	      }
-	    }
-		</style>
+
+	      [x-cloak] {
+	        display: none !important;
+	      }
+
+	      html.modal-scroll-lock {
+	        overflow: hidden;
+	      }
+
+        /* Utility for hiding scrolls while keeping functionality */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Sidebar Parameters */
+        :root {
+          --sidebar-width: 288px;
+          --sidebar-collapsed-width: 84px;
+          --sidebar-py: clamp(0.5rem, 3lvh, 4.5rem);
+          --toggle-y: calc(var(--sidebar-py) + 28px);
+          --topbar-height: 72px;
+        }
+
+        .sidebar-w {
+        width: var(--sidebar-width);
+        }
+        .sidebar-pl {
+        padding-left: 0;
+        }
+        .topbar-pt {
+          padding-top: var(--topbar-height);
+        }
+
+        @media (min-width: 768px) {
+          .sidebar-pl {
+          padding-left: var(--sidebar-width);
+          }
+          .topbar-pt {
+            padding-top: 0;
+          }
+          body.is-collapsed .sidebar-w {
+            width: var(--sidebar-collapsed-width);
+          }
+          body.is-collapsed .sidebar-pl {
+            padding-left: var(--sidebar-collapsed-width);
+          }
+        }
+	}
+		  </style>
+    	<!-- Alpine Plugins -->
+    	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 
 		<!-- Alpine.js -->
-		<script
-			defer
-			src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
-		></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 		<!-- HTMX -->
 		<script
@@ -138,32 +421,45 @@
 		<link rel="stylesheet" href="{% static 'css/global.css' %}" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'css/favicon.svg' %}">
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.svg' %}">
+
+	<script>
+		// Prevent FOUC
+		document.documentElement.style.visibility = 'hidden';
+		document.addEventListener('DOMContentLoaded', function() {
+			document.documentElement.style.visibility = 'visible';
+		});
+	</script>
 	</head>
-	<body x-data="{ mobileOpen: false }" class="min-h-screen flex flex-col overflow-x-hidden relative">
+	<body x-data="{ mobileOpen: false, desktopCollapsed: JSON.parse(localStorage.getItem('desktopCollapsed') || 'false') }" x-init="$watch('desktopCollapsed', value => localStorage.setItem('desktopCollapsed', value))" class="min-h-screen flex flex-col overflow-x-hidden relative" :class="{'is-collapsed': desktopCollapsed}">
 		{% block header %}
-			{% include 'partials/_sidebar.html' %}
-			{% include 'partials/_topbar.html' %}
+			{% include 'partials/layout/_sidebar.html' %}
+			{% include 'partials/layout/_topbar.html' %}
 		{% endblock %}
 
+		<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
 		<main id="main-content" class="flex-1 flex flex-col">
-			<div class="flex-1 {% block main_class %}pt-24 md:pt-0 md:pl-72{% endblock %}">
+			<div class="flex-1 transition-[padding] duration-350 ease-out {% block main_class %}sidebar-pl topbar-pt md:pt-0{% endblock %}">
 				{% block content %}
 				<!-- Contenido de cada página -->
 				{% endblock %}
 			</div>
 
 			{% block footer %}
-				<div class="{% block footer_class %}md:pl-72{% endblock %}">
-					{% include 'partials/_footer.html' %}
+				<div class="transition-[padding] duration-350 ease-out {% block footer_class %}sidebar-pl{% endblock %}">
+					{% include 'partials/layout/_footer.html' %}
 				</div>
 			{% endblock %}
 
-			<div
-				id="global-spinner"
-				class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"
-			></div>
-		</main>
+		<div
+			id="global-spinner"
+			class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"
+		></div>
+
+	</main>
+
+		{% block page_modals %}{% endblock %}
+		</div>
 
 		{% block other_footer_classes %}{% endblock %}
 

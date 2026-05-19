@@ -1,13 +1,15 @@
-from django.core.management.base import BaseCommand
+from datetime import datetime, timedelta
+
 from django.apps import apps
-import os
-import json
-from datetime import timedelta
+from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_datetime
+
+import json
+import os
 
 
 class Command(BaseCommand):
-    help = "Loads initial classes and teachers data idempotently from fixture"
+    help = "Loads sedes, salas, disciplinas, teachers and classes from fixture (idempotent)."
 
     def handle(self, *args, **options):
         Teacher = apps.get_model("classes", "Teacher")
@@ -20,134 +22,166 @@ class Command(BaseCommand):
         fixtures_path = os.path.join(classes_path, "fixtures", "initial_classes.json")
 
         if not os.path.exists(fixtures_path):
-            self.stdout.write(
-                self.style.WARNING(f"Fixture file not found: {fixtures_path}")
-            )
+            self.stdout.write(self.style.WARNING(f"Fixture not found: {fixtures_path}"))
             return
 
         with open(fixtures_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        # Load Sedes
-        sedes_created = 0
-        sedes_skipped = 0
-        for s_data in data.get("sedes", []):
-            _, created = Sede.objects.get_or_create(
-                nombre=s_data["nombre"],
-                defaults={"direccion": s_data.get("direccion", "")},
-            )
-            if created:
-                sedes_created += 1
-            else:
-                sedes_skipped += 1
-
-        # Load Disciplinas
-        disciplinas_created = 0
-        disciplinas_skipped = 0
-        for d_data in data.get("disciplinas", []):
-            _, created = Disciplina.objects.get_or_create(
-                nombre=d_data["nombre"],
-                defaults={"descripcion": d_data.get("descripcion", "")},
-            )
-            if created:
-                disciplinas_created += 1
-            else:
-                disciplinas_skipped += 1
-
-        # Load Salas
-        salas_created = 0
-        salas_skipped = 0
-        for sa_data in data.get("salas", []):
-            try:
-                sede = Sede.objects.get(nombre=sa_data["sede_nombre"])
-            except Sede.DoesNotExist:
-                self.stdout.write(
-                    self.style.ERROR(f"Sede '{sa_data['sede_nombre']}' not found for sala '{sa_data['nombre']}'")
-                )
-                continue
-            _, created = Sala.objects.get_or_create(
-                nombre=sa_data["nombre"],
-                sede=sede,
-                defaults={"capacidad": sa_data.get("capacidad", 20)},
-            )
-            if created:
-                salas_created += 1
-            else:
-                salas_skipped += 1
-
-        # Load Teachers
-        teachers_created = 0
-        teachers_skipped = 0
-        for t_data in data.get("teachers", []):
-            _, created = Teacher.objects.get_or_create(
-                nombre=t_data["nombre"],
-                apellido=t_data["apellido"],
-            )
-            if created:
-                teachers_created += 1
-            else:
-                teachers_skipped += 1
-
-        # Load Classes
-        classes_created = 0
-        classes_skipped = 0
-        for c_data in data.get("classes", []):
-            disciplina_nombre = c_data["disciplina_nombre"]
-            sala_nombre = c_data["sala_nombre"]
-            sala_sede_nombre = c_data["sala_sede_nombre"]
-            teacher_nombre = c_data["teacher_nombre"]
-            teacher_apellido = c_data["teacher_apellido"]
-            duracion_minutos = c_data["duracion_minutos"]
-            inicio_str = c_data["inicio"]
-
-            try:
-                teacher = Teacher.objects.get(nombre=teacher_nombre, apellido=teacher_apellido)
-            except Teacher.DoesNotExist:
-                self.stdout.write(
-                    self.style.ERROR(f"Teacher {teacher_nombre} {teacher_apellido} not found")
-                )
-                continue
-
-            try:
-                disciplina = Disciplina.objects.get(nombre=disciplina_nombre)
-            except Disciplina.DoesNotExist:
-                self.stdout.write(
-                    self.style.ERROR(f"Disciplina '{disciplina_nombre}' not found")
-                )
-                continue
-
-            try:
-                sede = Sede.objects.get(nombre=sala_sede_nombre)
-                sala = Sala.objects.get(nombre=sala_nombre, sede=sede)
-            except (Sede.DoesNotExist, Sala.DoesNotExist):
-                self.stdout.write(
-                    self.style.ERROR(f"Sala '{sala_nombre}' in sede '{sala_sede_nombre}' not found")
-                )
-                continue
-
-            inicio = parse_datetime(inicio_str)
-
-            if Class.objects.filter(disciplina=disciplina, inicio=inicio, sala=sala).exists():
-                classes_skipped += 1
-                continue
-
-            Class.objects.create(
-                disciplina=disciplina,
-                sala=sala,
-                profesor=teacher,
-                inicio=inicio,
-                duracion=timedelta(minutes=duracion_minutos),
-                cupo_maximo=c_data.get("cupo_maximo", 20),
-                estado=c_data.get("estado", "disponible"),
-            )
-            classes_created += 1
+        sedes_created = self._load_sedes(Sede, Sala, data.get("sedes", []))
+        disciplinas_created = self._load_disciplinas(Disciplina, data.get("disciplinas", []))
+        teachers_created, teachers_skipped = self._load_teachers(
+            Teacher, data.get("teachers", [])
+        )
+        classes_created, classes_skipped = self._load_classes(
+            Class, Teacher, Disciplina, Sede, Sala, data.get("classes", [])
+        )
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Sedes: {sedes_created} created, {sedes_skipped} skipped. "
-                f"Disciplinas: {disciplinas_created} created, {disciplinas_skipped} skipped. "
-                f"Salas: {salas_created} created, {salas_skipped} skipped. "
+                f"Sedes/salas: {sedes_created} sedes processed. "
+                f"Disciplinas: {disciplinas_created} created. "
                 f"Teachers: {teachers_created} created, {teachers_skipped} skipped. "
                 f"Classes: {classes_created} created, {classes_skipped} skipped."
             )
         )
+
+    def _load_sedes(self, Sede, Sala, sedes_data):
+        created = 0
+        for sede_data in sedes_data:
+            salas_data = sede_data.pop("salas", [])
+            sede, was_created = Sede.objects.get_or_create(
+                nombre=sede_data["nombre"],
+                defaults={"direccion": sede_data.get("direccion", "")},
+            )
+            if was_created:
+                created += 1
+            elif sede_data.get("direccion") and sede.direccion != sede_data["direccion"]:
+                sede.direccion = sede_data["direccion"]
+                sede.save(update_fields=["direccion"])
+
+            for sala_data in salas_data:
+                Sala.objects.get_or_create(
+                    nombre=sala_data["nombre"],
+                    sede=sede,
+                    defaults={"capacidad": sala_data["capacidad"]},
+                )
+        return created
+
+    def _load_disciplinas(self, Disciplina, disciplinas_data):
+        created = 0
+        for d_data in disciplinas_data:
+            _, was_created = Disciplina.objects.get_or_create(
+                nombre=d_data["nombre"],
+                defaults={"descripcion": d_data.get("descripcion", "")},
+            )
+            if was_created:
+                created += 1
+        return created
+
+    def _load_teachers(self, Teacher, teachers_data):
+        created = 0
+        skipped = 0
+        for t_data in teachers_data:
+            if Teacher.objects.filter(
+                nombre=t_data["nombre"], apellido=t_data["apellido"]
+            ).exists():
+                skipped += 1
+                continue
+            Teacher.objects.create(**t_data)
+            created += 1
+        return created, skipped
+
+    def _resolve_schedule(self, c_data):
+        if "dia_semana" in c_data and "hora" in c_data:
+            dia_semana = int(c_data.pop("dia_semana"))
+            hora_parts = c_data.pop("hora").split(":")
+            hora_inicio = datetime.strptime(
+                f"{int(hora_parts[0]):02d}:{int(hora_parts[1]):02d}",
+                "%H:%M",
+            ).time()
+            return dia_semana, hora_inicio
+
+        inicio_str = c_data.pop("inicio")
+        inicio_dt = parse_datetime(inicio_str)
+        return inicio_dt.weekday(), inicio_dt.time()
+
+    def _load_classes(self, Class, Teacher, Disciplina, Sede, Sala, classes_data):
+        created = 0
+        skipped = 0
+
+        for c_data in list(classes_data):
+            row = dict(c_data)
+            teacher_nombre = row.pop("teacher_nombre")
+            teacher_apellido = row.pop("teacher_apellido")
+            duracion_minutos = row.pop("duracion_minutos")
+            disciplina_nombre = row.pop("disciplina")
+            sala_nombre = row.pop("sala")
+            sede_nombre = row.pop("sede", None)
+
+            try:
+                teacher = Teacher.objects.get(
+                    nombre=teacher_nombre, apellido=teacher_apellido
+                )
+            except Teacher.DoesNotExist:
+                self.stdout.write(
+                    self.style.ERROR(
+                        f"Teacher {teacher_nombre} {teacher_apellido} not found."
+                    )
+                )
+                continue
+
+            try:
+                dia_semana, hora_inicio = self._resolve_schedule(row)
+            except (KeyError, ValueError) as exc:
+                self.stdout.write(self.style.ERROR(f"Invalid schedule: {exc}"))
+                continue
+
+            disciplina, _ = Disciplina.objects.get_or_create(nombre=disciplina_nombre)
+
+            if sede_nombre:
+                try:
+                    sede = Sede.objects.get(nombre=sede_nombre)
+                except Sede.DoesNotExist:
+                    self.stdout.write(
+                        self.style.ERROR(f"Sede «{sede_nombre}» not found.")
+                    )
+                    continue
+                sala, _ = Sala.objects.get_or_create(
+                    nombre=sala_nombre,
+                    sede=sede,
+                    defaults={"capacidad": row.get("cupo_maximo", 20)},
+                )
+            else:
+                default_sede, _ = Sede.objects.get_or_create(
+                    nombre="Sede Central",
+                    defaults={"direccion": "Dirección Principal 123"},
+                )
+                sala, _ = Sala.objects.get_or_create(
+                    nombre=sala_nombre,
+                    sede=default_sede,
+                    defaults={"capacidad": row.get("cupo_maximo", 20)},
+                )
+
+            if Class.objects.filter(
+                disciplina=disciplina,
+                dia_semana=dia_semana,
+                hora_inicio=hora_inicio,
+                sala=sala,
+            ).exists():
+                skipped += 1
+                continue
+
+            Class.objects.create(
+                profesor=teacher,
+                dia_semana=dia_semana,
+                hora_inicio=hora_inicio,
+                duracion=timedelta(minutes=duracion_minutos),
+                disciplina=disciplina,
+                sala=sala,
+                cupo_maximo=row.get("cupo_maximo", 20),
+                estado=row.get("estado", "disponible"),
+            )
+            created += 1
+
+        return created, skipped

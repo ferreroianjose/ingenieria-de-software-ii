@@ -3,18 +3,16 @@
 {% block title %}Configuración{% endblock %}
 
 {% block content %}
-<div class="mx-auto w-full max-w-4xl p-6">
-  <div class="mb-8">
-    <h1 class="font-semibold">Configuración</h1>
-    <p class="mt-1 text-sm text-muted-foreground">
-      Administrá las preferencias de tu cuenta{% if user.rol == 'ADMIN' or user.rol == 'EMPLEADO' %} y del sistema{% endif %}.
-    </p>
-  </div>
+<div class="internal-page">
+  {% if user.rol == 'ADMIN' %}
+    {% include 'partials/admin/_admin_page_header.html' with title='Configuración' subtitle='Administrá las preferencias de tu cuenta y del sistema.' %}
+  {% else %}
+    {% include 'partials/admin/_admin_page_header.html' with title='Configuración' subtitle='Administrá las preferencias de tu cuenta.' %}
+  {% endif %}
 
   <div class="space-y-4">
-
-    {% if user.rol == 'ADMIN' or user.rol == 'EMPLEADO' %}
-      {% include 'partials/_collapsible_section.html' with icon='bell' title='Notificaciones manuales' description='Enviá notificaciones de prueba o avisos individuales.' content_template='notifications/_test_send.html' %}
+    {% if user.rol == 'ADMIN' %}
+      {% include 'partials/ui/_collapsible_section.html' with icon='bell-fill' title='Notificaciones manuales' description='Enviá notificaciones de prueba o avisos individuales.' content_template='notifications/_test_send.html' %}
     {% endif %}
   </div>
 </div>

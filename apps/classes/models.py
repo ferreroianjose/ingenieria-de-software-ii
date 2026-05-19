@@ -63,10 +63,21 @@ class Class(models.Model):
         ('pausada', 'Pausada'),
     ]
 
+    WEEKDAY_CHOICES = [
+        (0, 'Lunes'),
+        (1, 'Martes'),
+        (2, 'Miércoles'),
+        (3, 'Jueves'),
+        (4, 'Viernes'),
+        (5, 'Sábado'),
+        (6, 'Domingo'),
+    ]
+
     disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, null=True, blank=True)
-    sala = models.ForeignKey(Sala, on_delete=models.CASCADE, null=True, blank=True)
-    profesor = models.ForeignKey('Teacher', on_delete=models.CASCADE)
-    inicio = models.DateTimeField()
+    sala = models.ForeignKey(Sala, on_delete=models.PROTECT, null=True, blank=True)
+    profesor = models.ForeignKey('Teacher', on_delete=models.PROTECT)
+    dia_semana = models.PositiveSmallIntegerField(choices=WEEKDAY_CHOICES, default=0)
+    hora_inicio = models.TimeField(null=True, blank=True)
     duracion = models.DurationField()
     cupo_maximo = models.PositiveIntegerField(default=1)
     estado = models.CharField(
@@ -76,7 +87,7 @@ class Class(models.Model):
     )
 
     def __str__(self):
-        return f"{self.disciplina} - {self.profesor} - {self.inicio}"
+        return f"{self.disciplina} - {self.profesor} - {self.get_dia_semana_display()} {self.hora_inicio}"
 
     @property
     def duracion_minutos(self):
@@ -84,27 +95,27 @@ class Class(models.Model):
 
 
 class Inscripcion(models.Model):
-    ESTADO_ESPERA = 'ESPERA'
-    ESTADO_RESERVADA = 'RESERVADA'
-    ESTADO_PENDIENTE_PAGO = 'PENDIENTE_PAGO'
-    ESTADO_CANCELADA = 'CANCELADA'
+    ESTADO_ESPERA = "ESPERA"
+    ESTADO_RESERVADA = "RESERVADA"
+    ESTADO_PENDIENTE_PAGO = "PENDIENTE_PAGO"
+    ESTADO_CANCELADA = "CANCELADA"
 
     ESTADO_CHOICES = [
-        (ESTADO_ESPERA, 'En lista de espera'),
-        (ESTADO_RESERVADA, 'Reservada'),
-        (ESTADO_PENDIENTE_PAGO, 'Pendiente de pago'),
-        (ESTADO_CANCELADA, 'Cancelada'),
+        (ESTADO_ESPERA, "En lista de espera"),
+        (ESTADO_RESERVADA, "Reservada"),
+        (ESTADO_PENDIENTE_PAGO, "Pendiente de pago"),
+        (ESTADO_CANCELADA, "Cancelada"),
     ]
 
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='inscripciones',
+        related_name="inscripciones",
     )
     clase = models.ForeignKey(
-        'Class',
+        Class,
         on_delete=models.CASCADE,
-        related_name='inscripciones',
+        related_name="inscripciones",
     )
     fecha_inscripcion = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(
@@ -114,8 +125,8 @@ class Inscripcion(models.Model):
     )
 
     class Meta:
-        # FIFO ordering for waitlist promotion
-        ordering = ['fecha_inscripcion']
+        ordering = ["fecha_inscripcion"]
 
     def __str__(self):
         return f"{self.usuario} — {self.clase} ({self.estado})"
+

@@ -1,0 +1,12 @@
+<button
+	class="transition-[scale,transform,background-color,filter,box-shadow] bg-transparent text-primary-600 ring-2 ring-inset ring-primary-500 hover:bg-primary-500 hover:text-white hover:ring-primary-500 text-on-light-bg-500 font-bold hover:scale-102 active:scale-95 duration-500 {{ class }}"
+	type="{{ type|default:'submit' }}"
+	{% if onclick %}onclick="{{ onclick }}"{% endif %}
+	{% if hx_get %}hx-get="{{ hx_get }}"{% endif %}
+	{% if hx_target %}hx-target="{{ hx_target }}"{% endif %}
+	{% if hx_swap %}hx-swap="{{ hx_swap }}"{% endif %}
+	{% if hx_trigger %}hx-trigger="{{ hx_trigger }}"{% endif %}
+	{{ attrs|safe }}
+>
+	{{ label }}
+</button>

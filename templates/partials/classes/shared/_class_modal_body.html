@@ -1,0 +1,43 @@
+<div class="space-y-8 [&>div>h3]:text-lg [&>div>h3]:font-black [&>div>h3]:uppercase [&>div>h3]:tracking-wide [&>div>h3]:text-primary-400 [&>div>h3]:pl-0 [&>div>h3]:p-1 [&>div>h3]:bg-gradient-to-l [&>div>h3]:to-transparent [&>div>h3]:via-25% [&>div>h3]:via-secondary-300/50 [&>div>h3]:rounded-sm">
+    <div class="space-y-4">
+        <h3>Lugar</h3>
+        {% include 'partials/classes/shared/_class_location_fields.html' with form=modal_form %}
+    </div>
+
+    <div class="space-y-4">
+        <h3>Instructor</h3>
+        <div>
+            <label>Profesor asignado</label>
+            {{ modal_form.profesor }}
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <h3>Cronograma</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+            <div class="space-y-4">
+                <div>
+                    <label>Día de la semana</label>
+                    {{ modal_form.dia_semana }}
+                </div>
+                <div class="flex items-end gap-3">
+                    <div class="flex-1">
+                        <label>Hora</label>
+                        {{ modal_form.hora }}
+                    </div>
+                    <div class="mb-2 text-2xl font-black text-gray-300">:</div>
+                    <div class="flex-1">
+                        <label>Minuto</label>
+                        {{ modal_form.minuto }}
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label>Duración (minutos)</label>
+                    {{ modal_form.duracion_minutos }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

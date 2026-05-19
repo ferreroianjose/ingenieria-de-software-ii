@@ -3,6 +3,7 @@
 ## Software Stack
 
 - **Backend:** Django 6
+- **Task Queue:** Django Q
 - **Frontend CSS:** Tailwind CSS
 - **Frontend Interactivity:** HTMX
 - **Frontend State/UI:** Alpine.js
@@ -50,19 +51,23 @@ erDiagram
     }
     SEDE {
         int id PK
-        string nombre
+        string nombre "unique"
         string direccion
+        datetime created_at
+        datetime updated_at
     }
     SALA {
         int id PK
         int sede_id FK
-        string nombre
+        string nombre "unique por sede"
         int capacidad
+        datetime created_at
+        datetime updated_at
     }
     PROFESOR {
         int id PK
         string nombre
-        string apellido
+        string apellido "unique (nombre, apellido)"
     }
     PERIODO_COBRO {
         int id PK
@@ -74,8 +79,10 @@ erDiagram
     }
     DISCIPLINA {
         int id PK
-        string nombre
-        string descripcion
+        string nombre "unique"
+        string descripcion "opcional"
+        datetime created_at
+        datetime updated_at
     }
     PRECIO_DISCIPLINA {
         int id PK
@@ -85,13 +92,14 @@ erDiagram
     }
     CLASE {
         int id PK
-        int disciplina_id FK
-        int sala_id FK
-        int profesor_id FK
-        datetime fecha_hora_inicio
-        int duracion_minutos
+        int disciplina_id FK "nullable, CASCADE"
+        int sala_id FK "nullable, PROTECT"
+        int profesor_id FK "PROTECT"
+        int dia_semana "0=Lun, 1=Mar, ..., 6=Dom"
+        time hora_inicio "nullable"
+        duration duracion
         int cupo_maximo
-        string estado
+        string estado "disponible, pausada"
     }
     INSCRIPCION {
         int id PK

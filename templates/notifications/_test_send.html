@@ -9,7 +9,12 @@
     </div>
 {% endif %}
 
-<form hx-post="{% url 'test-notifications' %}" hx-target="#notification-test-container" hx-swap="outerHTML" id="notification-test-form" class="w-full space-y-4">
+<form hx-post="{% url 'test-notifications' %}" 
+      hx-target="#notification-test-container" 
+      hx-swap="outerHTML" 
+      hx-disabled-elt="#submit-btn"
+      id="notification-test-form" 
+      class="w-full space-y-4">
     {% csrf_token %}
     
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -42,30 +47,40 @@
     </div>
 
     <div class="pt-2">
-        {% include 'partials/_primary_button.html' with label="Enviar notificación" %}
+        {% include 'partials/ui/buttons/_primary_button.html' with label="Enviar notificación" attrs='id="submit-btn"' class="hover:scale-0" %}
     </div>
 </form>
 
 <div class="w-full space-y-2 mt-4 border-t border-gray-100">
     <div class="flex items-center justify-between">
-        {% if last_results %}
+        {% if results %}
         <div class="mt-2 rounded-full text-md font-black uppercase {% if all_success %} text-secondary-500{% else %}text-red-500{% endif %}">
-            {% if all_success %}Enviado{% else %}Error parcial{% endif %}
+            {% if all_success %}Procesando...{% else %}Error parcial{% endif %}
         </div>
         {% endif %}
     </div>
     
-    {% if last_results %}
+    {% if results %}
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {% for adapter, success in last_results.items %}
-            <div class="flex items-center justify-between p-2 rounded-full bg-gray-100 border border-white/50 shadow-fair-md">
-                <div class="flex flex-col">
-                    <span class="ml-3 font-mono text-md font-bold text-on-light-bg-500">{{ adapter|title }}</span>
+        {% for result in results %}
+            {% if result.is_async %}
+                {# Es un ID de tarea (string) #}
+                {% include 'notifications/partials/_task_status.html' with task_id=result.value %}
+            {% else %}
+                {# Es un resultado síncrono (boolean) #}
+                <div class="flex items-center justify-between p-2 rounded-full bg-gray-100 border border-white/50 shadow-fair-md">
+                    <div class="flex flex-col">
+                        <span class="ml-3 font-mono text-md font-bold text-on-light-bg-500">{{ result.slug|title }}</span>
+                    </div>
+                    <span class="flex items-center justify-center size-10 rounded-full shadow-fair-sm transition-transform duration-500 hover:scale-110 {% if result.value %}bg-secondary-300 text-white{% else %}bg-red-500 text-white{% endif %}">
+                        {% if result.value %}
+                            {% include 'partials/ui/_icon.html' with name="check-lg" class="size-5" %}
+                        {% else %}
+                            {% include 'partials/ui/_icon.html' with name="x-lg" class="size-5" %}
+                        {% endif %}
+                    </span>
                 </div>
-                <span class="flex items-center justify-center size-10 rounded-full shadow-fair-sm transition-transform duration-500 hover:scale-110 {% if success %}bg-secondary-300 text-white{% else %}bg-red-500 text-white{% endif %}">
-                    {% if success %}✓{% else %}✕{% endif %}
-                </span>
-            </div>
+            {% endif %}
         {% endfor %}
     </div>
     {% else %}

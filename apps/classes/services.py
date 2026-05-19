@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.db import transaction
 from django.utils import timezone
@@ -26,13 +26,20 @@ class InscripcionDuplicada(ReservaError):
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def proxima_ocurrencia(inicio):
-    """Return the next future datetime for a weekly-repeating class."""
-    ahora = timezone.now()
-    if inicio >= ahora:
-        return inicio
-    semanas = (ahora - inicio).days // 7 + 1
-    return inicio + timedelta(weeks=semanas)
+def proxima_ocurrencia(clase):
+    """Return the next future datetime for a weekly class (dia_semana + hora_inicio)."""
+    if not clase.hora_inicio:
+        return None
+    ahora = timezone.localtime(timezone.now())
+    tz = timezone.get_current_timezone()
+    days_ahead = (clase.dia_semana - ahora.weekday()) % 7
+    dt = timezone.make_aware(
+        datetime.combine(ahora.date() + timedelta(days=days_ahead), clase.hora_inicio),
+        tz,
+    )
+    if dt <= ahora:
+        dt += timedelta(days=7)
+    return dt
 
 
 def cupo_disponible(clase):

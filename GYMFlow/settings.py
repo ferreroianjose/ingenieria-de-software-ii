@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "apps.attendance",  # Módulo de asistencia
     "apps.reports",  # Módulo de reportes y métricas
     "apps.notifications",  # Módulo de notificaciones
+    "django_q",  # Django Q2 para tareas en segundo plano
 ]
 
 MIDDLEWARE = [
@@ -102,6 +103,19 @@ if POSTGRES_DB:
     }
 else:
     raise Exception("No se proporcionaron las variables de entorno de Postgres en .env")
+
+# Django Q2 Configuration
+Q_CLUSTER = {
+    "name": "GYMFlow_Cluster",
+    "workers": 4,
+    "recycle": 500,
+    "timeout": 60,
+    "compress": True,
+    "save_limit": 250,
+    "queue_limit": 500,
+    "label": "Django Q",
+    "orm": "default",  # Usar la base de datos por defecto como broker
+}
 
 
 # Password validation
@@ -160,7 +174,7 @@ AUTH_USER_MODEL = 'users.User'
 runserver.default_port = "8000"
 
 # Email Configuration
-EMAIL_BACKEND = "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"

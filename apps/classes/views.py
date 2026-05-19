@@ -1,222 +1,999 @@
-from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from GYMFlow.access import admin_required
+from django.db.models import ProtectedError
+from django.http import HttpResponse
+from django.urls import reverse
 
-from . import services
 from .forms import ClassForm, TeacherForm, SedeForm, SalaForm, DisciplinaForm
-from .models import Class, Inscripcion, Teacher, Sede, Sala, Disciplina
+from .models import Class, Teacher, Sede, Sala, Disciplina, Inscripcion
+from . import services
 from .services import proxima_ocurrencia
+from .search import apply_text_search
+from .htmx import hx_ok
 
 
-# ── Infrastructure management (staff) ─────────────────────────────────────────
+def _hx_ok_or_redirect(
+    request,
+    *,
+    message,
+    redirect_to,
+    level="success",
+    close_modal=None,
+    refresh=None,
+    redirect_url=None,
+    locations_reload=None,
+):
+    if request.headers.get("HX-Request"):
+        return hx_ok(
+            request,
+            message=message,
+            level=level,
+            close_modal=close_modal,
+            refresh=refresh,
+            redirect_url=redirect_url,
+            locations_reload=locations_reload,
+        )
+    if level == "success":
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
+    return redirect(redirect_to)
 
-@staff_member_required
-def infrastructure_list(request):
-    """Vista unificada que muestra Sedes, Salas, Disciplinas y Profesores"""
 
-    # Inicializar formularios y modales
-    sede_form = SedeForm()
-    sala_form = SalaForm()
-    disciplina_form = DisciplinaForm()
-    teacher_form = TeacherForm()
-
-    show_sede_modal = False
-    show_sala_modal = False
-    show_disciplina_modal = False
-    show_teacher_modal = False
-
-    # Procesar POST para Sede
-    if request.method == 'POST' and 'form_type' in request.POST:
-        form_type = request.POST.get('form_type')
-
-        if form_type == 'sede':
-            sede_form = SedeForm(request.POST)
-            if sede_form.is_valid():
-                sede_form.save()
-                return redirect('classes:infrastructure_list')
-            show_sede_modal = True
-
-        elif form_type == 'sala':
-            sala_form = SalaForm(request.POST)
-            if sala_form.is_valid():
-                sala_form.save()
-                return redirect('classes:infrastructure_list')
-            show_sala_modal = True
-
-        elif form_type == 'disciplina':
-            disciplina_form = DisciplinaForm(request.POST)
-            if disciplina_form.is_valid():
-                disciplina_form.save()
-                return redirect('classes:infrastructure_list')
-            show_disciplina_modal = True
-
-        elif form_type == 'teacher':
-            teacher_form = TeacherForm(request.POST)
-            if teacher_form.is_valid():
-                teacher_form.save()
-                return redirect('classes:infrastructure_list')
-            show_teacher_modal = True
-
-    # Obtener datos optimizados
-    sedes = Sede.objects.all().order_by('nombre')
-    salas = Sala.objects.select_related('sede').all().order_by('nombre')
-    disciplinas = Disciplina.objects.all().order_by('nombre')
-    teachers = Teacher.objects.all().order_by('nombre', 'apellido')
-
-    context = {
-        'sedes': sedes,
-        'salas': salas,
-        'disciplinas': disciplinas,
-        'teachers': teachers,
-        'sede_form': sede_form,
-        'sala_form': sala_form,
-        'disciplina_form': disciplina_form,
-        'teacher_form': teacher_form,
-        'show_sede_modal': show_sede_modal,
-        'show_sala_modal': show_sala_modal,
-        'show_disciplina_modal': show_disciplina_modal,
-        'show_teacher_modal': show_teacher_modal,
+def _class_rows_refresh():
+    return {
+        "url": reverse("classes:class_rows"),
+        "target": "#class-rows-tbody",
     }
 
-    return render(request, 'classes/infrastructure_list.html', context)
+
+def _disciplina_rows_refresh():
+    return {
+        "url": reverse("classes:disciplina_rows"),
+        "target": "#disciplinas-tbody",
+        "searchFormId": "disciplinas-search-form",
+    }
 
 
-@staff_member_required
-def delete_sede(request, sede_id):
-    """Eliminar una sede"""
-    if request.method == 'POST':
-        try:
-            sede = Sede.objects.get(id=sede_id)
-            sede.delete()
-        except Sede.DoesNotExist:
-            pass
-    return redirect('classes:infrastructure_list')
+def _teacher_rows_refresh():
+    return {
+        "url": reverse("classes:teacher_rows"),
+        "target": "#teachers-tbody",
+        "searchFormId": "teachers-search-form",
+    }
 
 
-@staff_member_required
-def delete_sala(request, sala_id):
-    """Eliminar una sala"""
-    if request.method == 'POST':
-        try:
-            sala = Sala.objects.get(id=sala_id)
-            sala.delete()
-        except Sala.DoesNotExist:
-            pass
-    return redirect('classes:infrastructure_list')
+def _sala_rows_refresh(sede_id):
+    return {
+        "url": reverse("classes:sala_rows"),
+        "target": "#salas-tbody",
+        "query": {"sede_id": str(sede_id)},
+    }
 
 
-@staff_member_required
-def delete_disciplina(request, disciplina_id):
-    """Eliminar una disciplina"""
-    if request.method == 'POST':
-        try:
-            disciplina = Disciplina.objects.get(id=disciplina_id)
-            disciplina.delete()
-        except Disciplina.DoesNotExist:
-            pass
-    return redirect('classes:infrastructure_list')
+def _edit_initial_for_class(instance):
+    initial = {}
+    if instance.sala_id:
+        initial["sede"] = instance.sala.sede_id
+    if instance.hora_inicio:
+        initial["hora"] = instance.hora_inicio.hour
+        initial["minuto"] = instance.hora_inicio.minute
+    if instance.duracion:
+        initial["duracion_minutos"] = instance.duracion_minutos
+    return initial
 
 
-@staff_member_required
-def delete_teacher(request, teacher_id):
-    if request.method == 'POST':
-        try:
-            teacher = Teacher.objects.get(id=teacher_id)
-            teacher.delete()
-        except Teacher.DoesNotExist:
-            pass
-    return redirect('classes:infrastructure_list')
+def _render_modal(
+    request,
+    *,
+    body_template,
+    form,
+    title,
+    subtitle,
+    button_label,
+    action_url,
+    show_var,
+    container_id,
+    variant="center",
+    status=200,
+    **extra,
+):
+    return render(
+        request,
+        "partials/ui/modals/_modal.html",
+        {
+            "modal_form": form,
+            "modal_title": title,
+            "modal_subtitle": subtitle,
+            "modal_button_label": button_label,
+            "action_url": action_url,
+            "modal_show_var": show_var,
+            "modal_container_id": container_id,
+            "modal_variant": variant,
+            "modal_body_template": body_template,
+            **extra,
+        },
+        status=status,
+    )
 
 
-# ── Class management (staff) ─────────────────────────────────────────────────
+def _class_modal_context(form, instance=None):
+    editing = instance is not None and instance.pk
+    if editing:
+        return {
+            "body_template": "partials/classes/shared/_class_modal_body.html",
+            "form": form,
+            "title": "Editar clase",
+            "subtitle": "Modificá los datos de la clase y guarda los cambios.",
+            "button_label": "Guardar cambios",
+            "action_url": reverse("classes:update_class", args=[instance.pk]),
+            "show_var": "classDrawerOpen",
+            "container_id": "class-drawer",
+            "variant": "drawer",
+        }
+    return {
+        "body_template": "partials/classes/shared/_class_modal_body.html",
+        "form": form,
+        "title": "Nueva clase",
+        "subtitle": 'Ingresá los datos de la nueva clase y presiona "Publicar clase" para guardar.',
+        "button_label": "Publicar clase",
+        "action_url": reverse("classes:create_class"),
+        "show_var": "classDrawerOpen",
+        "container_id": "class-drawer",
+        "variant": "drawer",
+    }
 
-@staff_member_required
+
+def _render_class_drawer(request, form, instance=None, status=200):
+    ctx = _class_modal_context(form, instance)
+    return render(
+        request,
+        "partials/classes/list/_class_drawer_panel.html",
+        {
+            "modal_form": ctx["form"],
+            "modal_title": ctx["title"],
+            "modal_subtitle": ctx["subtitle"],
+            "modal_button_label": ctx["button_label"],
+            "action_url": ctx["action_url"],
+        },
+        status=status,
+    )
+
+
+def _sede_modal_context(form, instance=None):
+    editing = instance is not None and instance.pk
+    if editing:
+        return {
+            "form": form,
+            "title": "Editar sede",
+            "subtitle": "Actualizá el nombre y la dirección.",
+            "button_label": "Guardar cambios",
+            "action_url": reverse("classes:update_sede", args=[instance.pk]),
+        }
+    return {
+        "form": form,
+        "title": "Agregar sede",
+        "subtitle": "Ingresá los datos de la nueva sede.",
+        "button_label": "Guardar sede",
+        "action_url": reverse("classes:create_sede"),
+    }
+
+
+def _render_sede_modal_panel(request, form, instance=None, status=200):
+    ctx = _sede_modal_context(form, instance)
+    return render(
+        request,
+        "partials/classes/modals/_sede_modal_panel.html",
+        {
+            "modal_form": ctx["form"],
+            "modal_title": ctx["title"],
+            "modal_subtitle": ctx["subtitle"],
+            "modal_button_label": ctx["button_label"],
+            "action_url": ctx["action_url"],
+        },
+        status=status,
+    )
+
+
+def _sala_modal_context(form, instance=None):
+    editing = instance is not None and instance.pk
+    if editing:
+        return {
+            "form": form,
+            "title": "Editar sala",
+            "subtitle": "Actualizá nombre, capacidad y sede.",
+            "button_label": "Guardar cambios",
+            "action_url": reverse("classes:update_sala", args=[instance.pk]),
+            "lock_sede": False,
+            "selected_sede_id": None,
+        }
+    return {
+        "form": form,
+        "title": "Agregar sala",
+        "subtitle": "Ingresá los datos de la nueva sala.",
+        "button_label": "Guardar sala",
+        "action_url": reverse("classes:create_sala"),
+        "lock_sede": True,
+        "selected_sede_id": None,
+    }
+
+
+def _render_sala_modal_panel(
+    request, form, instance=None, *, lock_sede=False, selected_sede_id=None, status=200
+):
+    ctx = _sala_modal_context(form, instance)
+    if instance is None:
+        ctx["lock_sede"] = lock_sede
+        ctx["selected_sede_id"] = selected_sede_id
+    return render(
+        request,
+        "partials/classes/modals/_sala_modal_panel.html",
+        {
+            "modal_form": ctx["form"],
+            "modal_title": ctx["title"],
+            "modal_subtitle": ctx["subtitle"],
+            "modal_button_label": ctx["button_label"],
+            "action_url": ctx["action_url"],
+            "lock_sede": ctx["lock_sede"],
+            "selected_sede_id": ctx["selected_sede_id"],
+        },
+        status=status,
+    )
+
+
+def _disciplina_modal_context(form, instance=None):
+    editing = instance is not None and instance.pk
+    if editing:
+        return {
+            "form": form,
+            "title": "Editar disciplina",
+            "subtitle": "Actualizá el nombre y la descripción.",
+            "button_label": "Guardar cambios",
+            "action_url": reverse("classes:update_disciplina", args=[instance.pk]),
+        }
+    return {
+        "form": form,
+        "title": "Nueva disciplina",
+        "subtitle": "Ingresá los datos de la disciplina.",
+        "button_label": "Guardar disciplina",
+        "action_url": reverse("classes:create_disciplina"),
+    }
+
+
+def _render_disciplina_modal_panel(request, form, instance=None, status=200):
+    ctx = _disciplina_modal_context(form, instance)
+    return render(
+        request,
+        "partials/classes/modals/_disciplina_modal_panel.html",
+        {
+            "modal_form": ctx["form"],
+            "modal_title": ctx["title"],
+            "modal_subtitle": ctx["subtitle"],
+            "modal_button_label": ctx["button_label"],
+            "action_url": ctx["action_url"],
+        },
+        status=status,
+    )
+
+
+def _teacher_modal_context(form, instance=None):
+    editing = instance is not None and instance.pk
+    if editing:
+        return {
+            "form": form,
+            "title": "Editar profesor",
+            "subtitle": "Actualizá nombre y apellido.",
+            "button_label": "Guardar cambios",
+            "action_url": reverse("classes:update_teacher", args=[instance.pk]),
+        }
+    return {
+        "form": form,
+        "title": "Nuevo profesor",
+        "subtitle": "Ingresá los datos del profesor.",
+        "button_label": "Guardar profesor",
+        "action_url": reverse("classes:create_teacher"),
+    }
+
+
+def _render_teacher_modal_panel(request, form, instance=None, status=200):
+    ctx = _teacher_modal_context(form, instance)
+    return render(
+        request,
+        "partials/classes/modals/_teacher_modal_panel.html",
+        {
+            "modal_form": ctx["form"],
+            "modal_title": ctx["title"],
+            "modal_subtitle": ctx["subtitle"],
+            "modal_button_label": ctx["button_label"],
+            "action_url": ctx["action_url"],
+        },
+        status=status,
+    )
+
+
+def _filter_class_queryset(request):
+    qs = Class.objects.select_related(
+        "disciplina", "sala", "sala__sede", "profesor"
+    ).order_by("dia_semana", "hora_inicio")
+    qs = apply_text_search(
+        qs,
+        request.GET.get("q", ""),
+        "disciplina__nombre",
+        "sala__nombre",
+        "sala__sede__nombre",
+        "profesor__nombre",
+        "profesor__apellido",
+    )
+    disciplina = request.GET.get("disciplina")
+    if disciplina:
+        qs = qs.filter(disciplina_id=disciplina)
+    sede = request.GET.get("sede")
+    if sede:
+        qs = qs.filter(sala__sede_id=sede)
+    profesor = request.GET.get("profesor")
+    if profesor:
+        qs = qs.filter(profesor_id=profesor)
+    dia = request.GET.get("dia_semana")
+    if dia not in (None, ""):
+        qs = qs.filter(dia_semana=dia)
+    estado = request.GET.get("estado")
+    if estado:
+        qs = qs.filter(estado=estado)
+    return qs
+
+
+def _class_rows_context(request):
+    if request.GET.get("cleared"):
+        return {
+            "classes": [],
+            "searched": False,
+            "q": "",
+        }
+    qs = _filter_class_queryset(request)
+    return {
+        "classes": qs,
+        "searched": True,
+        "q": request.GET.get("q", ""),
+    }
+
+
+def _all_class_rows_context():
+    return {
+        "classes": Class.objects.select_related(
+            "disciplina", "sala", "sala__sede", "profesor"
+        ).order_by("dia_semana", "hora_inicio"),
+        "searched": True,
+        "q": "",
+    }
+
+
+CLASS_LIST_VIEW_TABS = [
+    {"id": "lista", "label": "Listado"},
+    {"id": "cronograma", "label": "Cronograma"},
+]
+
+CATALOG_VIEW_TABS = [
+    {"id": "disciplinas", "label": "Disciplinas"},
+    {"id": "profesores", "label": "Profesores"},
+]
+
+
+@admin_required
 def class_list(request):
+    tab = request.GET.get("tab", "lista")
+    if tab not in {t["id"] for t in CLASS_LIST_VIEW_TABS}:
+        tab = "lista"
+    return render(
+        request,
+        "classes/class_list.html",
+        {
+            "filter_url": reverse("classes:class_rows"),
+            "disciplinas": Disciplina.objects.order_by("nombre"),
+            "sedes": Sede.objects.order_by("nombre"),
+            "profesores": Teacher.objects.order_by("nombre", "apellido"),
+            "weekday_choices": Class.WEEKDAY_CHOICES,
+            "estado_choices": Class.ESTADO_CHOICES,
+            "view_tabs": CLASS_LIST_VIEW_TABS,
+            "initial_tab": tab,
+            "class_rows_searched": False,
+        },
+    )
+
+
+@admin_required
+def class_rows(request):
+    return render(
+        request,
+        "partials/classes/rows/_class_rows.html",
+        _class_rows_context(request),
+    )
+
+
+@admin_required
+def locations_list(request):
+    sedes = Sede.objects.all().order_by("nombre")
+    selected_sede_id = request.GET.get("sede_id")
+    if selected_sede_id:
+        try:
+            selected_sede_id = int(selected_sede_id)
+        except ValueError, TypeError:
+            selected_sede_id = sedes[0].id if sedes else None
+    elif sedes:
+        selected_sede_id = sedes[0].id
+    else:
+        selected_sede_id = None
+
+    return render(
+        request,
+        "classes/locations_list.html",
+        {
+            "sedes": sedes,
+            "selected_sede_id": selected_sede_id,
+        },
+    )
+
+
+@admin_required
+def sala_rows(request):
+    sede_id = request.GET.get("sede_id")
+    if not sede_id:
+        return render(
+            request,
+            "partials/classes/rows/_sala_rows.html",
+            {
+                "salas": Sala.objects.none(),
+                "sede": None,
+            },
+        )
+    sede = get_object_or_404(Sede, pk=sede_id)
+    salas = Sala.objects.filter(sede=sede).order_by("nombre")
+    return render(
+        request,
+        "partials/classes/rows/_sala_rows.html",
+        {
+            "salas": salas,
+            "sede": sede,
+        },
+    )
+
+
+@admin_required
+def catalog(request):
+    tab = request.GET.get("tab", "disciplinas")
+    if tab not in ("disciplinas", "profesores"):
+        tab = "disciplinas"
+    return render(
+        request,
+        "classes/catalog.html",
+        {
+            "disciplina_form": DisciplinaForm(),
+            "teacher_form": TeacherForm(),
+            "create_disciplina_url": reverse("classes:create_disciplina"),
+            "create_teacher_url": reverse("classes:create_teacher"),
+            "view_tabs": CATALOG_VIEW_TABS,
+            "initial_tab": tab,
+        },
+    )
+
+
+@admin_required
+def disciplina_rows(request):
+    q = request.GET.get("q", "")
+    disciplinas = apply_text_search(
+        Disciplina.objects.all().order_by("nombre"), q, "nombre", "descripcion"
+    )
+    return render(
+        request,
+        "partials/classes/rows/_disciplina_rows.html",
+        {
+            "disciplinas": disciplinas,
+            "searched": True,
+            "q": request.GET.get("q", ""),
+        },
+    )
+
+
+@admin_required
+def teacher_rows(request):
+    q = request.GET.get("q", "")
+    teachers = apply_text_search(
+        Teacher.objects.all().order_by("nombre", "apellido"), q, "nombre", "apellido"
+    )
+    return render(
+        request,
+        "partials/classes/rows/_teacher_rows.html",
+        {
+            "teachers": teachers,
+            "searched": True,
+            "q": request.GET.get("q", ""),
+        },
+    )
+
+
+@admin_required
+def class_modal(request, class_id=None):
+    if class_id is not None:
+        instance = get_object_or_404(
+            Class.objects.select_related("sala__sede"),
+            pk=class_id,
+        )
+        form = ClassForm(instance=instance, initial=_edit_initial_for_class(instance))
+    else:
+        instance = None
+        form = ClassForm()
+    return _render_class_drawer(request, form, instance)
+
+
+@admin_required
+def salas_por_sede(request):
+    sede_id = request.GET.get("sede")
+    sala_id = request.GET.get("sala")
     form = ClassForm()
-    show_modal = False
+    if sede_id:
+        try:
+            form.fields["sala"].queryset = Sala.objects.filter(
+                sede_id=int(sede_id)
+            ).order_by("nombre")
+            if sala_id:
+                try:
+                    sala_pk = int(sala_id)
+                    if form.fields["sala"].queryset.filter(pk=sala_pk).exists():
+                        form.fields["sala"].initial = sala_pk
+                except ValueError, TypeError:
+                    pass
+        except ValueError, TypeError:
+            form.fields["sala"].queryset = Sala.objects.none()
+    else:
+        form.fields["sala"].queryset = Sala.objects.none()
+    return render(request, "partials/classes/shared/_sala_field.html", {"form": form})
 
-    if request.method == 'POST':
-        form = ClassForm(request.POST)
-        if form.is_valid():
-            new_class = form.save(commit=False)
-            new_class.estado = 'disponible'
-            new_class.save()
-            return redirect('classes:class_list')
-        show_modal = True
 
-    classes = Class.objects.all()
-    return render(
+@admin_required
+def create_class(request):
+    if request.method != "POST":
+        return redirect("classes:class_list")
+    form = ClassForm(request.POST)
+    if form.is_valid():
+        form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message="La clase fue publicada correctamente.",
+            redirect_to="classes:class_list",
+            close_modal="classDrawerOpen",
+            refresh=_class_rows_refresh(),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_class_drawer(request, form)
+    return redirect("classes:class_list")
+
+
+@admin_required
+def delete_class(request, class_id):
+    if request.method != "POST":
+        return redirect("classes:class_list")
+    clase = get_object_or_404(Class, pk=class_id)
+    try:
+        nombre = str(clase)
+        clase.delete()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La clase «{nombre}» fue eliminada.",
+            redirect_to="classes:class_list",
+            refresh=_class_rows_refresh(),
+        )
+    except ProtectedError:
+        return _hx_ok_or_redirect(
+            request,
+            message="No se puede eliminar esta clase porque tiene datos asociados.",
+            redirect_to="classes:class_list",
+            level="error",
+        )
+
+
+@admin_required
+def toggle_class_pause(request, class_id):
+    if request.method != "POST":
+        return redirect("classes:class_list")
+    clase = get_object_or_404(Class, pk=class_id)
+    if clase.estado == "disponible":
+        clase.estado = "pausada"
+        msg = f"La clase «{clase}» fue pausada."
+    else:
+        clase.estado = "disponible"
+        msg = f"La clase «{clase}» está disponible nuevamente."
+    clase.save()
+    return _hx_ok_or_redirect(
         request,
-        'classes/class_list.html',
-        {'classes': classes, 'form': form, 'show_modal': show_modal},
+        message=msg,
+        redirect_to="classes:class_list",
+        refresh=_class_rows_refresh(),
     )
 
 
-@staff_member_required
-def teacher_list(request):
-    form = TeacherForm()
-    show_modal = False
+@admin_required
+def update_class(request, class_id):
+    if request.method != "POST":
+        return redirect("classes:class_list")
+    instance = get_object_or_404(Class, pk=class_id)
+    form = ClassForm(request.POST, instance=instance)
+    if form.is_valid():
+        form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La clase «{instance}» fue actualizada correctamente.",
+            redirect_to="classes:class_list",
+            close_modal="classDrawerOpen",
+            refresh=_class_rows_refresh(),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_class_drawer(request, form, instance)
+    return redirect("classes:class_list")
 
-    if request.method == 'POST':
-        form = TeacherForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('classes:teacher_list')
-        show_modal = True
 
-    teachers = Teacher.objects.all()
-    return render(
+@admin_required
+def sede_modal(request, sede_id=None):
+    if sede_id is not None:
+        instance = get_object_or_404(Sede, pk=sede_id)
+        form = SedeForm(instance=instance)
+    else:
+        instance = None
+        form = SedeForm()
+    return _render_sede_modal_panel(request, form, instance)
+
+
+@admin_required
+def sala_modal(request, sala_id=None):
+    if sala_id is not None:
+        instance = get_object_or_404(Sala, pk=sala_id)
+        form = SalaForm(instance=instance)
+        return _render_sala_modal_panel(request, form, instance)
+    sede_id = request.GET.get("sede_id")
+    initial = {}
+    lock_sede = False
+    if sede_id:
+        try:
+            initial["sede"] = int(sede_id)
+            lock_sede = True
+        except (ValueError, TypeError):
+            pass
+    form = SalaForm(initial=initial)
+    return _render_sala_modal_panel(
         request,
-        'classes/teacher_list.html',
-        {'teachers': teachers, 'form': form, 'show_modal': show_modal},
+        form,
+        lock_sede=lock_sede,
+        selected_sede_id=initial.get("sede"),
     )
 
 
-# ── Client-facing views ──────────────────────────────────────────────────────
+@admin_required
+def create_sede(request):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    form = SedeForm(request.POST)
+    if form.is_valid():
+        sede = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sede «{sede.nombre}» fue creada.",
+            redirect_to="classes:locations_list",
+            close_modal="sedeModalOpen",
+            locations_reload=(
+                reverse("classes:locations_list") + f"?sede_id={sede.pk}"
+            ),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_sede_modal_panel(request, form)
+    return redirect("classes:locations_list")
+
+
+@admin_required
+def update_sede(request, sede_id):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    instance = get_object_or_404(Sede, pk=sede_id)
+    form = SedeForm(request.POST, instance=instance)
+    if form.is_valid():
+        sede = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sede «{sede.nombre}» fue actualizada.",
+            redirect_to="classes:locations_list",
+            close_modal="sedeModalOpen",
+            locations_reload=(
+                reverse("classes:locations_list") + f"?sede_id={sede.pk}"
+            ),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_sede_modal_panel(request, form, instance)
+    return redirect("classes:locations_list")
+
+
+@admin_required
+def create_sala(request):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    form = SalaForm(request.POST)
+    if form.is_valid():
+        sala = form.save()
+        sede = sala.sede
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sala «{sala.nombre}» fue creada.",
+            redirect_to="classes:locations_list",
+            close_modal="salaModalOpen",
+            refresh=_sala_rows_refresh(sede.pk),
+        )
+    sede_id = request.POST.get("sede")
+    if request.headers.get("HX-Request"):
+        return _render_sala_modal_panel(
+            request,
+            form,
+            lock_sede=bool(sede_id),
+            selected_sede_id=int(sede_id) if sede_id and str(sede_id).isdigit() else None,
+        )
+    return redirect("classes:locations_list")
+
+
+@admin_required
+def update_sala(request, sala_id):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    instance = get_object_or_404(Sala, pk=sala_id)
+    form = SalaForm(request.POST, instance=instance)
+    if form.is_valid():
+        sala = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sala «{sala.nombre}» fue actualizada.",
+            redirect_to="classes:locations_list",
+            close_modal="salaModalOpen",
+            refresh=_sala_rows_refresh(sala.sede_id),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_sala_modal_panel(request, form, instance)
+    return redirect("classes:locations_list")
+
+
+@admin_required
+def disciplina_modal(request, disciplina_id=None):
+    if disciplina_id is not None:
+        instance = get_object_or_404(Disciplina, pk=disciplina_id)
+        form = DisciplinaForm(instance=instance)
+    else:
+        instance = None
+        form = DisciplinaForm()
+    return _render_disciplina_modal_panel(request, form, instance)
+
+
+@admin_required
+def create_disciplina(request):
+    if request.method != "POST":
+        return redirect(reverse("classes:catalog") + "?tab=disciplinas")
+    form = DisciplinaForm(request.POST)
+    if form.is_valid():
+        disciplina = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La disciplina «{disciplina.nombre}» fue creada.",
+            redirect_to=reverse("classes:catalog") + "?tab=disciplinas",
+            close_modal="disciplinaModalOpen",
+            refresh=_disciplina_rows_refresh(),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_disciplina_modal_panel(request, form)
+    return redirect(reverse("classes:catalog") + "?tab=disciplinas")
+
+
+@admin_required
+def update_disciplina(request, disciplina_id):
+    if request.method != "POST":
+        return redirect(reverse("classes:catalog") + "?tab=disciplinas")
+    instance = get_object_or_404(Disciplina, pk=disciplina_id)
+    form = DisciplinaForm(request.POST, instance=instance)
+    if form.is_valid():
+        disciplina = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La disciplina «{disciplina.nombre}» fue actualizada.",
+            redirect_to=reverse("classes:catalog") + "?tab=disciplinas",
+            close_modal="disciplinaModalOpen",
+            refresh=_disciplina_rows_refresh(),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_disciplina_modal_panel(request, form, instance)
+    return redirect(reverse("classes:catalog") + "?tab=disciplinas")
+
+
+@admin_required
+def teacher_modal(request, teacher_id=None):
+    if teacher_id is not None:
+        instance = get_object_or_404(Teacher, pk=teacher_id)
+        form = TeacherForm(instance=instance)
+    else:
+        instance = None
+        form = TeacherForm()
+    return _render_teacher_modal_panel(request, form, instance)
+
+
+@admin_required
+def create_teacher(request):
+    if request.method != "POST":
+        return redirect(reverse("classes:catalog") + "?tab=profesores")
+    form = TeacherForm(request.POST)
+    if form.is_valid():
+        teacher = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"El profesor «{teacher.nombre} {teacher.apellido}» fue creado.",
+            redirect_to=reverse("classes:catalog") + "?tab=profesores",
+            close_modal="teacherModalOpen",
+            refresh=_teacher_rows_refresh(),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_teacher_modal_panel(request, form)
+    return redirect(reverse("classes:catalog") + "?tab=profesores")
+
+
+@admin_required
+def update_teacher(request, teacher_id):
+    if request.method != "POST":
+        return redirect(reverse("classes:catalog") + "?tab=profesores")
+    instance = get_object_or_404(Teacher, pk=teacher_id)
+    form = TeacherForm(request.POST, instance=instance)
+    if form.is_valid():
+        teacher = form.save()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"El profesor «{teacher.nombre} {teacher.apellido}» fue actualizado.",
+            redirect_to=reverse("classes:catalog") + "?tab=profesores",
+            close_modal="teacherModalOpen",
+            refresh=_teacher_rows_refresh(),
+        )
+    if request.headers.get("HX-Request"):
+        return _render_teacher_modal_panel(request, form, instance)
+    return redirect(reverse("classes:catalog") + "?tab=profesores")
+
+
+@admin_required
+def delete_sede(request, sede_id):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    sede = get_object_or_404(Sede, pk=sede_id)
+    try:
+        nombre = sede.nombre
+        sede.delete()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sede «{nombre}» fue eliminada.",
+            redirect_to="classes:locations_list",
+            locations_reload=reverse("classes:locations_list"),
+        )
+    except ProtectedError:
+        return _hx_ok_or_redirect(
+            request,
+            message=f"No se puede eliminar la sede «{sede.nombre}» porque tiene salas con clases asignadas.",
+            redirect_to="classes:locations_list",
+            level="error",
+        )
+
+
+@admin_required
+def delete_sala(request, sala_id):
+    if request.method != "POST":
+        return redirect("classes:locations_list")
+    sala = get_object_or_404(Sala, pk=sala_id)
+    sede_id = sala.sede_id
+    try:
+        nombre = sala.nombre
+        sala.delete()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La sala «{nombre}» fue eliminada.",
+            redirect_to="classes:locations_list",
+            refresh=_sala_rows_refresh(sede_id),
+        )
+    except ProtectedError:
+        return _hx_ok_or_redirect(
+            request,
+            message=f"No se puede eliminar la sala «{sala.nombre}» porque tiene clases asignadas.",
+            redirect_to="classes:locations_list",
+            level="error",
+        )
+
+
+@admin_required
+def delete_disciplina(request, disciplina_id):
+    if request.method != "POST":
+        return redirect(reverse("classes:catalog") + "?tab=disciplinas")
+    disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
+    try:
+        nombre = disciplina.nombre
+        disciplina.delete()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"La disciplina «{nombre}» fue eliminada.",
+            redirect_to=reverse("classes:catalog") + "?tab=disciplinas",
+            refresh=_disciplina_rows_refresh(),
+        )
+    except ProtectedError:
+        return _hx_ok_or_redirect(
+            request,
+            message=f"No se puede eliminar «{disciplina.nombre}» porque tiene clases asignadas.",
+            redirect_to=reverse("classes:catalog") + "?tab=disciplinas",
+            level="error",
+        )
+
+
+@admin_required
+def delete_teacher(request, teacher_id):
+    if request.method != "POST":
+        return redirect(reverse("classes:catalog") + "?tab=profesores")
+    teacher = get_object_or_404(Teacher, pk=teacher_id)
+    try:
+        nombre = str(teacher)
+        teacher.delete()
+        return _hx_ok_or_redirect(
+            request,
+            message=f"El profesor «{nombre}» fue eliminado.",
+            redirect_to=reverse("classes:catalog") + "?tab=profesores",
+            refresh=_teacher_rows_refresh(),
+        )
+    except ProtectedError:
+        return _hx_ok_or_redirect(
+            request,
+            message=f"No se puede eliminar «{teacher}» porque tiene clases asignadas.",
+            redirect_to=reverse("classes:catalog") + "?tab=profesores",
+            level="error",
+        )
+
+
+# ── Cliente: reservas ────────────────────────────────────────────────────────
 
 @login_required
 def browse_clases(request):
-    """Catalog of available classes with capacity and next occurrence info."""
     clases = (
-        Class.objects.filter(estado='disponible')
-        .select_related('profesor', 'disciplina', 'sala', 'sala__sede')
-        .prefetch_related('inscripciones')
+        Class.objects.filter(estado="disponible")
+        .select_related("profesor", "disciplina", "sala", "sala__sede")
+        .prefetch_related("inscripciones")
     )
 
     clases_con_info = []
     for clase in clases:
-        proximo_inicio = proxima_ocurrencia(clase.inicio)
         activas = clase.inscripciones.filter(
-            estado__in=[Inscripcion.ESTADO_RESERVADA, Inscripcion.ESTADO_PENDIENTE_PAGO]
+            estado__in=[
+                Inscripcion.ESTADO_RESERVADA,
+                Inscripcion.ESTADO_PENDIENTE_PAGO,
+            ]
         ).count()
-        cupo_restante = max(0, clase.cupo_maximo - activas)
-        en_espera = clase.inscripciones.filter(estado=Inscripcion.ESTADO_ESPERA).count()
-        mi_inscripcion = (
-            clase.inscripciones.filter(usuario=request.user)
-            .exclude(estado=Inscripcion.ESTADO_CANCELADA)
-            .first()
+        clases_con_info.append(
+            {
+                "clase": clase,
+                "proximo_inicio": proxima_ocurrencia(clase),
+                "cupo_restante": max(0, clase.cupo_maximo - activas),
+                "en_espera": clase.inscripciones.filter(
+                    estado=Inscripcion.ESTADO_ESPERA
+                ).count(),
+                "mi_inscripcion": (
+                    clase.inscripciones.filter(usuario=request.user)
+                    .exclude(estado=Inscripcion.ESTADO_CANCELADA)
+                    .first()
+                ),
+            }
         )
-        clases_con_info.append({
-            'clase': clase,
-            'proximo_inicio': proximo_inicio,
-            'cupo_restante': cupo_restante,
-            'en_espera': en_espera,
-            'mi_inscripcion': mi_inscripcion,
-        })
 
-    return render(request, 'classes/browse.html', {'clases_con_info': clases_con_info})
+    return render(request, "classes/browse.html", {"clases_con_info": clases_con_info})
 
 
 @login_required
 def reservar_clase_view(request, clase_id):
-    """POST-only action: reserve a spot or join the waitlist."""
-    if request.method != 'POST':
-        return redirect('classes:browse')
+    if request.method != "POST":
+        return redirect("classes:browse")
 
     try:
         inscripcion, resultado = services.reservar_clase(request.user, clase_id)
-        if resultado == 'reservada':
+        if resultado == "reservada":
             messages.success(request, "reserva exitosa")
         else:
             messages.info(
@@ -225,7 +1002,9 @@ def reservar_clase_view(request, clase_id):
                 f"{inscripcion.clase.disciplina} por falta de cupo",
             )
     except services.TelefonoEmergenciaFaltante:
-        messages.error(request, "reserva fallida, actualizar el telefono de emergencia")
+        messages.error(
+            request, "reserva fallida, actualizar el telefono de emergencia"
+        )
     except services.InscripcionDuplicada:
         messages.warning(request, "Ya tenés una inscripción activa en esta clase.")
     except services.ClaseNoDisponible:
@@ -233,39 +1012,37 @@ def reservar_clase_view(request, clase_id):
     except Class.DoesNotExist:
         messages.error(request, "La clase no existe.")
 
-    return redirect('classes:browse')
+    return redirect("classes:browse")
 
 
 @login_required
 def mis_reservas(request):
-    """List the authenticated user's active inscriptions."""
     inscripciones = (
         Inscripcion.objects.filter(usuario=request.user)
         .exclude(estado=Inscripcion.ESTADO_CANCELADA)
-        .select_related('clase', 'clase__profesor', 'clase__disciplina', 'clase__sala')
-        .order_by('-fecha_inscripcion')
+        .select_related("clase", "clase__profesor", "clase__disciplina", "clase__sala")
+        .order_by("-fecha_inscripcion")
     )
 
     inscripciones_con_info = [
         {
-            'inscripcion': i,
-            'proximo_inicio': proxima_ocurrencia(i.clase.inicio),
+            "inscripcion": i,
+            "proximo_inicio": proxima_ocurrencia(i.clase),
         }
         for i in inscripciones
     ]
 
     return render(
         request,
-        'classes/mis_reservas.html',
-        {'inscripciones_con_info': inscripciones_con_info},
+        "classes/mis_reservas.html",
+        {"inscripciones_con_info": inscripciones_con_info},
     )
 
 
 @login_required
 def cancelar_reserva_view(request, inscripcion_id):
-    """POST-only action: cancel a reservation or leave the waitlist."""
-    if request.method != 'POST':
-        return redirect('classes:mis_reservas')
+    if request.method != "POST":
+        return redirect("classes:mis_reservas")
 
     try:
         services.cancelar_reserva(inscripcion_id, request.user)
@@ -273,4 +1050,4 @@ def cancelar_reserva_view(request, inscripcion_id):
     except services.ReservaError as e:
         messages.error(request, str(e))
 
-    return redirect('classes:mis_reservas')
+    return redirect("classes:mis_reservas")

@@ -1,0 +1,18 @@
+{# Sede → Sala: sede uses hx-select="unset" so the modal form's hx-select does not apply. #}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+    <div>
+        <label>Sede</label>
+        {{ form.sede }}
+    </div>
+    <div>
+        <label>Disciplina</label>
+        {{ form.disciplina }}
+    </div>
+    <div id="sala-field-container">
+        {% include 'partials/classes/shared/_sala_field.html' with form=form %}
+    </div>
+    <div>
+        <label>Cupo máximo</label>
+        {{ form.cupo_maximo }}
+    </div>
+</div>

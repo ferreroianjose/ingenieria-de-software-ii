@@ -1,0 +1,20 @@
+{% url 'classes:delete_sede' 0 as sede_delete_url %}
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary btn-auto text-sm px-5 py-2"
+	@click.prevent="openSedeModal()"
+	x-text="selectedSedeId ? 'Editar sede' : 'Agregar sede'"
+></button>
+<form x-ref="deleteSedeForm" method="post" class="hidden" :action="selectedSedeId ? adminActionUrl('{{ sede_delete_url }}', selectedSedeId) : ''">
+	{% csrf_token %}
+</form>
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger btn-auto text-sm px-4 py-2"
+	x-show="selectedSedeId"
+	x-cloak
+	@click="if (selectedSedeId && confirm('¿Eliminar la sede «' + selectedSedeName + '» y sus salas?')) adminHtmxPost($refs.deleteSedeForm)"
+>
+	Eliminar sede
+</button>

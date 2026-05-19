@@ -33,5 +33,11 @@ class CustomUserAdmin(UserAdmin):
     )
     search_fields = ("username", "first_name", "last_name", "dni")
 
+    def get_readonly_fields(self, request, obj=None):
+        readonly = list(super().get_readonly_fields(request, obj))
+        if "is_staff" not in readonly:
+            readonly.append("is_staff")
+        return readonly
+
 
 admin.site.register(User, CustomUserAdmin)

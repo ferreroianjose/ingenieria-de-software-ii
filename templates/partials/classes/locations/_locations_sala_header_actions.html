@@ -1,0 +1,21 @@
+{% url 'classes:delete_sala' 0 as sala_delete_url %}
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary btn-auto text-sm px-5 py-2"
+	:disabled="!selectedSedeId && !selectedSalaId"
+	@click.prevent="openSalaModal()"
+	x-text="selectedSalaId ? 'Editar sala' : 'Agregar sala'"
+></button>
+<form x-ref="deleteSalaForm" method="post" class="hidden" :action="selectedSalaId ? adminActionUrl('{{ sala_delete_url }}', selectedSalaId) : ''">
+	{% csrf_token %}
+</form>
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger btn-auto text-sm px-4 py-2"
+	x-show="selectedSalaId"
+	x-cloak
+	@click="if (selectedSalaId && confirm('¿Eliminar esta sala?')) adminHtmxPost($refs.deleteSalaForm)"
+>
+	Eliminar sala
+</button>

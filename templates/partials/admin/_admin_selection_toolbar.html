@@ -1,0 +1,12 @@
+{# selected_expr, label_expr (Alpine identifiers); empty_hint; actions_template #}
+<div class="admin-selection-toolbar">
+	<p class="text-sm text-gray-500" x-show="!{{ selected_expr }}" x-cloak>{{ empty_hint }}</p>
+	<p class="text-sm text-gray-600" x-show="{{ selected_expr }}" x-cloak>
+		<span class="text-gray-500">Seleccionado:</span>
+		<span class="font-semibold text-primary-700" x-text="{{ label_expr }}"></span>
+		<span class="text-gray-400"> · clic de nuevo para deseleccionar</span>
+	</p>
+	<div class="flex flex-wrap items-center gap-2 shrink-0">
+		{% include actions_template %}
+	</div>
+</div>

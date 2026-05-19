@@ -1,57 +1,86 @@
 {
   "sedes": [
     {
-      "nombre": "Sede Central",
-      "direccion": "Av. Principal 1234"
+      "nombre": "Sede Palermo",
+      "direccion": "Av. Santa Fe 3200, CABA",
+      "salas": [
+        {"nombre": "Sala Zen", "capacidad": 18},
+        {"nombre": "Sala Power", "capacidad": 28}
+      ]
+    },
+    {
+      "nombre": "Sede Belgrano",
+      "direccion": "Vuelta de Obligado 2100, CABA",
+      "salas": [
+        {"nombre": "Sala Spin", "capacidad": 22},
+        {"nombre": "Sala Box", "capacidad": 16},
+        {"nombre": "Sala Flow", "capacidad": 14}
+      ]
     }
   ],
   "disciplinas": [
-    { "nombre": "Yoga", "descripcion": "" },
-    { "nombre": "Pilates", "descripcion": "" },
-    { "nombre": "Funcional", "descripcion": "" }
-  ],
-  "salas": [
-    { "nombre": "A", "capacidad": 20, "sede_nombre": "Sede Central" },
-    { "nombre": "B", "capacidad": 15, "sede_nombre": "Sede Central" }
+    {"nombre": "Yoga", "descripcion": "Clases de yoga para todos los niveles."},
+    {"nombre": "Pilates", "descripcion": "Fortalecimiento y flexibilidad en colchoneta y reformer."},
+    {"nombre": "Funcional", "descripcion": "Entrenamiento funcional en circuito."},
+    {"nombre": "Spinning", "descripcion": "Ciclismo indoor con música."},
+    {"nombre": "HIIT", "descripcion": "Alta intensidad por intervalos."},
+    {"nombre": "Boxeo", "descripcion": "Técnica y acondicionamiento."},
+    {"nombre": "Stretching", "descripcion": "Movilidad y recuperación muscular."}
   ],
   "teachers": [
-    { "nombre": "Carlos", "apellido": "Sánchez" },
-    { "nombre": "Ana", "apellido": "Martínez" },
-    { "nombre": "Roberto", "apellido": "García" }
+    {"nombre": "Carlos", "apellido": "Sánchez"},
+    {"nombre": "Ana", "apellido": "Martínez"},
+    {"nombre": "Roberto", "apellido": "García"},
+    {"nombre": "Lucía", "apellido": "Fernández"},
+    {"nombre": "Martín", "apellido": "Díaz"},
+    {"nombre": "Valentina", "apellido": "Ruiz"},
+    {"nombre": "Diego", "apellido": "Morales"},
+    {"nombre": "Camila", "apellido": "Torres"},
+    {"nombre": "Facundo", "apellido": "López"},
+    {"nombre": "Sofía", "apellido": "Acosta"}
   ],
   "classes": [
-    {
-      "disciplina_nombre": "Yoga",
-      "sala_nombre": "A",
-      "sala_sede_nombre": "Sede Central",
-      "teacher_nombre": "Carlos",
-      "teacher_apellido": "Sánchez",
-      "inicio": "2026-06-01T09:00:00Z",
-      "duracion_minutos": 60,
-      "cupo_maximo": 15,
-      "estado": "disponible"
-    },
-    {
-      "disciplina_nombre": "Pilates",
-      "sala_nombre": "B",
-      "sala_sede_nombre": "Sede Central",
-      "teacher_nombre": "Ana",
-      "teacher_apellido": "Martínez",
-      "inicio": "2026-06-01T10:00:00Z",
-      "duracion_minutos": 45,
-      "cupo_maximo": 10,
-      "estado": "disponible"
-    },
-    {
-      "disciplina_nombre": "Funcional",
-      "sala_nombre": "A",
-      "sala_sede_nombre": "Sede Central",
-      "teacher_nombre": "Roberto",
-      "teacher_apellido": "García",
-      "inicio": "2026-06-01T18:00:00Z",
-      "duracion_minutos": 60,
-      "cupo_maximo": 20,
-      "estado": "disponible"
-    }
+    {"disciplina": "Yoga", "sede": "Sede Palermo", "sala": "Sala Zen", "teacher_nombre": "Carlos", "teacher_apellido": "Sánchez", "dia_semana": 0, "hora": "07:00", "duracion_minutos": 60, "cupo_maximo": 16, "estado": "disponible"},
+    {"disciplina": "Pilates", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Ana", "teacher_apellido": "Martínez", "dia_semana": 0, "hora": "08:30", "duracion_minutos": 50, "cupo_maximo": 12, "estado": "disponible"},
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Roberto", "teacher_apellido": "García", "dia_semana": 0, "hora": "10:00", "duracion_minutos": 55, "cupo_maximo": 24, "estado": "disponible"},
+    {"disciplina": "Spinning", "sede": "Sede Belgrano", "sala": "Sala Spin", "teacher_nombre": "Lucía", "teacher_apellido": "Fernández", "dia_semana": 0, "hora": "18:00", "duracion_minutos": 45, "cupo_maximo": 20, "estado": "disponible"},
+    {"disciplina": "HIIT", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Martín", "teacher_apellido": "Díaz", "dia_semana": 0, "hora": "19:00", "duracion_minutos": 45, "cupo_maximo": 22, "estado": "disponible"},
+    {"disciplina": "Boxeo", "sede": "Sede Belgrano", "sala": "Sala Box", "teacher_nombre": "Valentina", "teacher_apellido": "Ruiz", "dia_semana": 0, "hora": "20:00", "duracion_minutos": 60, "cupo_maximo": 14, "estado": "disponible"},
+
+    {"disciplina": "Yoga", "sede": "Sede Palermo", "sala": "Sala Zen", "teacher_nombre": "Camila", "teacher_apellido": "Torres", "dia_semana": 1, "hora": "07:30", "duracion_minutos": 60, "cupo_maximo": 16, "estado": "disponible"},
+    {"disciplina": "Pilates", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Ana", "teacher_apellido": "Martínez", "dia_semana": 1, "hora": "09:00", "duracion_minutos": 50, "cupo_maximo": 12, "estado": "disponible"},
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Facundo", "teacher_apellido": "López", "dia_semana": 1, "hora": "10:30", "duracion_minutos": 55, "cupo_maximo": 24, "estado": "disponible"},
+    {"disciplina": "Spinning", "sede": "Sede Belgrano", "sala": "Sala Spin", "teacher_nombre": "Sofía", "teacher_apellido": "Acosta", "dia_semana": 1, "hora": "17:30", "duracion_minutos": 45, "cupo_maximo": 20, "estado": "disponible"},
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Roberto", "teacher_apellido": "García", "dia_semana": 1, "hora": "19:30", "duracion_minutos": 55, "cupo_maximo": 24, "estado": "disponible"},
+    {"disciplina": "Stretching", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Diego", "teacher_apellido": "Morales", "dia_semana": 1, "hora": "20:30", "duracion_minutos": 45, "cupo_maximo": 12, "estado": "disponible"},
+
+    {"disciplina": "Spinning", "sede": "Sede Belgrano", "sala": "Sala Spin", "teacher_nombre": "Lucía", "teacher_apellido": "Fernández", "dia_semana": 2, "hora": "07:00", "duracion_minutos": 45, "cupo_maximo": 20, "estado": "disponible"},
+    {"disciplina": "Yoga", "sede": "Sede Palermo", "sala": "Sala Zen", "teacher_nombre": "Carlos", "teacher_apellido": "Sánchez", "dia_semana": 2, "hora": "08:00", "duracion_minutos": 60, "cupo_maximo": 16, "estado": "disponible"},
+    {"disciplina": "Pilates", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Camila", "teacher_apellido": "Torres", "dia_semana": 2, "hora": "18:00", "duracion_minutos": 50, "cupo_maximo": 12, "estado": "disponible"},
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Facundo", "teacher_apellido": "López", "dia_semana": 2, "hora": "19:00", "duracion_minutos": 55, "cupo_maximo": 24, "estado": "disponible"},
+    {"disciplina": "Boxeo", "sede": "Sede Belgrano", "sala": "Sala Box", "teacher_nombre": "Valentina", "teacher_apellido": "Ruiz", "dia_semana": 2, "hora": "20:00", "duracion_minutos": 60, "cupo_maximo": 14, "estado": "disponible"},
+
+    {"disciplina": "Pilates", "sede": "Sede Palermo", "sala": "Sala Zen", "teacher_nombre": "Ana", "teacher_apellido": "Martínez", "dia_semana": 3, "hora": "07:30", "duracion_minutos": 50, "cupo_maximo": 14, "estado": "disponible"},
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Roberto", "teacher_apellido": "García", "dia_semana": 3, "hora": "09:00", "duracion_minutos": 55, "cupo_maximo": 24, "estado": "disponible"},
+    {"disciplina": "Spinning", "sede": "Sede Belgrano", "sala": "Sala Spin", "teacher_nombre": "Sofía", "teacher_apellido": "Acosta", "dia_semana": 3, "hora": "10:00", "duracion_minutos": 45, "cupo_maximo": 20, "estado": "disponible"},
+    {"disciplina": "Yoga", "sede": "Sede Palermo", "sala": "Sala Zen", "teacher_nombre": "Camila", "teacher_apellido": "Torres", "dia_semana": 3, "hora": "18:30", "duracion_minutos": 60, "cupo_maximo": 16, "estado": "disponible"},
+    {"disciplina": "HIIT", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Martín", "teacher_apellido": "Díaz", "dia_semana": 3, "hora": "19:30", "duracion_minutos": 45, "cupo_maximo": 22, "estado": "disponible"},
+
+    {"disciplina": "Yoga", "sede": "Sede Palermo", "sala": "Sala Zen", "teacher_nombre": "Carlos", "teacher_apellido": "Sánchez", "dia_semana": 4, "hora": "07:00", "duracion_minutos": 60, "cupo_maximo": 16, "estado": "disponible"},
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Facundo", "teacher_apellido": "López", "dia_semana": 4, "hora": "08:30", "duracion_minutos": 55, "cupo_maximo": 24, "estado": "disponible"},
+    {"disciplina": "Spinning", "sede": "Sede Belgrano", "sala": "Sala Spin", "teacher_nombre": "Lucía", "teacher_apellido": "Fernández", "dia_semana": 4, "hora": "17:00", "duracion_minutos": 45, "cupo_maximo": 20, "estado": "disponible"},
+    {"disciplina": "Pilates", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Ana", "teacher_apellido": "Martínez", "dia_semana": 4, "hora": "18:00", "duracion_minutos": 50, "cupo_maximo": 12, "estado": "disponible"},
+    {"disciplina": "Boxeo", "sede": "Sede Belgrano", "sala": "Sala Box", "teacher_nombre": "Valentina", "teacher_apellido": "Ruiz", "dia_semana": 4, "hora": "19:00", "duracion_minutos": 60, "cupo_maximo": 14, "estado": "disponible"},
+    {"disciplina": "Stretching", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Diego", "teacher_apellido": "Morales", "dia_semana": 4, "hora": "20:00", "duracion_minutos": 45, "cupo_maximo": 12, "estado": "disponible"},
+
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Roberto", "teacher_apellido": "García", "dia_semana": 5, "hora": "08:00", "duracion_minutos": 55, "cupo_maximo": 24, "estado": "disponible"},
+    {"disciplina": "HIIT", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Martín", "teacher_apellido": "Díaz", "dia_semana": 5, "hora": "09:30", "duracion_minutos": 45, "cupo_maximo": 22, "estado": "disponible"},
+    {"disciplina": "Pilates", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Camila", "teacher_apellido": "Torres", "dia_semana": 5, "hora": "10:30", "duracion_minutos": 50, "cupo_maximo": 12, "estado": "disponible"},
+    {"disciplina": "Spinning", "sede": "Sede Belgrano", "sala": "Sala Spin", "teacher_nombre": "Sofía", "teacher_apellido": "Acosta", "dia_semana": 5, "hora": "18:00", "duracion_minutos": 45, "cupo_maximo": 20, "estado": "disponible"},
+
+    {"disciplina": "Yoga", "sede": "Sede Palermo", "sala": "Sala Zen", "teacher_nombre": "Carlos", "teacher_apellido": "Sánchez", "dia_semana": 6, "hora": "09:00", "duracion_minutos": 60, "cupo_maximo": 18, "estado": "disponible"},
+    {"disciplina": "Funcional", "sede": "Sede Palermo", "sala": "Sala Power", "teacher_nombre": "Facundo", "teacher_apellido": "López", "dia_semana": 6, "hora": "10:00", "duracion_minutos": 55, "cupo_maximo": 26, "estado": "disponible"},
+    {"disciplina": "Spinning", "sede": "Sede Belgrano", "sala": "Sala Spin", "teacher_nombre": "Lucía", "teacher_apellido": "Fernández", "dia_semana": 6, "hora": "11:00", "duracion_minutos": 45, "cupo_maximo": 22, "estado": "disponible"},
+    {"disciplina": "Stretching", "sede": "Sede Belgrano", "sala": "Sala Flow", "teacher_nombre": "Diego", "teacher_apellido": "Morales", "dia_semana": 6, "hora": "12:00", "duracion_minutos": 45, "cupo_maximo": 12, "estado": "disponible"}
   ]
 }

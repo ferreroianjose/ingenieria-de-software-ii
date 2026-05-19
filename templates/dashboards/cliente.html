@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Dashboard{% endblock %}
+
+{% block content %}
+<style type="text/tailwindcss">
+    /* Grid Layouts */
+    .dash-grid-top {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-4 xl:gap-6;
+    }
+    .dash-grid-footer {
+        @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+    }
+
+    /* Cards */
+    .dash-card {
+        @apply rounded-6xl md:rounded-8xl p-8 lg:p-6 xl:p-8 flex flex-col justify-between transition-transform relative overflow-hidden shadow-fair-lg isolate;
+        transform: translateZ(0);
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+    .dash-card-primary {
+        @apply bg-primary-400 text-white hover:scale-[1.02];
+    }
+    .dash-card-secondary {
+        @apply bg-primary-50 border border-primary-100/50 shadow-fair-sm;
+    }
+    .dash-card-dark {
+        @apply bg-secondary-950 text-white;
+    }
+
+    /* Sections */
+    .dash-section {
+        @apply rounded-5xl md:rounded-8xl p-8 sm:p-12 shadow-fair-2xl border border-white/5 relative overflow-hidden isolate;
+        transform: translateZ(0);
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+    .textured-bg {
+    	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 4 4'%3E%3Cpath fill='%239C92AC' fill-opacity='0.4' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+    }
+
+    /* Components */
+    .title-impact {
+        @apply font-black uppercase tracking-tight lg:tracking-tighter xl:tracking-tight;
+    }
+    .text-caption {
+        @apply text-sm font-black uppercase tracking-widest;
+    }
+</style>
+
+<div class="bg-gradient-to-b from-75% from-white to-black w-full">
+  <div class="mx-auto max-w-5xl py-8 px-4 space-y-8 @container" x-data="{ showQrModal: false }">
+
+      <!-- Grid: QR, Status, Streak -->
+      <div class="dash-grid-top">
+
+              <!-- Ingreso rápido -->
+              <div data-qr-target 
+                  class="dash-card dash-card-primary items-center cursor-pointer group" 
+                  @click="showQrModal = true">
+
+                  <div class="flex justify-start items-center gap-3 mb-4 w-full text-center">
+                      {% include 'partials/dashboards/_icon_fingerprint.html' with class="self-start size-14 opacity-90 group-hover:-rotate-5 duration-300" %}
+                      <h3 class="text-left text-2xl sm:text-3xl title-impact leading-tight group-hover:rotate-1 duration-300">Ingreso rápido</h3>
+                  </div>
+                  <div class="z-5 overflow-hidden bg-white rounded-2xl p-1 mb-4 size-48 flex items-center justify-center shadow-inner border border-white/20 duration-500">
+                      {% include 'partials/dashboards/_qr_code.html' with class="size-full" %}
+                  </div>
+                  <p class="text-caption opacity-80 tracking-[0.2em]">Escanear para entrar</p>
+              </div>
+
+
+          <!-- Estado de Membresía -->
+          <div class="dash-card dash-card-secondary group">
+              <div class="flex items-start justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                      {% include 'partials/dashboards/_icon_tag.html' with class="size-10 text-primary-400 mt-1 group-hover:rotate-6 duration-300" %}
+                      <h2 class="text-2xl md:text-3xl text-secondary-900 title-impact leading-none">Mi Estado</h2>
+                  </div>
+              </div>
+              
+              <div class="mb-4 flex-0">
+                  <p class="text-secondary-700/60 text-caption mb-1">Membresía actual</p>
+                  <p class="text-2xl font-black text-secondary-900 uppercase tracking-tight">Miembro</p>
+              </div>
+              
+              <div class="flex-1 my-auto space-y-2 flex flex-col justify-center">
+                  {% include 'partials/dashboards/_status_badge.html' with label="Pilates" subtitle="Desde Feb 2026" %}
+                  {% include 'partials/dashboards/_status_badge.html' with label="Yoga" subtitle="Desde Mar 2026" %}
+              </div>
+
+              {% include 'partials/ui/buttons/_primary_button.html' with label="Reinscripción en 4 días" class="self-end mb-0 mt-4 group-hover:scale-101" %}
+          </div>
+
+          <!-- Racha Actual --> 
+          <div class="dash-card dash-card-dark sm:col-span-2 lg:col-span-1 group">
+              <!-- Glow -->
+              <div class="absolute top-2 -right-2 w-32 h-64 bg-primary-400/75 blur-3xl rounded-full z-0"></div>
+              
+              <div class="absolute scale-175 sm:scale-150 lg:scale-125 top-15 right-12 sm:top-10 sm:right-11 xl:block lg:top-8 lg:-right-12 xl:top-8 xl:-right-4 z-10 transform group-hover:scale-185 sm:group-hover:scale-165 lg:group-hover:scale-135 group-hover:-translate-x-2 group-hover:rotate-3 transition-all duration-700 pointer-events-none opacity-80 sm:opacity-95">
+                  {% include 'partials/dashboards/_streak_char.html' with class="size-48 sm:size-64 drop-shadow-[0_20px_30px_rgba(0,0,0,0.5)]" %}
+              </div>
+              
+              <div class="flex items-start justify-between relative z-20 mb-4">
+                  <div class="flex items-center gap-3">
+                      {% include 'partials/dashboards/_icon_lightning.html' with class="self-start size-10 text-primary-400 drop-shadow-[0_0_8px_rgba(223,2,255,0.6)]" %}
+                      <h3 class="text-4xl title-impact leading-tight text-wrap">Racha actual</h3>
+                  </div>
+              </div>
+              
+              <div class="mt-8 relative z-20">
+                  <p class="text-secondary-300 text-caption text-4xl mb-1">Días Seguidos</p>
+                  <div class="flex items-baseline gap-2">
+                      <p class="text-7xl font-black italic tracking-tighter leading-none text-white drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">12</p>
+                      <p class="text-xl font-bold text-secondary-300 uppercase">Días</p>
+                  </div>
+                  <p class="text-sm font-medium text-gray-400 mt-2 italic">Seguí así {{ user.first_name }}!</p>
+              </div>
+          </div>
+      </div>
+
+      <!-- SECCIÓN: Próximas clases -->
+      <div class="dash-section relative bg-dark-bg-500 text-white overflow-hidden rounded-[2.5rem] p-8">
+          <div class="absolute -top-16 -right-16 md:top-0 md:right-0 w-64 h-64 bg-primary-400/35 blur-3xl rounded-full z-0 pointer-events-none"></div>
+          <div class="absolute -bottom-32 -left-24 w-72 h-64 bg-secondary-400/45 blur-3xl z-0 pointer-events-none"></div>
+          
+          <div class="relative z-10 flex flex-col lg:flex-row gap-8 lg:gap-6 xl:gap-10 items-center justify-between">
+              
+              <div class="w-full lg:w-auto flex justify-between items-center flex-shrink-0">
+                  <div>
+                      <h2 class="text-5xl lg:text-6xl title-impact leading-[0.9] md:leading-[1.15] !text-white mb-2 lg:mb-4">
+                          Tus<br>Próximas<br>Clases
+                      </h2>
+                      <p class="text-gray-400 text-caption hidden sm:block">No te olvides de agendarlas</p>
+                  </div>
+                  
+                  <div class="block lg:hidden w-full min-w-32 max-w-36 sm:max-w-42 md:ml-8 md:min-w-24 md:max-w-36 mb-auto ml-4 z-0">
+                      {% include 'partials/dashboards/_mini_calendar.html' %}
+                  </div>
+              </div>
+              
+              <div class="z-10 w-full lg:flex-2 mr-auto min-w-0 lg:max-w-72 flex flex-col sm:flex-row md:flex-col gap-4 md:gap-2 lg:gap-4 overflow-hidden @container">
+                  <div class="flex-1 min-w-0">
+                      {% include 'partials/dashboards/_class_list.html' with name="Yoga" sessions=yoga_sessions %}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                      {% include 'partials/dashboards/_class_list.html' with name="Pilates" sessions=pilates_sessions %}
+                  </div>
+              </div>
+              
+              <div class="hidden lg:block lg:-ml-16 lg:max-w-48 xl:max-w-auto xl:ml-0 flex-1 z-0">
+                  {% include 'partials/dashboards/_mini_calendar.html' %}
+              </div>
+          </div>
+      </div>
+
+      <!-- Cartelera -->
+      <div class="dash-section bg-gradient-to-b from-secondary-300 to-secondary-500 shadow-fair-2xl" style="">
+          <div class="absolute textured-bg top-0 left-0 w-full h-full pointer-events-none opacity-50"></div>
+          
+          <div class="flex flex-row flex-nowrap sm:items-center mb-4 gap-4 relative z-10 justify-between">
+              <h2 class="flex-1 text-3xl sm:text-4xl lg:text-5xl text-secondary-950 title-impact">Cartelera de Actividades</h2>
+              {% include 'partials/ui/buttons/_primary_button.html' with label="Ver todas" class="flex-0 text-nowrap h-14 sm:h-auto self-start" %}
+          </div>
+          
+          <div class="flex gap-6 overflow-x-auto hide-scroll pb-6 relative z-10 -mx-4 px-4 sm:mx-0 sm:px-0">
+              {% include 'partials/dashboards/_activity_card.html' with image="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600" badge="MAÑANA 08:00" title="Yoga" subtitle="Profe: Elena M." %}
+              {% include 'partials/dashboards/_activity_card.html' with image="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=600" badge="MIÉRCOLES 17:30" title="Pilates" subtitle="Profe: Lucas G." %}
+              {% include 'partials/dashboards/_activity_card.html' with image="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=600" badge="VIERNES 19:00" title="Funcional" subtitle="Profe: Marcos D." %}
+          </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="dash-grid-footer">
+          
+          <!-- Historial de pagos -->
+          <div class="dash-card dash-card-secondary p-8 sm:p-10 group justify-start">
+              <h3 class="text-secondary-900 text-2xl title-impact mb-8">Historial de Pagos</h3>
+              
+              <div class="space-y-4 mb-10">
+                  {% include 'partials/dashboards/_payment_row.html' with month="Marzo 2024" method="MercadoPago" amount="$25.000" %}
+                  {% include 'partials/dashboards/_payment_row.html' with month="Febrero 2024" method="Efectivo" amount="$12.500" %}
+              </div>
+
+              {% include 'partials/ui/buttons/_secondary_button.html' with label="Descargar último recibo" class="w-full" %}
+          </div>
+
+          <!-- Ayuda / FAQ -->
+          <div class="dash-card dash-card-primary p-8 sm:p-10">
+              <!-- Animated background shapes -->
+              <div class="absolute top-4 right-8 text-9xl font-black text-secondary-300 -rotate-12 z-0 leading-none group-hover:rotate-0 transition-transform duration-700">?</div>
+              <div class="absolute bottom-20 right-4 w-10 h-10 rounded-full bg-secondary-300/40 blur-xl z-0 animate-pulse"></div>
+
+              <div class="z-10 relative">
+                  <h3 class="text-4xl sm:text-5xl title-impact mb-4 leading-tight">¿Necesitas<br>ayuda?</h3>
+                  <p class="text-sm font-bold mb-10 text-white/90 leading-relaxed max-w-xs">
+                      Accedé a nuestra sección de FAQ o comunicate directamente con nosotros para resolver tus dudas.
+                  </p>
+              </div>
+              
+              <div class="flex flex-col sm:flex-row gap-4 z-10 relative">
+                  {% include 'partials/ui/buttons/_secondary_button.html' with label="FAQ" class="flex-1 border-white text-white hover:border-secondary-300 hover:bg-secondary-300" %}
+                  {% include 'partials/ui/buttons/_primary_button.html' with label="Contacto" class="flex-1 bg-secondary-300 hover:bg-secondary-400" %}
+              </div>
+          </div>
+
+      </div>
+
+      <!-- Modal del QR -->
+      {% include 'partials/attendance/_qr_modal.html' with modal_show_var="showQrModal" %}
+  </div>
+</div>
+{% endblock %}

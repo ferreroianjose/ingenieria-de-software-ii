@@ -1,4 +1,4 @@
-{% extends 'partials/_auth_card.html' %}
+{% extends 'partials/auth/_auth_card.html' %}
 
 {% block title %}Iniciar sesión{% endblock %}
 
@@ -22,7 +22,7 @@
 {% endblock %}
 
 {% block auth_primary_button %}
-  {% include 'partials/_primary_button.html' with label="Iniciar sesión" %}
+  {% include 'partials/ui/buttons/_primary_button.html' with label="Iniciar sesión" %}
 {% endblock %}
 
 {% block auth_extra %}

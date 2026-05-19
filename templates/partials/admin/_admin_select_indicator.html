@@ -1,0 +1,20 @@
+{# item_id: numeric id; selected_expr: Alpine expression e.g. selectedClassId #}
+<span
+	class="admin-select-indicator"
+	:class="{{ selected_expr }} === {{ item_id }} ? 'is-active' : ''"
+	aria-hidden="true"
+>
+	<svg
+		x-show="{{ selected_expr }} === {{ item_id }}"
+		x-cloak
+		class="h-3 w-3"
+		viewBox="0 0 12 12"
+		fill="none"
+		stroke="currentColor"
+		stroke-width="2.5"
+		stroke-linecap="round"
+		stroke-linejoin="round"
+	>
+		<path d="M2.5 6l2.5 2.5 4.5-5" />
+	</svg>
+</span>
