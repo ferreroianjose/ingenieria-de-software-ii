@@ -4,10 +4,31 @@
 {% endcomment %}
 <style type="text/tailwindcss">
 .nav-item {
-  @apply flex flex-row items-center gap-4 w-full p-4 rounded-full text-sm font-semibold text-gray-600 hover:bg-primary-400/10 hover:text-primary-500 transition-colors no-underline;
+  @apply block w-full rounded-9xl text-sm font-semibold text-gray-400 hover:bg-white/5 hover:text-white ring-inset no-underline overflow-hidden h-[52px] will-change-contents;
+  transition: width 0.7s ease, color 0.35s ease, background-color 0.35s ease, border-radius 1s ease;
 }
 .nav-item-active {
-  @apply bg-primary-400/10 text-primary-500 font-bold;
+  @apply bg-white/10 hover:bg-white/15 ring-1 ring-white/20 text-primary-400 font-bold relative;
+}
+.nav-item-active .nav-item-inner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 20%;
+  background: linear-gradient(to right, rgba(0,0,0,0.0) 65%, var(--color-secondary-300));
+  z-index: 0;
+}
+.nav-item-inner {
+  @apply flex flex-row items-center w-[256px] h-full px-4 gap-4 z-5;
+}
+.nav-text {
+  @apply whitespace-nowrap overflow-hidden text-ellipsis z-10;
+}
+.nav-item-inner > * {
+  @apply z-10;
 }
 </style>
 
@@ -18,8 +39,10 @@
   <a href="{% url 'dashboard' %}"
      class="nav-item"
      :class="currentPath === '{% url 'dashboard' %}' ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="house-fill" class="size-5 shrink-0" %}
-    Menú principal
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="house-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Menú principal</span>
+    </div>
   </a>
 
   <!-- PÁGINAS DE CLIENTE -->
@@ -27,15 +50,19 @@
   <a href="#"
      class="nav-item"
      :class="currentPath === '/reservas/' ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="calendar-fill" class="size-5 shrink-0" %}
-    Mis reservas
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="calendar-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Mis reservas</span>
+    </div>
   </a>
 
   <a href="#"
      class="nav-item"
      :class="currentPath === '/pagos/' ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="credit-card-fill" class="size-5 shrink-0" %}
-    Mis pagos
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="credit-card-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Mis pagos</span>
+    </div>
   </a>
   {% endif %}
 
@@ -44,22 +71,28 @@
   <a href="{% url 'classes:class_list' %}"
      class="nav-item"
      :class="currentPath.startsWith('/classes/list') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="kanban-fill" class="size-5 shrink-0" %}
-    Gestionar clases
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="kanban-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Gestionar clases</span>
+    </div>
   </a>
 
   <a href="{% url 'classes:locations_list' %}"
      class="nav-item"
      :class="currentPath.startsWith('/classes/locations') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="building-fill" class="size-5 shrink-0" %}
-    Sedes y salas
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="building-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Sedes y salas</span>
+    </div>
   </a>
 
   <a href="{% url 'classes:catalog' %}"
      class="nav-item"
      :class="currentPath.startsWith('/classes/catalog') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="person-arms-up" class="size-5 shrink-0" %}
-    Catálogo
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="person-arms-up" class="size-5 shrink-0" %}
+      <span class="nav-text">Catálogo</span>
+    </div>
   </a>
 
   {% endif %}
@@ -69,22 +102,28 @@
   <a href="{% url 'manage' %}"
      class="nav-item"
      :class="currentPath.startsWith('/users/manage') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
-    {% if user.rol == 'ADMIN' %}Usuarios{% else %}Clientes{% endif %}
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">{% if user.rol == 'ADMIN' %}Usuarios{% else %}Clientes{% endif %}</span>
+    </div>
   </a>
 
   <a href="{% url 'payments:manage' %}"
      class="nav-item"
      :class="currentPath.startsWith('/payments/manage') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="credit-card-fill" class="size-5 shrink-0" %}
-    Pagos
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="credit-card-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Pagos</span>
+    </div>
   </a>
 
   <a href="{% url 'attendance:manage' %}"
      class="nav-item"
      :class="currentPath.startsWith('/attendance/manage') ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="clipboard2-heart-fill" class="size-5 shrink-0" %}
-    Asistencia
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="clipboard2-heart-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Asistencia</span>
+    </div>
   </a>
   {% endif %}
 
@@ -92,7 +131,9 @@
      class="nav-item"
      x-show="currentPath === '{% url 'settings' %}'"
      :class="currentPath === '{% url 'settings' %}' ? 'nav-item-active' : ''">
-    {% include 'partials/ui/_icon.html' with name="gear" class="size-5 shrink-0" %}
-    Configuración
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="gear" class="size-5 shrink-0" %}
+      <span class="nav-text">Configuración</span>
+    </div>
   </a>
 </div>

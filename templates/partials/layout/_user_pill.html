@@ -1,57 +1,79 @@
 {% load static %}
 <div x-data="{ open: false }" @click.outside="open = false"
-  class="w-full bg-secondary-300 shadow-fair-md overflow-hidden transition-[border-radius] duration-350 ease-in-out"
-  :class="open ? 'rounded-2xl' : 'rounded-9xl'">
+  class="transition-all duration-350 ease-in-out z-50 shadow-black/30 {% if direction == 'down' %}absolute top-2.5 right-16{% endif %}"
+  :class="[
+    open ? 'rounded-2xl w-64 bg-gray-800 shadow-fair-2xl border border-white/10' : 'rounded-9xl overflow-hidden',
+    !open && '{{ direction }}' === 'down' ? 'w-[52px] bg-transparent shadow-none' : '',
+    !open && '{{ direction }}' !== 'down' ? 'w-full bg-white/5 border border-white/10' : ''
+  ]">
+
+  {% if direction == 'down' %}
+    <!-- Pill Row (Top) -->
+    <div @click="open = !open" class="flex items-center cursor-pointer select-none w-64 h-[52px]">
+      <!-- Avatar -->
+      <div class="shrink-0 duration-350 transition-all ease-in-out flex items-center justify-center size-[52px]" :class="open ? 'rounded-[calc(var(--radius-2xl)-calc(var(--spacing)*2))] bg-white/10 hidden' : 'rounded-full bg-white/10 hover:bg-white/20 text-white'">
+        {% include 'partials/ui/_icon.html' with name="person-fill" class="size-7" %}
+      </div>
+      <!-- Nombre / rol -->
+      <div class="flex flex-col flex-1 min-w-0 ml-3">
+        <p class="font-bold text-white truncate">{{ user.first_name }} {{ user.last_name }}</p>
+        <p class="text-sm text-gray-400 tracking-tighter truncate">{{ user.get_rol_display|upper }}</p>
+      </div>
+      <div class="p-3 shrink-0 text-gray-500">
+        <svg class="size-4 transition-transform duration-500" :class="open ? 'rotate-180' : ''" fill="currentColor" aria-hidden="true">
+          <use href="{% static 'vendors/bootstrap-icons/bootstrap-icons.svg' %}#chevron-down"></use>
+        </svg>
+      </div>
+    </div>
+  {% endif %}
 
   <div class="grid gap-4 transition-[grid-template-rows] duration-350 ease-in-out" :style="open ? 'grid-template-rows:1fr' : 'grid-template-rows:0fr'">
     <div class="overflow-hidden" :class="open ? 'p-2' : 'p-0'">
       <style type="text/tailwindcss">
+        .user-pill-item:not(:last-child) {
+          @apply mb-2;
+        }
         .user-pill-item a,
         .user-pill-item button {
-          @apply rounded-[calc(var(--radius-2xl)-calc(var(--spacing)*2))] w-full flex items-center gap-4 p-4 text-sm font-bold text-left  transition-colors no-underline text-white bg-black/25 hover:bg-black/20 mb-2 cursor-pointer;
+          @apply rounded-[calc(var(--radius-2xl)-calc(var(--spacing)*2))] w-full flex items-center gap-4 p-4 text-sm font-bold text-left transition-colors no-underline text-gray-200 bg-white/5 hover:bg-white/10 cursor-pointer;
         }
       </style>
       <div class="user-pill-item">
         <form method="post" action="{% url 'logout' %}" hx-boost="false">
           {% csrf_token %}
-          <button>
+          <button class="text-white !bg-[#F00]/45 hover:!bg-[#F00]/65">
             {% include 'partials/ui/_icon.html' with name="box-arrow-left" class="size-4 shrink-0" %}
-            Cerrar sesión
+            <span class="whitespace-nowrap">Cerrar sesión</span>
           </button>
         </form>
       </div>
       <div class="user-pill-item">
           <a href="{% url 'settings' %}">
             {% include 'partials/ui/_icon.html' with name="gear" class="size-4 shrink-0" %}
-            Configuracion
+            <span class="whitespace-nowrap">Configuración</span>
           </a>
       </div>
-
-      <!-- Divider  -->
-      <div class="mx-4 border-t border-white/40"></div>
     </div>
   </div>
 
-  <!-- Pill -->
-  <div @click="open = !open" class="flex items-center gap-2 p-2 cursor-pointer select-none">
-
-    <!-- Avatar -->
-    <div class="p-2 bg-white/75 shrink-0 duration-350 transition-[border-radius] ease-in-out" :class="open ? 'rounded-[calc(var(--radius-2xl)-calc(var(--spacing)*2))]' : 'rounded-6xl '">
-      {% include 'partials/ui/_icon.html' with name="person-fill" class="size-8" %}
+  {% if direction != 'down' %}
+    <!-- Pill Row (Bottom) -->
+    <div @click="open = !open" class="flex items-center px-[6px] cursor-pointer select-none w-64 h-[52px]">
+      <!-- Avatar -->
+      <div class="p-1 shrink-0 duration-350 transition-[border-radius] ease-in-out" :class="open ? 'rounded-[calc(var(--radius-2xl)-calc(var(--spacing)*2))]' : 'rounded-6xl'">
+        {% include 'partials/ui/_icon.html' with name="person-fill" class="size-8 text-white" %}
+      </div>
+      <!-- Nombre / rol -->
+      <div class="flex flex-col flex-1 min-w-0 ml-3">
+        <p class="font-bold text-white truncate">{{ user.first_name }} {{ user.last_name }}</p>
+        <p class="text-sm text-gray-400 tracking-tighter truncate">{{ user.get_rol_display|upper }}</p>
+      </div>
+      <div class="p-3 shrink-0 text-gray-500">
+        <svg class="size-4 transition-transform duration-500" :class="open ? 'rotate-180' : ''" fill="currentColor" aria-hidden="true">
+          <use href="{% static 'vendors/bootstrap-icons/bootstrap-icons.svg' %}#chevron-down"></use>
+        </svg>
+      </div>
     </div>
-
-    <!-- Nombre / rol -->
-    <div class="flex flex-col flex-1 min-w-0 w-full pr-2">
-      <p class="font-bold truncate">{{ user.first_name }} {{ user.last_name }}</p>
-      <p class="text-sm tracking-tighter truncate">{{ user.get_rol_display|upper }}</p>
-    </div>
-
-    <div class="p-3">
-      <svg class="size-4 shrink-0 transition-transform duration-500" :class="open ? 'rotate-180' : ''" fill="currentColor" aria-hidden="true">
-        <use href="{% static 'vendors/bootstrap-icons/bootstrap-icons.svg' %}#chevron-down"></use>
-      </svg>
-
-    </div>
-  </div>
+  {% endif %}
 
 </div>

@@ -4,6 +4,7 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="theme-color" content="#FFFFFF">
 		<title>
 			SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
 		</title>
@@ -86,7 +87,7 @@
 
 	      /* Admin shell, panels, color & depth */
           .internal-page {
-            @apply mx-auto px-4 lg:px-8 md:px-4 py-8 relative z-[1];
+            @apply mx-auto w-full px-4 lg:px-8 md:px-4 py-8 relative z-[1];
           }
           .internal-page::before {
             content: '';
@@ -232,7 +233,7 @@
 	      	@apply cursor-pointer;
 	      }
 	      button {
-	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 transition-colors font-bold cursor-pointer;
+	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 transition-colors font-bold cursor-pointer;
 	      }
 
 	      #auth-card button,
@@ -365,11 +366,44 @@
 	      }
 
 		  /* Utility for hiding scrolls while keeping functionality */
-	      .hide-scroll::-webkit-scrollbar { display: none; }
-	      .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-	      }
-		</style>
+		  .hide-scroll::-webkit-scrollbar { display: none; }
+		  .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
+		  /* Sidebar Variables - Change these to adjust widths globally! */
+		  :root {
+		    --sidebar-width: 288px;
+		    --sidebar-collapsed-width: 84px;
+        --sidebar-py: clamp(0.5rem, 3lvh, 4.5rem);
+        --toggle-y: calc(var(--sidebar-py) + 28px);
+        --topbar-height: 72px;
+		  }
+
+		  .sidebar-w {
+		  width: var(--sidebar-width);
+		  }
+		  .sidebar-pl {
+		  padding-left: 0;
+		  }
+      .topbar-pt {
+        padding-top: var(--topbar-height);
+      }
+
+		  @media (min-width: 768px) {
+		  .sidebar-pl {
+		  padding-left: var(--sidebar-width);
+		  }
+      .topbar-pt {
+        padding-top: 0;
+      }
+		  body.is-collapsed .sidebar-w {
+		  width: var(--sidebar-collapsed-width);
+		  }
+		  body.is-collapsed .sidebar-pl {
+		  padding-left: var(--sidebar-collapsed-width);
+		  }
+		  }
+		  }
+		  </style>
     	<!-- Alpine Plugins -->
     	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 
@@ -397,7 +431,7 @@
 		});
 	</script>
 	</head>
-	<body x-data="{ mobileOpen: false }" class="min-h-screen flex flex-col overflow-x-hidden relative">
+	<body x-data="{ mobileOpen: false, desktopCollapsed: JSON.parse(localStorage.getItem('desktopCollapsed') || 'false') }" x-init="$watch('desktopCollapsed', value => localStorage.setItem('desktopCollapsed', value))" class="min-h-screen flex flex-col overflow-x-hidden relative" :class="{'is-collapsed': desktopCollapsed}">
 		{% block header %}
 			{% include 'partials/layout/_sidebar.html' %}
 			{% include 'partials/layout/_topbar.html' %}
@@ -405,14 +439,14 @@
 
 		<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
 		<main id="main-content" class="flex-1 flex flex-col">
-			<div class="flex-1 {% block main_class %}pt-24 md:pt-0 md:pl-72{% endblock %}">
+			<div class="flex-1 transition-[padding] duration-350 ease-out {% block main_class %}sidebar-pl topbar-pt md:pt-0{% endblock %}">
 				{% block content %}
 				<!-- Contenido de cada página -->
 				{% endblock %}
 			</div>
 
 			{% block footer %}
-				<div class="{% block footer_class %}md:pl-72{% endblock %}">
+				<div class="transition-[padding] duration-350 ease-out {% block footer_class %}sidebar-pl{% endblock %}">
 					{% include 'partials/layout/_footer.html' %}
 				</div>
 			{% endblock %}

@@ -1,4 +1,31 @@
-<a href="/" class="flex items-center no-underline {{ class|default:'' }}">
-  <img src="/static/favicon.svg" alt="Siempre Gym" class="{{ logo_class|default:'h-14' }}" />
-  <span class="font-serif font-bold tracking-tigher text-primary-500 leading-none {{ text_class|default:'text-xl' }}">SIEMPRE GYM</span>
+<style type="text/tailwindcss">
+  .brand-text-container {
+    @apply transition-[max-width,opacity,margin] duration-350 overflow-hidden whitespace-nowrap;
+  }
+  .brand-logo-container {
+    @apply shrink-0 transition-all duration-350;
+  }
+
+  @media (min-width: 768px) {
+    .brand-logo-container {
+      @apply size-20;
+    }
+
+    body.is-collapsed .brand-text-container {
+      max-width: 0px !important;
+      opacity: 0 !important;
+    }
+    body.is-collapsed .brand-logo-container {
+      width: 64px !important;
+      height: 64px !important;
+    }
+    body.is-collapsed .brand-wrapper {
+      @apply justify-center;
+    }
+  }
+</style>
+
+<a href="/" class="will-change-transform flex items-center no-underline brand-wrapper {{ class|default:'' }}">
+  <img src="/static/favicon.svg" alt="Siempre Gym" class="brand-logo-container {{ logo_class|default:'h-14' }}" />
+  <span class="font-sans font-bold tracking-tight text-primary-500 leading-none brand-text-container {{ text_class|default:'text-4xl' }}">SIEMPRE <br>GYM</span>
 </a>

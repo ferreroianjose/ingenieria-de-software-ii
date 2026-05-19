@@ -1,14 +1,65 @@
-<header class="md:hidden fixed top-4 left-4 right-4 z-30 bg-white shadow-fair-lg rounded-full flex flex-row justify-between items-center px-3 py-2">
+<!-- Mobile Backdrop Overlay -->
+<div
+  x-show="mobileOpen"
+  x-transition.opacity.duration.350ms
+  @click="mobileOpen = false"
+  class="md:hidden fixed inset-0 z-40 bg-black/60"
+  x-cloak
+></div>
 
-  {% include 'partials/layout/_brand.html' with class="" text_class="hidden" %}
+<!-- Expanding Mobile Topbar -->
+<header 
+  hx-boost="true"
+  hx-target="#main-content"
+  hx-select="#main-content"
+  hx-swap="outerHTML"
+  class="md:hidden fixed top-0 left-0 right-0 z-50 shadow-fair-lg flex flex-col transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+  :class="mobileOpen ? 'max-h-[90vh] rounded-b-[2.5rem] bg-gray-900' : 'max-h-[72px] bg-gray-900 rounded-b-none'"
+>
+  <!-- Always visible header row -->
+  <div class="flex flex-row justify-between items-center p-3 shrink-0 h-[72px] bg-gray-900 z-10 gap-2">
+    {% include 'partials/layout/_brand.html' with class="w-auto h-12" text_class="hidden" %}
+    
+    <div class="flex-1"> </div>
+    
+    <div class="flex flex-row space-x-2">
+    {% block _user_pill %}
+      {% include 'partials/layout/_user_pill.html' with direction="down" %}
+    {% endblock %}
 
-  <div class="flex-1"></div>
-  <button
-    @click="mobileOpen = true"
-    class="w-fit p-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors focus:outline-none"
-    aria-label="Abrir menú"
-  >
-    {% include 'partials/ui/_icon.html' with name="list" class="size-8" %}
-  </button>
+    <button
+      @click="mobileOpen = !mobileOpen"
+      class="size-[52px] rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors focus:outline-none"
+      aria-label="Toggle menú"
+    >
+      <div class="relative flex items-center justify-center">
+        <span x-show="!mobileOpen" x-transition.opacity.duration.300ms class="absolute flex items-center justify-center">
+          {% include 'partials/ui/_icon.html' with name="list" class="size-7 text-white" %}
+        </span>
+        <span x-show="mobileOpen" x-transition.opacity.duration.300ms class="absolute flex items-center justify-center" x-cloak>
+          <svg class="size-7 text-white" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </span>
+      </div>
+    </button>
+  </div>
+  </div>
 
+  <!-- Collapsible body -->
+  <div class="flex-1 overflow-y-auto px-4 pb-8 pt-4 flex flex-col gap-6 hide-scroll"
+       x-show="mobileOpen"
+       x-transition:enter="transition-[opacity,transform] duration-500 delay-100"
+       x-transition:enter-start="opacity-0 -translate-y-4"
+       x-transition:enter-end="opacity-100 translate-y-0"
+       x-transition:leave="transition-[opacity,transform] duration-200"
+       x-transition:leave-start="opacity-100 translate-y-0"
+       x-transition:leave-end="opacity-0 -translate-y-4"
+       x-cloak>
+    
+    <nav class="flex flex-col gap-1 w-full" @click="mobileOpen = false">
+      {% include 'partials/layout/_nav_items.html' %}
+    </nav>
+
+  </div>
 </header>
