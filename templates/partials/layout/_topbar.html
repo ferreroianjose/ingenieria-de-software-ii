@@ -13,11 +13,11 @@
   hx-target="#main-content"
   hx-select="#main-content"
   hx-swap="outerHTML"
-  class="md:hidden fixed top-0 left-0 right-0 z-50 shadow-fair-lg flex flex-col transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
-  :class="mobileOpen ? 'max-h-[90vh] rounded-b-[2.5rem] bg-gray-900' : 'max-h-[72px] bg-gray-900 rounded-b-none'"
+  class="md:hidden fixed top-0 left-0 right-0 z-50 shadow-fair-lg flex flex-col transition-all rounded-b-8xl duration-500 ease-out"
+  :class="mobileOpen ? 'max-h-[90vh] bg-gray-900' : 'max-h-[var(--topbar-height)] bg-gray-900'"
 >
   <!-- Always visible header row -->
-  <div class="flex flex-row justify-between items-center p-3 shrink-0 h-[72px] bg-gray-900 z-10 gap-2">
+  <div class="flex flex-row justify-between items-center p-3 shrink-0 h-[var(--topbar-height)] bg-gray-900 z-10 gap-2">
     {% include 'partials/layout/_brand.html' with class="w-auto h-12" text_class="hidden" %}
     
     <div class="flex-1"> </div>
@@ -29,7 +29,8 @@
 
     <button
       @click="mobileOpen = !mobileOpen"
-      class="size-[52px] rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors focus:outline-none"
+      class="size-[52px] rounded-full flex items-center ring-inset justify-center bg-white/10 hover:bg-white/20 transition-colors focus:outline-none"
+      :class="mobileOpen ? 'bg-white/15 hover:bg-white/20 text-primary-400 ring-1 ring-white/18' : ''"
       aria-label="Toggle menú"
     >
       <div class="relative flex items-center justify-center">
@@ -47,14 +48,14 @@
   </div>
 
   <!-- Collapsible body -->
-  <div class="flex-1 overflow-y-auto px-4 pb-8 pt-4 flex flex-col gap-6 hide-scroll"
+  <div class="flex-1 overflow-y-auto p-5 pt-0 flex flex-col gap-6 hide-scroll transition-[opacity,transform] "
        x-show="mobileOpen"
-       x-transition:enter="transition-[opacity,transform] duration-500 delay-100"
-       x-transition:enter-start="opacity-0 -translate-y-4"
-       x-transition:enter-end="opacity-100 translate-y-0"
-       x-transition:leave="transition-[opacity,transform] duration-200"
-       x-transition:leave-start="opacity-100 translate-y-0"
-       x-transition:leave-end="opacity-0 -translate-y-4"
+       x-transition:enter="duration-500"
+       x-transition:enter-start="opacity-0"
+       x-transition:enter-end="opacity-100"
+       x-transition:leave="duration-400"
+       x-transition:leave-start="opacity-100"
+       x-transition:leave-end="opacity-0"
        x-cloak>
     
     <nav class="flex flex-col gap-1 w-full" @click="mobileOpen = false">
