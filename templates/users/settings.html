@@ -3,7 +3,7 @@
 {% block title %}Configuración{% endblock %}
 
 {% block content %}
-<div class="internal-page">
+<div class="internal-page container">
   {% if user.rol == 'ADMIN' %}
     {% include 'partials/admin/_admin_page_header.html' with title='Configuración' subtitle='Administrá las preferencias de tu cuenta y del sistema.' %}
   {% else %}

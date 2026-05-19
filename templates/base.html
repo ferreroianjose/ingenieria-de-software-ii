@@ -4,7 +4,6 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta name="theme-color" content="#FFFFFF">
 		<title>
 			SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
 		</title>
@@ -73,6 +72,41 @@
 		}
 
 	    @layer base {
+	      /* Shell layout (sidebar + mobile topbar) */
+	      :root {
+	        --sidebar-width: 18rem;
+	        --sidebar-collapsed-width: 5.25rem;
+	        --topbar-height: 5rem;
+	        --shell-action-size: 3.25rem;
+	        --shell-inset-y: clamp(calc(var(--spacing) * 2), 3lvh, calc(var(--spacing) * 18));
+	        --sidebar-py: var(--shell-inset-y);
+	        --toggle-y: calc(var(--shell-inset-y) + 1.75rem);
+	      }
+
+	      .sidebar-w {
+	        width: var(--sidebar-width);
+	      }
+	      .sidebar-pl {
+	        padding-left: 0;
+	      }
+	      .topbar-pt {
+	        padding-top: var(--topbar-height);
+	      }
+	      @media (min-width: 768px) {
+	        .sidebar-pl {
+	          padding-left: var(--sidebar-width);
+	        }
+	        .topbar-pt {
+	          padding-top: 0;
+	        }
+	        body.is-collapsed .sidebar-w {
+	          width: var(--sidebar-collapsed-width);
+	        }
+	        body.is-collapsed .sidebar-pl {
+	          padding-left: var(--sidebar-collapsed-width);
+	        }
+	      }
+
 	      /* Títulos — site-wide */
 	      h1 {
 	        @apply text-5xl lg:text-6xl font-black text-primary-400 uppercase text-pretty;
@@ -87,7 +121,7 @@
 
 	      /* Admin shell, panels, color & depth */
           .internal-page {
-            @apply mx-auto w-full px-4 lg:px-8 md:px-4 py-8 relative z-[1];
+            @apply mx-auto px-4 lg:px-8 md:px-4 py-8 relative z-[1];
           }
           .internal-page::before {
             content: '';
@@ -187,8 +221,8 @@
 	        @apply flex flex-col gap-3 px-4 py-3 lg:px-6 lg:flex-row items-end justify-between my-auto xl:min-h-8 lg:min-h-16 sm:min-h-28 min-h-34;
 	      }
 	      .admin-selection-toolbar p {
-          	@apply w-full min-w-0 my-auto xl:line-clamp-1 line-clamp-2 sm:text-left text-center overflow-ellipsis;
-          }
+          @apply w-full min-w-0 my-auto xl:line-clamp-1 line-clamp-2 sm:text-left text-center overflow-ellipsis;
+        }
 	      .admin-panel__table {
 	        @apply overflow-x-auto;
 	      }
@@ -233,7 +267,7 @@
 	      	@apply cursor-pointer;
 	      }
 	      button {
-	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 transition-colors font-bold cursor-pointer;
+	        @apply py-2 px-4 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-700 focus:ring-offset-2 transition-colors font-bold cursor-pointer;
 	      }
 
 	      #auth-card button,
@@ -365,45 +399,12 @@
 	        overflow: hidden;
 	      }
 
-        /* Utility for hiding scrolls while keeping functionality */
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+		  /* Utility for hiding scrolls while keeping functionality */
+	      .hide-scroll::-webkit-scrollbar { display: none; }
+	      .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+	      }
+		</style>
 
-        /* Sidebar Parameters */
-        :root {
-          --sidebar-width: 288px;
-          --sidebar-collapsed-width: 84px;
-          --sidebar-py: clamp(0.5rem, 3lvh, 4.5rem);
-          --toggle-y: calc(var(--sidebar-py) + 28px);
-          --topbar-height: 72px;
-        }
-
-        .sidebar-w {
-        width: var(--sidebar-width);
-        }
-        .sidebar-pl {
-        padding-left: 0;
-        }
-        .topbar-pt {
-          padding-top: var(--topbar-height);
-        }
-
-        @media (min-width: 768px) {
-          .sidebar-pl {
-          padding-left: var(--sidebar-width);
-          }
-          .topbar-pt {
-            padding-top: 0;
-          }
-          body.is-collapsed .sidebar-w {
-            width: var(--sidebar-collapsed-width);
-          }
-          body.is-collapsed .sidebar-pl {
-            padding-left: var(--sidebar-collapsed-width);
-          }
-        }
-	}
-		  </style>
     	<!-- Alpine Plugins -->
     	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 
@@ -431,7 +432,12 @@
 		});
 	</script>
 	</head>
-	<body x-data="{ mobileOpen: false, desktopCollapsed: JSON.parse(localStorage.getItem('desktopCollapsed') || 'false') }" x-init="$watch('desktopCollapsed', value => localStorage.setItem('desktopCollapsed', value))" class="min-h-screen flex flex-col overflow-x-hidden relative" :class="{'is-collapsed': desktopCollapsed}">
+	<body
+	  x-data="{ mobileOpen: false, desktopCollapsed: JSON.parse(localStorage.getItem('desktopCollapsed') || 'false') }"
+	  x-init="$watch('desktopCollapsed', value => localStorage.setItem('desktopCollapsed', JSON.stringify(value)))"
+	  :class="{ 'is-collapsed': desktopCollapsed }"
+	  class="min-h-screen flex flex-col overflow-x-hidden relative"
+	>
 		{% block header %}
 			{% include 'partials/layout/_sidebar.html' %}
 			{% include 'partials/layout/_topbar.html' %}

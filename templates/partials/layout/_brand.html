@@ -1,12 +1,16 @@
 <style type="text/tailwindcss">
   .brand-text-container {
-    @apply transition-[max-width,opacity,margin] duration-350 overflow-hidden whitespace-nowrap;
+    @apply transition-[max-width,opacity,margin] duration-300 overflow-hidden whitespace-nowrap my-auto;
   }
   .brand-logo-container {
     @apply shrink-0 transition-all duration-350;
   }
 
   @media (min-width: 768px) {
+    .brand-text-container {
+      @apply max-w-[var(--sidebar-width)];
+    }
+
     .brand-logo-container {
       @apply size-20;
     }
@@ -16,8 +20,7 @@
       opacity: 0 !important;
     }
     body.is-collapsed .brand-logo-container {
-      width: 64px !important;
-      height: 64px !important;
+      @apply size-16;
     }
     body.is-collapsed .brand-wrapper {
       @apply justify-center;
@@ -25,7 +28,7 @@
   }
 </style>
 
-<a href="/" class="will-change-transform flex items-center no-underline brand-wrapper {{ class|default:'' }}">
+<a href="/" class="min-h-20 flex flex-row will-change-transform items-center no-underline brand-wrapper {{ class|default:'' }}">
   <img src="/static/favicon.svg" alt="Siempre Gym" class="brand-logo-container {{ logo_class|default:'h-14' }}" />
   <span class="font-sans font-bold tracking-tight text-primary-500 leading-none brand-text-container {{ text_class|default:'text-4xl' }}">SIEMPRE <br>GYM</span>
 </a>
