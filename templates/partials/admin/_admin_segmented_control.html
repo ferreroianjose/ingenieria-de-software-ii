@@ -1,20 +1,52 @@
 {# Parent Alpine scope must define `tab`. Pass view_tabs: [{id, label}, ...] #}
 <div
-	role="tablist"
-	class="admin-segmented"
-	aria-label="{{ aria_label|default:'Vista' }}"
+    role="tablist"
+    class="admin-segmented relative z-0"
+    aria-label="{{ aria_label|default:'Vista' }}"
+    x-data="{
+        isResizing: false,
+        resizeTimer: null,
+        moveSlider(btn) {
+            if (!btn) return;
+            this.$refs.slider.style.transform = `translateX(${btn.offsetLeft}px)`;
+            this.$refs.slider.style.width = `${btn.offsetWidth}px`;
+        },
+        handleResize() {
+            this.isResizing = true; 
+            this.moveSlider(this.$el.querySelector('[aria-selected=true]'));             
+            clearTimeout(this.resizeTimer);
+            this.resizeTimer = setTimeout(() => {
+                this.isResizing = false;
+            }, 150);
+        }
+    }"
+    x-init="
+        $nextTick(() => {
+            const activeBtn = $el.querySelector('[aria-selected=true]') || $el.querySelector('button');
+            moveSlider(activeBtn);
+        })
+    "
+    @resize.window="handleResize()"
 >
-	{% for t in view_tabs %}
-	<button
-		type="button"
-		role="tab"
-		@click="tab = '{{ t.id }}'"
-		:aria-selected="tab === '{{ t.id }}'"
-		:class="tab === '{{ t.id }}'
-			? 'bg-white text-gray-900 shadow-sm ring-1 ring-black/[0.04]'
-			: 'text-gray-600 hover:text-gray-900'"
-	>
-		{{ t.label }}
-	</button>
-	{% endfor %}
+    <!-- Slider -->
+    <div
+        x-ref="slider"
+        class="absolute top-1 bottom-1 left-0 z-0 flex flex-col justify-end overflow-hidden rounded-full bg-gradient-to-r from-gray-50 to-white shadow-sm ring-1 ring-inset ring-black/5"
+        :class="isResizing ? 'transition-none' : 'transition-all duration-300 ease-out'"
+    >
+    </div>
+
+    {% for t in view_tabs %}
+    <button
+        id="tab-{{ t.id }}"
+        type="button"
+        role="tab"
+        @click="tab = '{{ t.id }}'; moveSlider($event.currentTarget)"
+        :aria-selected="tab === '{{ t.id }}'"
+        :class="tab === '{{ t.id }}' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+        class="relative z-10 bg-transparent"
+    >
+        {{ t.label }}
+    </button>
+    {% endfor %}
 </div>

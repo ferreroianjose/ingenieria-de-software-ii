@@ -6,7 +6,7 @@
 <style type="text/tailwindcss">
     /* Dashboard Container */
     .dash-container {
-        @apply w-full max-w-5xl mx-auto py-8 px-4 space-y-8 @container;
+        @apply space-y-8 @container;
     }
 
     /* Grid Layouts */
@@ -52,7 +52,7 @@
     }
 </style>
 
-<div class="dash-container" x-data="{ showQrModal: false }">
+<div class="internal-page dash-container" x-data="{ showQrModal: false }">
 
     <!-- Grid: QR, Status, Streak -->
     <div class="dash-grid-top">

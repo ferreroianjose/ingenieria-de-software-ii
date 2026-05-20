@@ -1,18 +1,20 @@
 {% load static %}
 <!doctype html>
 <html lang="es">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>
-			SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
-		</title>
 
-		<!-- Tailwind v4 -->
-		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="theme-color" content="#101828">
+	<title>
+		SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
+	</title>
 
-		<!-- Tailwind configuration -->
-		<style type="text/tailwindcss">
+	<!-- Tailwind v4 -->
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+	<!-- Tailwind configuration -->
+	<style type="text/tailwindcss">
 		@theme {
 		  /* Colors */
 		  --color-transparent: #00000000;
@@ -120,30 +122,37 @@
 	      }
 
 	      /* Admin shell, panels, color & depth */
-          .internal-page {
-            @apply mx-auto px-4 lg:px-8 md:px-4 py-8 relative z-[1];
+        .internal-page {
+          @apply min-h-screen w-full mx-auto px-4 lg:px-8 md:px-4 py-8 relative z-[1] bg-white;
+        }
+        .internal-page__content {
+          @apply max-w-7xl mx-auto;
+        }
+        .internal-page::before {
+          content: '';
+          @apply pointer-events-none absolute inset-x-0 -z-10 bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
+          top: -6rem;
+          height: calc(20rem + 6rem);
+        }
+        @media (min-width: 768px) {
+          .internal-page::before {
+            top: 0;
+            height: 20rem;
+          }
+        }
+        @media (max-width: 767px) {
+          #main-content:has(.internal-page)::before {
+            content: '';
+            @apply pointer-events-none fixed inset-x-0 top-0 -z-10 h-[22rem] bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
           }
           .internal-page::before {
-            content: '';
-            @apply pointer-events-none absolute inset-x-0 -z-10 bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
-            top: -6rem;
-            height: calc(20rem + 6rem);
+            @apply hidden;
           }
-          @media (min-width: 768px) {
-            .internal-page::before {
-              top: 0;
-              height: 20rem;
-            }
-          }
-          @media (max-width: 767px) {
-            #main-content:has(.internal-page)::before {
-              content: '';
-              @apply pointer-events-none fixed inset-x-0 top-0 -z-10 h-[22rem] bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
-            }
-            .internal-page::before {
-              @apply hidden;
-            }
-          }
+        }
+
+        .internal-page__content {
+          @apply max-w-7xl mx-auto;
+        }
 
 	      /* Informa el estado de la op CRUD al usuario */
 	      #admin-flash {
@@ -293,12 +302,12 @@
 	        @apply w-auto py-0 px-0 rounded-none font-semibold bg-transparent shadow-none ring-0 hover:ring-0 focus:ring-0 focus:ring-offset-0;
 	      }
 
-	      /* Segmented control (after global button rules) */
+	      /* Segmented control (componente tipo pestaña en páginas admin) */
 	      .internal-page [role="tablist"].admin-segmented {
 	        @apply flex w-full min-w-0 p-1 gap-0.5 rounded-full bg-gray-200/90 border border-black/[0.06] shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)];
 	      }
 	      .internal-page [role="tablist"].admin-segmented button {
-	        @apply w-auto min-w-0 flex-1 py-1.5 px-3 text-xs font-semibold leading-tight shadow-none rounded-full transition-all duration-200 ease-out whitespace-nowrap text-center focus:ring-2 focus:ring-primary-400/35 focus:ring-offset-0;
+	        @apply w-auto min-w-0 flex-1 p-3 md:p-2 text-xs font-semibold leading-tight rounded-full transition-all duration-200 ease-out whitespace-nowrap text-center ring-inset focus:outline-none focus:ring-0 focus:ring-transparent active:outline-none active:ring-0 active:ring-transparent;
 	      }
 	      @media (min-width: 768px) {
 	        .internal-page [role="tablist"].admin-segmented {
@@ -308,6 +317,7 @@
 	          @apply flex-none min-w-[4.25rem] px-4 text-sm;
 	        }
 	      }
+		  
 
 	      /* Admin selection (picker cards + tables) */
 	      .admin-picker-list {
@@ -405,72 +415,65 @@
 	      }
 		</style>
 
-    	<!-- Alpine Plugins -->
-    	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+	<!-- Alpine Plugins -->
+	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 
-		<!-- Alpine.js -->
-		<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+	<!-- Alpine.js -->
+	<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
-		<!-- HTMX -->
-		<script
-			src="https://cdn.jsdelivr.net/npm/htmx.org@2.0/dist/htmx.min.js"
-			integrity="sha256-cepnGFv6jJjDnTFxfG/OXYUjcPzf0SnbRUN3TTFFwN4="
-			crossorigin="anonymous"
-		></script>
+	<!-- HTMX -->
+	<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0/dist/htmx.min.js"
+		integrity="sha256-cepnGFv6jJjDnTFxfG/OXYUjcPzf0SnbRUN3TTFFwN4=" crossorigin="anonymous"></script>
 
-		<!-- Estilos globales -->
-		<link rel="stylesheet" href="{% static 'css/global.css' %}" />
+	<!-- Estilos globales -->
+	<link rel="stylesheet" href="{% static 'css/global.css' %}" />
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{% static 'favicon.svg' %}">
+	<!-- Favicon -->
+	<link rel="icon" type="image/x-icon" href="{% static 'favicon.svg' %}">
 
 	<script>
 		// Prevent FOUC
 		document.documentElement.style.visibility = 'hidden';
-		document.addEventListener('DOMContentLoaded', function() {
+		document.addEventListener('DOMContentLoaded', function () {
 			document.documentElement.style.visibility = 'visible';
 		});
 	</script>
-	</head>
-	<body
-	  x-data="{ mobileOpen: false, desktopCollapsed: JSON.parse(localStorage.getItem('desktopCollapsed') || 'false') }"
-	  x-init="$watch('desktopCollapsed', value => localStorage.setItem('desktopCollapsed', JSON.stringify(value)))"
-	  :class="{ 'is-collapsed': desktopCollapsed }"
-	  class="min-h-screen flex flex-col overflow-x-hidden relative"
-	>
-		{% block header %}
-			{% include 'partials/layout/_sidebar.html' %}
-			{% include 'partials/layout/_topbar.html' %}
-		{% endblock %}
+</head>
 
-		<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
+<body x-data="{ mobileOpen: false, desktopCollapsed: JSON.parse(localStorage.getItem('desktopCollapsed') || 'false') }"
+	x-init="$watch('desktopCollapsed', value => localStorage.setItem('desktopCollapsed', JSON.stringify(value)))"
+	:class="{ 'is-collapsed': desktopCollapsed }"
+	class="min-h-svh flex flex-col overflow-x-hidden relative bg-primary-900">
+	{% block header %}
+	{% include 'partials/layout/_sidebar.html' %}
+	{% include 'partials/layout/_topbar.html' %}
+	{% endblock %}
+
+	<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
 		<main id="main-content" class="flex-1 flex flex-col">
-			<div class="flex-1 transition-[padding] duration-350 ease-out {% block main_class %}sidebar-pl topbar-pt md:pt-0{% endblock %}">
+			<div
+				class="flex-1 transition-[padding] duration-350 ease-out {% block main_class %}sidebar-pl topbar-pt md:pt-0{% endblock %}">
 				{% block content %}
 				<!-- Contenido de cada página -->
 				{% endblock %}
 			</div>
 
 			{% block footer %}
-				<div class="transition-[padding] duration-350 ease-out {% block footer_class %}sidebar-pl{% endblock %}">
-					{% include 'partials/layout/_footer.html' %}
-				</div>
+			<div class="transition-[padding] duration-350 ease-out {% block footer_class %}sidebar-pl{% endblock %}">
+				{% include 'partials/layout/_footer.html' %}
+			</div>
 			{% endblock %}
 
-		<div
-			id="global-spinner"
-			class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"
-		></div>
-
-	</main>
-
+			<div id="global-spinner" class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"></div>
 		{% block page_modals %}{% endblock %}
-		</div>
+		</main>
+	</div>
 
-		{% block other_footer_classes %}{% endblock %}
+	{% block other_footer_classes %}{% endblock %}
 
-		<!-- Scripts globales -->
-		<script src="{% static 'js/main.js' %}"></script>
-		{% block extra_js %}{% endblock %}
-	</body>
+	<!-- Scripts globales -->
+	<script src="{% static 'js/main.js' %}"></script>
+	{% block extra_js %}{% endblock %}
+</body>
+
 </html>

@@ -4,7 +4,7 @@
 
 {% block content %}
 <div
-    class="internal-page container"
+    class="internal-page"
     x-data="{
         selectedSedeId: {{ selected_sede_id|default:'null' }},
         selectedSedeName: '',
@@ -66,7 +66,7 @@
         if ($event.detail === 'salaModalOpen') salaModalOpen = false;
     "
 >
-    <div class="flex flex-col gap-6">
+    <div class="internal-page__content flex flex-col gap-6">
         {% include 'partials/admin/_admin_page_header.html' with title='Sedes y salas' subtitle='Elegí una sede para ver y administrar sus salas.' %}
 
         <div class="grid grid-cols-1 lg:grid-cols-[minmax(320px,38%)_1fr] gap-6 min-h-[28rem]">

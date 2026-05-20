@@ -3,7 +3,8 @@
 {% block title %}Panel de Administración{% endblock %}
 
 {% block content %}
-<div class="internal-page  max-w-7xl sm:px-8 space-y-12">
+<div class="internal-page">
+  <div class="internal-page__content flex flex-col gap-6">
     <!-- Header -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
@@ -84,7 +85,8 @@
                 </div>
                 {% endfor %}
             </div>
-            {% include 'partials/ui/buttons/_secondary_button.html' with label="Ver todo el historial" class="w-full py-3" %}
+              {% include 'partials/ui/buttons/_secondary_button.html' with label="Ver todo el historial" class="w-full py-3" %}
+          </div>
         </div>
     </div>
 </div>

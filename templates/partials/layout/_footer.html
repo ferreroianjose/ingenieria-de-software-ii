@@ -1,3 +1,9 @@
-<footer class="w-full text-center text-gray-100 text-xs p-4 mt-auto bg-black">
-	&copy; {% now "Y" %} Info Solutions. Todos los derechos reservados.
+<footer class="relative w-full h-full flex items-center justify-center z-0">
+  <div class="relative overflow-hidden min-h-16 bg-black flex items-center justify-center w-full">
+    <p class="text-center text-gray-100 text-xs">
+      &copy; {% now "Y" %} Info Solutions. Todos los derechos reservados.
+    </p>
+    <!-- Glows -->
+    {% include 'partials/ui/modals/_modal_footer_glows.html' %}
+  </div>
 </footer>

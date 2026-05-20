@@ -4,7 +4,7 @@
 
 {% block content %}
 <div
-    class="internal-page container"
+    class="internal-page"
     x-data="Object.assign(adminSelection({ idKey: 'selectedClassId', labelKey: 'selectedClassLabel', clearOnSwapTargets: ['class-rows-tbody'], extraClearKeys: ['selectedClassEstado'] }), {
         selectedClassEstado: '',
         classDrawerOpen: false,
@@ -30,7 +30,7 @@
     @admin-modal-close.window="if ($event.detail === 'classDrawerOpen') classDrawerOpen = false"
     @class-drawer-open.window="classDrawerOpen = true"
 >
-    <div class="flex flex-col gap-6">
+    <div class="internal-page__content flex flex-col gap-6">
         {% include 'partials/admin/_admin_page_header.html' with title='Gestionar Clases' subtitle='Filtrá clases y administrá horarios, salas y profesores.' view_tabs=view_tabs aria_label='Clases' %}
 
         <section x-show="tab === 'lista'" x-cloak class="flex flex-col gap-4">
