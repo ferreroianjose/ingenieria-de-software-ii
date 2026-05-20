@@ -4,84 +4,86 @@
 
 {% block content %}
 <div class="internal-page">
-  <h1 class="text-3xl font-bold text-primary-500 mb-2">Mis reservas</h1>
-  <p class="text-gray-500 mb-8">Tus inscripciones activas y lista de espera.</p>
+  <div class="internal-page__content">
+    <h1 class="text-3xl font-bold text-primary-500 mb-2">Mis reservas</h1>
+    <p class="text-gray-500 mb-8">Tus inscripciones activas y lista de espera.</p>
 
-  {# ── Flash messages ── #}
-  {% if messages %}
-  <div class="mb-6 flex flex-col gap-3">
-    {% for message in messages %}
-    <div class="rounded-3xl px-4 py-3 text-sm font-medium
-      {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800
-      {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700
-      {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800
-      {% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
-      {{ message }}
+    {# ── Flash messages ── #}
+    {% if messages %}
+    <div class="mb-6 flex flex-col gap-3">
+      {% for message in messages %}
+      <div class="rounded-3xl px-4 py-3 text-sm font-medium
+        {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800
+        {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700
+        {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-800
+        {% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-  {% endif %}
+    {% endif %}
 
-  {% if not inscripciones_con_info %}
-  <div class="rounded-3xl bg-gray-50 border border-gray-200 px-6 py-12 text-center">
-    <p class="text-gray-500 mb-4">No tenés reservas activas.</p>
-    <a href="{% url 'classes:browse' %}"
-       class="inline-block rounded-full bg-primary-400 hover:bg-primary-600 text-white font-bold px-6 py-2 text-sm transition-colors">
-      Ver clases disponibles
-    </a>
-  </div>
-  {% else %}
-  <div class="flex flex-col gap-4">
-    {% for item in inscripciones_con_info %}
-    {% with inscripcion=item.inscripcion clase=item.inscripcion.clase %}
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[1.5rem] bg-white shadow-fair-md px-6 py-4">
+    {% if not inscripciones_con_info %}
+    <div class="rounded-3xl bg-gray-50 border border-gray-200 px-6 py-12 text-center">
+      <p class="text-gray-500 mb-4">No tenés reservas activas.</p>
+      <a href="{% url 'classes:browse' %}"
+        class="inline-block rounded-full bg-primary-400 hover:bg-primary-600 text-white font-bold px-6 py-2 text-sm transition-colors">
+        Ver clases disponibles
+      </a>
+    </div>
+    {% else %}
+    <div class="flex flex-col gap-4">
+      {% for item in inscripciones_con_info %}
+      {% with inscripcion=item.inscripcion clase=item.inscripcion.clase %}
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[1.5rem] bg-white shadow-fair-md px-6 py-4">
 
-      {# Class info #}
-      <div class="flex flex-col gap-1">
-        <div class="flex items-center gap-3">
-          <span class="text-base font-bold text-gray-900">{{ clase.disciplina }}</span>
-          <span class="text-xs font-semibold text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{{ clase.sala.nombre }}</span>
+        {# Class info #}
+        <div class="flex flex-col gap-1">
+          <div class="flex items-center gap-3">
+            <span class="text-base font-bold text-gray-900">{{ clase.disciplina }}</span>
+            <span class="text-xs font-semibold text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">{{ clase.sala.nombre }}</span>
 
-          {# Status badge #}
-          {% if inscripcion.estado == 'RESERVADA' %}
-          <span class="text-xs font-bold bg-green-100 text-green-800 rounded-full px-3 py-0.5">Reservada</span>
-          {% elif inscripcion.estado == 'PENDIENTE_PAGO' %}
-          <span class="text-xs font-bold bg-orange-100 text-orange-800 rounded-full px-3 py-0.5">Pendiente de pago</span>
-          {% elif inscripcion.estado == 'ESPERA' %}
-          <span class="text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full px-3 py-0.5">En lista de espera</span>
-          {% endif %}
+            {# Status badge #}
+            {% if inscripcion.estado == 'RESERVADA' %}
+            <span class="text-xs font-bold bg-green-100 text-green-800 rounded-full px-3 py-0.5">Reservada</span>
+            {% elif inscripcion.estado == 'PENDIENTE_PAGO' %}
+            <span class="text-xs font-bold bg-orange-100 text-orange-800 rounded-full px-3 py-0.5">Pendiente de pago</span>
+            {% elif inscripcion.estado == 'ESPERA' %}
+            <span class="text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full px-3 py-0.5">En lista de espera</span>
+            {% endif %}
+          </div>
+
+          <p class="text-sm text-gray-500">
+            Prof. {{ clase.profesor.nombre }} {{ clase.profesor.apellido }}
+            &nbsp;·&nbsp;
+            {{ item.proximo_inicio|date:"l d/m/Y" }} a las {{ item.proximo_inicio|date:"H:i" }} hs
+            &nbsp;·&nbsp;
+            {{ clase.duracion_minutos }} min
+          </p>
         </div>
 
-        <p class="text-sm text-gray-500">
-          Prof. {{ clase.profesor.nombre }} {{ clase.profesor.apellido }}
-          &nbsp;·&nbsp;
-          {{ item.proximo_inicio|date:"l d/m/Y" }} a las {{ item.proximo_inicio|date:"H:i" }} hs
-          &nbsp;·&nbsp;
-          {{ clase.duracion_minutos }} min
-        </p>
+        {# Cancel action #}
+        <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post"
+              x-data
+              @submit.prevent="if(confirm('¿Confirmás la cancelación?')) $el.submit()">
+          {% csrf_token %}
+          <button type="submit"
+                  class="rounded-full border border-red-300 text-red-600 hover:bg-red-50 font-semibold text-sm px-5 py-2 transition-colors whitespace-nowrap">
+            {% if inscripcion.estado == 'ESPERA' %}Salir de lista{% else %}Cancelar reserva{% endif %}
+          </button>
+        </form>
       </div>
-
-      {# Cancel action #}
-      <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post"
-            x-data
-            @submit.prevent="if(confirm('¿Confirmás la cancelación?')) $el.submit()">
-        {% csrf_token %}
-        <button type="submit"
-                class="rounded-full border border-red-300 text-red-600 hover:bg-red-50 font-semibold text-sm px-5 py-2 transition-colors whitespace-nowrap">
-          {% if inscripcion.estado == 'ESPERA' %}Salir de lista{% else %}Cancelar reserva{% endif %}
-        </button>
-      </form>
+      {% endwith %}
+      {% endfor %}
     </div>
-    {% endwith %}
-    {% endfor %}
-  </div>
 
-  <div class="mt-6">
-    <a href="{% url 'classes:browse' %}"
-       class="inline-block rounded-full border border-primary-400 text-primary-500 hover:bg-primary-400/10 font-semibold text-sm px-6 py-2 transition-colors">
-      Ver más clases
-    </a>
+    <div class="mt-6">
+      <a href="{% url 'classes:browse' %}"
+        class="inline-block rounded-full border border-primary-400 text-primary-500 hover:bg-primary-400/10 font-semibold text-sm px-6 py-2 transition-colors">
+        Ver más clases
+      </a>
+    </div>
+    {% endif %}
   </div>
-  {% endif %}
 </div>
 {% endblock %}

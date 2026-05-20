@@ -2,6 +2,11 @@
  * @fileOverview Custom client-side JavaScript
  */
 
+// hacer visible la página luego de que tailwind cargue
+window.onload = function() {
+  document.body.style.opacity = '1';
+}
+
 /** Ref-counted scroll lock while modals/drawers are open (supports multiple overlays). */
 const modalScrollLock = (() => {
 	let count = 0;

@@ -76,7 +76,8 @@ def two_factor(request):
             request.session.pop("is_2fa_pending", None)
             request.session.pop("2fa_code", None)
             next_url = (
-                request.session.pop("post_login_next", None) or settings.LOGIN_REDIRECT_URL
+                request.session.pop("post_login_next", None)
+                or settings.LOGIN_REDIRECT_URL
             )
             return redirect(next_url)
     else:
@@ -116,18 +117,22 @@ def register(request):
     )
 
 
+@staff_required
 def _staff_users_queryset(request):
     qs = User.objects.order_by("last_name", "first_name", "email")
+    # Si es empleado solo puede ver clientes
     if request.user.rol == "EMPLEADO":
         qs = qs.filter(rol="CLIENTE")
     return qs
 
 
+@staff_required
 def get_staff_user(request, user_id):
     user = get_object_or_404(_staff_users_queryset(request), pk=user_id)
     return user
 
 
+@staff_required
 def _user_rows_context(request):
     q = (request.GET.get("q") or "").strip()
     qs = filter_users_queryset(_staff_users_queryset(request), q)
@@ -169,9 +174,7 @@ def staff_clientes(request):
                 if is_admin
                 else "Buscá clientes y abrí la ficha para ver sus datos y modificar su estado de constancia (#TODO)."
             ),
-            "search_placeholder": (
-                "Nombre, email o DNI…"
-            ),
+            "search_placeholder": ("Nombre, email o DNI…"),
             "empty_search_message": (
                 "Presioná «Buscar» para listar usuarios."
                 if is_admin

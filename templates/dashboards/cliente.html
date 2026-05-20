@@ -5,10 +5,6 @@
 {% block content %}
 <style type="text/tailwindcss">
     /* Dashboard Container */
-    .dash-container {
-        @apply space-y-8 @container;
-    }
-
     /* Grid Layouts */
     .dash-grid-top {
         @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-4 xl:gap-6;
@@ -52,7 +48,8 @@
     }
 </style>
 
-<div class="internal-page dash-container" x-data="{ showQrModal: false }">
+<div class="internal-page" x-data="{ showQrModal: false }">
+  <div class="@container internal-page__content space-y-6 max-w-5xl">
 
     <!-- Grid: QR, Status, Streak -->
     <div class="dash-grid-top">
@@ -142,7 +139,7 @@
                 </div>
             </div>
             
-            <div class="z-10 w-full lg:flex-2 mr-auto min-w-0 lg:max-w-72 flex flex-col sm:flex-row md:flex-col gap-4 md:gap-2 lg:gap-4 overflow-hidden @container">
+            <div class="z-10 w-full lg:flex-2 mr-auto min-w-0 lg:max-w-96 flex flex-col sm:flex-row md:flex-col gap-4 md:gap-2 lg:gap-4 overflow-hidden @container">
                 <div class="flex-1 min-w-0">
                     {% include 'partials/dashboards/_class_list.html' with name="Yoga" sessions=yoga_sessions %}
                 </div>
@@ -211,5 +208,6 @@
 
     <!-- Modal del QR -->
     {% include 'partials/attendance/_qr_modal.html' with modal_show_var="showQrModal" %}
+</div>
 </div>
 {% endblock %}

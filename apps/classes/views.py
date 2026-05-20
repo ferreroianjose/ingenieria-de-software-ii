@@ -998,12 +998,12 @@ def reservar_clase_view(request, clase_id):
         else:
             messages.info(
                 request,
-                f"has sido registrado a la lista de espera de la clase "
+                f"Has sido registrado a la lista de espera de la clase "
                 f"{inscripcion.clase.disciplina} por falta de cupo",
             )
     except services.TelefonoEmergenciaFaltante:
         messages.error(
-            request, "reserva fallida, actualizar el telefono de emergencia"
+            request, "Reserva fallida, actualizar el telefono de emergencia"
         )
     except services.InscripcionDuplicada:
         messages.warning(request, "Ya tenés una inscripción activa en esta clase.")

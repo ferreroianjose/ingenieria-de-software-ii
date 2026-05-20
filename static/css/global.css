@@ -10,6 +10,10 @@ html{
   color: var(--color-on-light-bg-500);
 }
 
+body {
+  opacity: 0;
+}
+
 *::selection {
   background-color: var(--color-secondary-300);
 }
