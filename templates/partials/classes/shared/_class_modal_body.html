@@ -15,23 +15,30 @@
     <div class="space-y-4">
         <h3>Cronograma</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+            <div>
+                <label>Día de la semana</label>
+                {{ modal_form.dia_semana }}
+            </div>
             <div class="space-y-4">
-                <div>
-                    <label>Día de la semana</label>
-                    {{ modal_form.dia_semana }}
-                </div>
                 <div class="flex items-end gap-3">
                     <div class="flex-1">
                         <label>Hora</label>
                         {{ modal_form.hora }}
                     </div>
+                    {% if not modal_form.minuto.is_hidden %}
                     <div class="mb-2 text-2xl font-black text-gray-300">:</div>
                     <div class="flex-1">
                         <label>Minuto</label>
                         {{ modal_form.minuto }}
                     </div>
+                    {% else %}
+                        {{ modal_form.minuto }}
+                    {% endif %}
                 </div>
             </div>
+        </div>
+        {% if not modal_form.duracion_minutos.is_hidden %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
             <div class="space-y-4">
                 <div>
                     <label>Duración (minutos)</label>
@@ -39,5 +46,8 @@
                 </div>
             </div>
         </div>
+        {% else %}
+            {{ modal_form.duracion_minutos }}
+        {% endif %}
     </div>
 </div>

@@ -188,3 +188,6 @@ NOTIFICATION_ADAPTERS = [
 ]
 if DEBUG:
     NOTIFICATION_ADAPTERS.insert(0, "apps.notifications.adapters.email.FakeEmailNotificationAdapter")
+
+# Restricciones de horarios (clases de 60 min y que arrancan en :00)
+GYM_RESTRICTED_SCHEDULE = True

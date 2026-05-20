@@ -2,6 +2,7 @@ from datetime import timedelta, datetime, time
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.conf import settings
 
 from .models import Class, Teacher, Sede, Sala, Disciplina
 
@@ -137,6 +138,20 @@ class ClassForm(BaseStyledForm):
         if self.instance.pk and self.instance.duracion and not self.data:
             self.fields['duracion_minutos'].initial = self.instance.duracion_minutos
 
+        # Apply restricted schedule if configured
+        if getattr(settings, 'GYM_RESTRICTED_SCHEDULE', False):
+            self.fields['minuto'].widget = forms.HiddenInput()
+            self.fields['minuto'].initial = 0
+            self.fields['minuto'].required = False
+            
+            self.fields['duracion_minutos'].widget = forms.HiddenInput()
+            self.fields['duracion_minutos'].initial = 60
+            self.fields['duracion_minutos'].required = False
+        else:
+            # Revert to visible if setting is off (useful if toggled)
+            self.fields['duracion_minutos'].widget = forms.NumberInput(attrs={'placeholder': 'Ej. 45'})
+            self.fields['duracion_minutos'].initial = 60 # Default to 60 as per previous requirement but editable
+
     def _resolve_sede_id(self):
         if 'sede' in self.data:
             try:
@@ -161,6 +176,8 @@ class ClassForm(BaseStyledForm):
 
     def clean_minuto(self):
         minuto = self.cleaned_data.get('minuto')
+        if getattr(settings, 'GYM_RESTRICTED_SCHEDULE', False):
+            return 0
         if minuto is not None and not (0 <= minuto <= 59):
             raise ValidationError('El minuto debe estar entre 0 y 59.')
         return minuto
@@ -175,12 +192,18 @@ class ClassForm(BaseStyledForm):
         dia_semana = cleaned_data.get('dia_semana')
         sede = cleaned_data.get('sede')
         duracion_min = cleaned_data.get('duracion_minutos')
+        
+        if getattr(settings, 'GYM_RESTRICTED_SCHEDULE', False):
+            minuto = 0
+            duracion_min = 60
+            cleaned_data['minuto'] = minuto
+            cleaned_data['duracion_minutos'] = duracion_min
 
         # Validate that the sala belongs to the selected sede
         if sala and sede and sala.sede != sede:
             raise ValidationError(f'La sala {sala.nombre} no pertenece a la sede {sede.nombre}.')
 
-        if hora is not None and minuto is not None and duracion_min is not None:
+        if hora is not None and minuto is not None:
             try:
                 hora_inicio = time(hour=int(hora), minute=int(minuto))
                 cleaned_data['hora_inicio'] = hora_inicio
@@ -247,9 +270,12 @@ class ClassForm(BaseStyledForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.hora_inicio = self.cleaned_data.get('hora_inicio')
-        instance.duracion = timedelta(
-            minutes=self.cleaned_data['duracion_minutos']
-        )
+        
+        duracion_min = self.cleaned_data.get('duracion_minutos')
+        if getattr(settings, 'GYM_RESTRICTED_SCHEDULE', False):
+            duracion_min = 60
+            
+        instance.duracion = timedelta(minutes=duracion_min)
         
         if commit:
             instance.save()
