@@ -5,28 +5,50 @@
 {% block main_class %}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen w-full flex flex-col justify-center items-center p-[clamp(1em,3vw,4em)] bg-white">
+<style>
+@keyframes colorCycle {
+  from {
+    background-position: 0% center;
+  }
+
+  to {
+    background-position: 200% center;
+  }
+}
+
+.animate-colorCycle {
+  background: linear-gradient(
+    to right,
+    var(--color-primary-400) 40%,
+    var(--color-secondary-300) 50%,
+    var(--color-primary-400) 70%
+  );
+animation-timing-function: cubic-bezier(1, 0.001, 0, 1);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: colorCycle;
+  animation-duration: 7s;
+}
+</style>
+<div class="min-h-screen w-full flex flex-col justify-center items-center bg-white">
 
     <!-- Tarjeta principal -->
-    <div class="relative flex flex-row w-fit md:w-full max-w-6xl bg-light-bg-500 rounded-4xl shadow-fair-xl border border-white overflow-hidden h-fit max-h-[90vh] justify-end items-stretch">
+    <div class="min-h-screen w-full relative flex flex-row md:w-full bg-light-bg-500 justify-end items-stretch">
 
         <!-- Columna izquierda -->
-        <div class="hidden md:block absolute inset-0 size-full z-0">
-          <!-- fondo -->
-            {% block _brand-bg-card %}
-              {% include 'partials/layout/_brand-bg.html' %}
-            {% endblock %}
-
+        <div class="hidden bg-white md:bg-gray-200 md:block absolute inset-0 size-full z-0">
             <!-- Textos -->
             <div class="relative size-full z-10 flex flex-col items-start justify-center h-full p-6 lg:p-12 md:pr-[480px] [container-type:inline-size]">
-                <h2 class="[font-size:clamp(var(--text-3xl),19cqw,var(--text-6xl))] font-black tracking-tighter lg:tracking-normal xl:tracking-wide uppercase">
-                  <span class="text-primary-400 block mb-1 lg:mb-2 text-[1.15em]">Siempre</span>
+                <h2 class="[font-size:clamp(var(--text-4xl),19cqw,var(--text-7xl))] font-black tracking-tighter lg:tracking-normal xl:tracking-wide uppercase z-10">
+                  <span class="animate-colorCycle  block mb-1 lg:mb-2 text-[1.15em]">Siempre</span>
                     <span class="text-gray-800 block">En</span>
                     <span class="text-gray-800 block">Movimiento</span>
                 </h2>
 
                 <!-- Burbuja con slogan -->
-                <div class="relative bg-primary-400 text-white p-4 rounded-4xl lg:p-8 lg:rounded-8xl rounded-bl-none lg:rounded-bl-none max-w-[18rem] lg:max-w-[20rem] shadow-fair-md mt-4">
+                <div class="relative bg-primary-400 text-white p-4 rounded-4xl lg:p-8 lg:rounded-8xl rounded-bl-none lg:rounded-bl-none max-w-[18rem] lg:max-w-[20rem] shadow-fair-md mt-10">
                     <p class="font-bold text-wrap text-md lg:text-lg text-center leading-snug">
                         "La energía no se crea ni se destruye, solo se entrena."
                     </p>
@@ -38,7 +60,7 @@
 
         <!-- Columna derecha, el formulario -->
         <!-- Notar que está "flotanto" sobre la "columna" izquierda -->
-        <div id="auth-card" class="relative z-20 w-full md:w-[400px] lg:w-[450px] bg-white md:bg-white/50 backdrop-blur-sm overflow-y-auto p-8 lg:p-12 flex flex-col md:border-l md:border-white/50 h-fit max-h-[90vh] will-change-contents">
+        <div id="auth-card" class="relative z-20 w-full md:w-[400px] lg:w-[450px] bg-transparent md:bg-white/55 backdrop-blur-sm overflow-y-auto p-8 lg:p-12 flex flex-col md:border-l md:border-white/50 will-change-contents">
             {% block auth_card_content %}
             <form method="post" action="{% block auth_form_action %}{% endblock %}" class="w-full h-fit max-w-sm mx-auto my-auto flex flex-col justify-center space-y-6">
                 {% csrf_token %}
@@ -64,7 +86,7 @@
                             </ul>
                         </div>
                     {% else %}
-                    <h1>
+                    <h1 class='leading-none'>
                             {% block auth_title %}{% endblock %}
                         </h1>
                         <p class="text-md text-gray-600 font-medium">
@@ -74,7 +96,7 @@
                 </div>
 
                 <!-- Inputs -->
-                <div class="space-y-4 m-0 p-0">
+                <div class="space-y-4 m-0 p-0 [&div]:space-y-2">
                     {% block auth_fields %}{% endblock %}
                 </div>
 
@@ -103,9 +125,9 @@
             {% endblock %}
         </div>
     </div>
-  <!-- fondo en mobile -->
+  <!-- Fondo -->
   {% block _mobile_bg %}
-    <div class="block md:hidden z-0">
+    <div class="z-0">
       {% include 'partials/layout/_brand-bg.html' %}
     </div>
   {% endblock %}

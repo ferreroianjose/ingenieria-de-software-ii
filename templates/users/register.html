@@ -16,32 +16,32 @@
   }" class="space-y-4">
       
       <div class="grid grid-cols-2 gap-2">
-          <div>
+          <div class='flex flex-col'>
               <label for="first_name">Nombre</label>
               <input id="first_name" name="first_name" type="text" required autofocus value="{{ form.first_name.value|default:'' }}">
           </div>
-          <div>
+          <div class='flex flex-col'>
               <label for="last_name">Apellido</label>
               <input id="last_name" name="last_name" type="text" required value="{{ form.last_name.value|default:'' }}">
           </div>
       </div>
 
-      <div>
+      <div class='flex flex-col'>
           <label for="email">Correo electrónico</label>
           <input id="email" name="email" type="email" required value="{{ form.email.value|default:'' }}">
       </div>
 
       <div class="flex flex-row gap-2">
-          <div class="flex-1">
+          <div class="flex-1 flex flex-col">
               <label for="dni">DNI</label>
               <input id="dni" name="dni" type="text" required value="{{ form.dni.value|default:'' }}">
           </div>
-          <div class="flex-0 w-fit">
+          <div class="flex-0">
               {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" min_age=14 required=True %}
           </div>
       </div>
 
-      <div class="relative">
+      <div class="relative flex flex-col">
           <label for="password1" class="flex items-center gap-2">
               Contraseña
               {% include 'partials/ui/_tooltip.html' with text=password_help_texts %}
@@ -52,7 +52,7 @@
           </div>
       </div>
 
-      <div class="relative">
+      <div class="relative flex flex-col">
           <label for="password2">Confirmar contraseña</label>
           <div class="relative flex items-center">
               <input id="password2" name="password2" type="password" required x-model="pass2" class="pr-12 md:pr-10">

@@ -17,6 +17,7 @@ Air Datepicker v3 widget:
 {% load static %}
 
 {# Visible input — Air Datepicker attaches here, carries required validation #}
+<div class='flex flex-col'>
 <label for="dp_{{ field_name }}" class="text-nowrap">{{ label }}</label>
 <input id="dp_{{ field_name }}" type="text"
        class="text-center cursor-pointer w-36"
@@ -120,3 +121,4 @@ Air Datepicker v3 widget:
     }
   })();
 </script>
+</div>
