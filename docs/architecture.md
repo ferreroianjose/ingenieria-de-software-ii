@@ -92,7 +92,7 @@ erDiagram
     }
     CLASE {
         int id PK
-        int disciplina_id FK "nullable, CASCADE"
+        int disciplina_id FK "nullable, PROTECT"
         int sala_id FK "nullable, PROTECT"
         int profesor_id FK "PROTECT"
         int dia_semana "0=Lun, 1=Mar, ..., 6=Dom"

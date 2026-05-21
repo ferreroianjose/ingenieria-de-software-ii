@@ -73,7 +73,7 @@ class Class(models.Model):
         (6, 'Domingo'),
     ]
 
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, null=True, blank=True)
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.PROTECT, null=True, blank=True)
     sala = models.ForeignKey(Sala, on_delete=models.PROTECT, null=True, blank=True)
     profesor = models.ForeignKey('Teacher', on_delete=models.PROTECT)
     dia_semana = models.PositiveSmallIntegerField(choices=WEEKDAY_CHOICES, default=0)
