@@ -12,3 +12,7 @@ dependencies = [
   "psycopg[binary]>=3.3.4",        # postgre connector
   "python-dotenv>=1.2.2",          # load variables from .env
 ]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
