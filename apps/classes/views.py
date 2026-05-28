@@ -994,7 +994,11 @@ def reservar_clase_view(request, clase_id):
     try:
         inscripcion, resultado = services.reservar_clase(request.user, clase_id)
         if resultado == "reservada":
-            messages.success(request, "reserva exitosa")
+            # marcar como pendiente de pago y redirigir al checkout
+            inscripcion.estado = Inscripcion.ESTADO_PENDIENTE_PAGO
+            inscripcion.save()
+            messages.info(request, "Iniciando pago...")
+            return redirect(reverse("payments:pagar", args=[inscripcion.id]))
         else:
             messages.info(
                 request,

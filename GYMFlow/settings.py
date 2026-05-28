@@ -191,3 +191,6 @@ if DEBUG:
 
 # Restricciones de horarios (clases de 60 min y que arrancan en :00)
 GYM_RESTRICTED_SCHEDULE = True
+
+# Precio por defecto para una clase (usado cuando no hay una tarifa por disciplina)
+CLASE_DEFAULT_PRICE = float(os.environ.get("CLASE_DEFAULT_PRICE", "2500.0"))
