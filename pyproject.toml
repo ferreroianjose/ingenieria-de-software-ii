@@ -8,7 +8,8 @@ dependencies = [
   "django>=6.0.5",                 # framework base
   "django-browser-reload>=1.21.0", # live reloading
   "django-cors-headers>=4.9.0",    # cors headers para http reqs
-  "django-q2>=1.10.0",
+  "django-q2>=1.10.0",             # pool thread para tareas asíncronas
+  "mercadopago>=3.1.1",            # https://github.com/mercadopago/sdk-python
   "psycopg[binary]>=3.3.4",        # postgre connector
   "python-dotenv>=1.2.2",          # load variables from .env
 ]
