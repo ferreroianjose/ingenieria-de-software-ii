@@ -123,8 +123,7 @@ erDiagram
         int periodo_id FK
         decimal monto
         datetime fecha_pago
-        string metodo
-        string modalidad_pago "TOTAL, SENA, SALDO"
+        string metodo "EFECTIVO, MERCADOPAGO, CREDITO"
         string estado "PENDIENTE, COMPLETADO, REEMBOLSADO"
     }
     CREDITO {

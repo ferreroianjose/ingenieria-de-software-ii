@@ -95,17 +95,15 @@ class Class(models.Model):
 
 
 class Inscripcion(models.Model):
-    ESTADO_ESPERA = "ESPERA"
-    ESTADO_RESERVADA = "RESERVADA"
-    ESTADO_PENDIENTE_PAGO = "PENDIENTE_PAGO"
-    ESTADO_CANCELADA = "CANCELADA"
+    class Estado(models.TextChoices):
+        ESPERA = "ESPERA", "En lista de espera"
+        RESERVADA = "RESERVADA", "Reservada"
+        PENDIENTE_PAGO = "PENDIENTE_PAGO", "Pendiente de pago"
+        CANCELADA = "CANCELADA", "Cancelada"
 
-    ESTADO_CHOICES = [
-        (ESTADO_ESPERA, "En lista de espera"),
-        (ESTADO_RESERVADA, "Reservada"),
-        (ESTADO_PENDIENTE_PAGO, "Pendiente de pago"),
-        (ESTADO_CANCELADA, "Cancelada"),
-    ]
+    class Tipo(models.TextChoices):
+        MENSUAL = "MENSUAL", "Abonado (mensual)"
+        CLASE_SUELTA = "CLASE_SUELTA", "No Abonado (clase suelta)"
 
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -117,16 +115,26 @@ class Inscripcion(models.Model):
         on_delete=models.CASCADE,
         related_name="inscripciones",
     )
+    periodo = models.ForeignKey(
+        'payments.PeriodoCobro',
+        on_delete=models.PROTECT,
+        related_name="inscripciones",
+        null=True, #TODO: ELIMINAR LUEGO! reason: migraciones.
+    )
+    tipo = models.CharField(
+        max_length=20,
+        choices=Tipo.choices,
+        default=Tipo.CLASE_SUELTA,
+    )
     fecha_inscripcion = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(
         max_length=20,
-        choices=ESTADO_CHOICES,
-        default=ESTADO_RESERVADA,
+        choices=Estado.choices,
+        default=Estado.RESERVADA,
     )
 
     class Meta:
         ordering = ["fecha_inscripcion"]
 
     def __str__(self):
-        return f"{self.usuario} — {self.clase} ({self.estado})"
-
+        return f"{self.usuario} — {self.clase} ({self.get_estado_display()})"

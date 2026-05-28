@@ -62,8 +62,8 @@ def pagar_inscripcion(request, inscripcion_id):
         return redirect("classes:mis_reservas")
 
     # Marcar la inscripción como pendiente de pago si corresponde
-    if inscripcion.estado != Inscripcion.ESTADO_PENDIENTE_PAGO:
-        inscripcion.estado = Inscripcion.ESTADO_PENDIENTE_PAGO
+    if inscripcion.estado != Inscripcion.Estado.PENDIENTE_PAGO:
+        inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
         inscripcion.save()
 
     return redirect(init_point)
@@ -81,7 +81,7 @@ def success(request, inscripcion_id):
     )
 
     if collection_status and collection_status.lower() == "approved":
-        inscripcion.estado = Inscripcion.ESTADO_RESERVADA
+        inscripcion.estado = Inscripcion.Estado.RESERVADA
         inscripcion.save()
         messages.success(request, "Pago exitoso")
     else:
