@@ -108,6 +108,7 @@ erDiagram
         int periodo_id FK
         datetime fecha_registro
         string estado "ESPERA, RESERVADA, PENDIENTE_PAGO, CANCELADA"
+        string tipo "MENSUAL, CLASE_SUELTA"
     }
     ASISTENCIA {
         int id PK
@@ -123,7 +124,7 @@ erDiagram
         decimal monto
         datetime fecha_pago
         string metodo
-        string tipo "MEMBRESIA, SENA, SALDO, CLASE_INDIVIDUAL"
+        string modalidad_pago "TOTAL, SENA, SALDO"
         string estado "PENDIENTE, COMPLETADO, REEMBOLSADO"
     }
     CREDITO {
