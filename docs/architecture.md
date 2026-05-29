@@ -124,7 +124,7 @@ erDiagram
         decimal monto
         datetime fecha_pago
         string metodo "EFECTIVO, MERCADOPAGO, CREDITO"
-        string estado "PENDIENTE, COMPLETADO, REEMBOLSADO"
+        string estado "PENDIENTE, COMPLETADO, FALLIDO, REEMBOLSADO"
     }
     CREDITO {
         int id PK
@@ -141,6 +141,7 @@ erDiagram
         decimal monto_aplicado
     }
 
+    USUARIO ||--o{ PAGO : "paga"
     PAGO ||--o{ PAGO_INSCRIPCION : "detalla"
     INSCRIPCION ||--o{ PAGO_INSCRIPCION : "es cubierta por"
     SEDE ||--o{ SALA : "contiene"

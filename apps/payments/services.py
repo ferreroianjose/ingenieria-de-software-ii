@@ -1,42 +1,24 @@
 import logging
 import os
-from decimal import Decimal
 from urllib.parse import urlparse
 
 import mercadopago
 from django.conf import settings
 from django.urls import reverse
 
-from apps.classes.models import Inscripcion
-from apps.payments.models import Pago, PrecioDisciplina
+from apps.payments.inscripcion_pago import aplicar_pago_aprobado
+from apps.payments.models import Pago
 
 logger = logging.getLogger(__name__)
 
 
-def aplicar_pago_aprobado(pago):
-    """Marca Pago completado y la inscripción RESERVADA (o sigue pendiente si fue seña)."""
-    pago.estado = Pago.Estado.COMPLETADO
-    pago.save(update_fields=["estado"])
-
-    for detalle in pago.detalles.select_related("inscripcion"):
-        inscripcion = detalle.inscripcion
-        try:
-            base_amount = PrecioDisciplina.objects.get(
-                disciplina=inscripcion.clase.disciplina,
-                periodo=inscripcion.periodo,
-            ).monto
-        except PrecioDisciplina.DoesNotExist:
-            base_amount = Decimal(getattr(settings, "CLASE_DEFAULT_PRICE", "2500.0"))
-
-        # Seña (50%): el cupo queda asegurado pero falta el resto.
-        if (
-            inscripcion.tipo == Inscripcion.Tipo.CLASE_SUELTA
-            and pago.monto < base_amount
-        ):
-            inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
-        else:
-            inscripcion.estado = Inscripcion.Estado.RESERVADA
-        inscripcion.save(update_fields=["estado"])
+class ConfirmacionMP:
+    APPROVED = "approved"
+    ALREADY_COMPLETED = "already_completed"
+    PENDING = "pending"
+    REJECTED = "rejected"
+    MISMATCH = "mismatch"
+    ERROR = "error"
 
 
 def _supports_auto_return(success_url):
@@ -101,7 +83,9 @@ class MercadoPagoService:
         }
 
         if _supports_auto_return(success_url):
-            preference_data["auto_return"] = "approved"  # vuelta automática si success es HTTPS público
+            preference_data["auto_return"] = (
+                "approved"  # vuelta automática si success es HTTPS público
+            )
 
         try:
             preference = self.sdk.preference().create(preference_data)
@@ -120,36 +104,60 @@ class MercadoPagoService:
             return response.get("sandbox_init_point")
         return response.get("init_point")
 
-    def sync_pago_from_mp_payment_id(self, mp_payment_id):
-        """Webhook: id de MP → GET payment → external_reference → aplicar si approved."""
+    def _fetch_mp_payment(self, mp_payment_id):
         try:
             result = self.sdk.payment().get(mp_payment_id)
         except Exception:
             logger.exception("Error al obtener pago %s de MP", mp_payment_id)
-            return False
+            return None
 
         if result.get("status") not in (200, 201):
-            return False
+            return None
 
-        mp_payment = result.get("response") or {}
-        if mp_payment.get("status") != "approved":
-            return False  # pending/rejected: no tocamos el Pago local
+        return result.get("response") or {}
 
-        ref = mp_payment.get("external_reference")  # = str(pago.id) al crear la preferencia
-        if not ref:
-            return False
-
+    def _confirmar_pago_local(self, mp_payment, pago_id):
+        """Aplica reglas de negocio según el pago devuelto por la API de MP."""
+        ref = mp_payment.get("external_reference")
         try:
-            pago_id = int(ref)
+            ref_id = int(ref) if ref is not None else None
         except TypeError, ValueError:
-            return False
+            ref_id = None
+
+        if ref_id != pago_id:
+            return ConfirmacionMP.MISMATCH
 
         pago = Pago.objects.filter(id=pago_id).first()
-        if not pago or pago.estado == Pago.Estado.COMPLETADO:
-            return bool(pago)  # idempotente si el webhook se reenvía
+        if not pago:
+            return ConfirmacionMP.ERROR
 
-        aplicar_pago_aprobado(pago)
-        return True
+        if pago.estado == Pago.Estado.COMPLETADO:
+            return ConfirmacionMP.ALREADY_COMPLETED
+
+        status = (mp_payment.get("status") or "").lower()
+        if status == "approved":
+            aplicar_pago_aprobado(pago)
+            return ConfirmacionMP.APPROVED
+
+        if status in ("pending", "in_process", "in_mediation"):
+            return ConfirmacionMP.PENDING
+
+        return ConfirmacionMP.REJECTED
+
+    def confirmar_pago_desde_mp(self, mp_payment_id, pago_id=None):
+        """GET /v1/payments/{id}. pago_id desde la URL (redirect) o external_reference (webhook)."""
+        mp_payment = self._fetch_mp_payment(mp_payment_id)
+        if not mp_payment:
+            return ConfirmacionMP.ERROR
+
+        if pago_id is None:
+            ref = mp_payment.get("external_reference")
+            try:
+                pago_id = int(ref)
+            except TypeError, ValueError:
+                return ConfirmacionMP.ERROR
+
+        return self._confirmar_pago_local(mp_payment, pago_id)
 
 
 mercadopago_service = MercadoPagoService()

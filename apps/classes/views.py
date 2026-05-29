@@ -1061,10 +1061,13 @@ def mis_reservas(request):
         .order_by("-fecha_inscripcion")
     )
 
+    from apps.payments.inscripcion_pago import resumen_pago_inscripcion
+
     inscripciones_con_info = [
         {
             "inscripcion": i,
             "proximo_inicio": proxima_ocurrencia(i.clase),
+            "pago": resumen_pago_inscripcion(i),
         }
         for i in inscripciones
     ]

@@ -62,7 +62,7 @@ class PaymentLogicTests(TestCase):
             clase=self.clase,
             periodo=self.periodo,
             tipo=Inscripcion.Tipo.CLASE_SUELTA,
-            estado=Inscripcion.Estado.RESERVADA
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
         )
 
     @patch('apps.payments.views.mercadopago_service.create_preference')
@@ -140,8 +140,15 @@ class PaymentLogicTests(TestCase):
         pago = Pago.objects.last()
         self.assertEqual(pago.monto, Decimal('6000.00'))
 
-    def test_success_callback_full_payment(self):
-        # MP vuelve con approved y pago total: inscripción queda RESERVADA.
+    def _mp_payment_response(self, pago, status="approved"):
+        return {
+            "status": status,
+            "external_reference": str(pago.id),
+        }
+
+    @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
+    def test_success_callback_full_payment(self, mock_fetch):
+        # API MP approved + pago total: inscripción queda RESERVADA.
         PrecioDisciplina.objects.create(
             disciplina=self.disciplina,
             periodo=self.periodo,
@@ -159,17 +166,20 @@ class PaymentLogicTests(TestCase):
         self.inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
         self.inscripcion.save()
 
+        mock_fetch.return_value = self._mp_payment_response(pago)
         url = reverse('payments:success', args=[pago.id])
-        response = self.client.get(f"{url}?status=approved")
+        self.client.get(f"{url}?payment_id=9001")
         
         pago.refresh_from_db()
         self.inscripcion.refresh_from_db()
         
         self.assertEqual(pago.estado, Pago.Estado.COMPLETADO)
         self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.RESERVADA)
+        mock_fetch.assert_called_once_with("9001")
 
-    def test_success_callback_sena_payment(self):
-        # MP approved pero solo se pagó seña: inscripción sigue PENDIENTE_PAGO.
+    @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
+    def test_success_callback_sena_payment(self, mock_fetch):
+        # API MP approved pero solo se pagó seña: inscripción sigue PENDIENTE_PAGO.
         PrecioDisciplina.objects.create(
             disciplina=self.disciplina,
             periodo=self.periodo,
@@ -187,14 +197,82 @@ class PaymentLogicTests(TestCase):
         self.inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
         self.inscripcion.save()
 
-        url = reverse('payments:success', args=[pago.id])
-        response = self.client.get(f"{url}?status=approved")
+        mock_fetch.return_value = self._mp_payment_response(pago)
+        self.client.get(f"{reverse('payments:success', args=[pago.id])}?payment_id=9002")
         
         pago.refresh_from_db()
         self.inscripcion.refresh_from_db()
         
         self.assertEqual(pago.estado, Pago.Estado.COMPLETADO)
         self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.PENDIENTE_PAGO)
+
+    @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
+    def test_success_callback_saldo_completes_reservation(self, mock_fetch):
+        PrecioDisciplina.objects.create(
+            disciplina=self.disciplina,
+            periodo=self.periodo,
+            monto=Decimal("4000.00"),
+        )
+        self.inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
+        self.inscripcion.save()
+
+        pago_sena = Pago.objects.create(
+            usuario=self.user,
+            periodo=self.periodo,
+            monto=Decimal("2000.00"),
+            estado=Pago.Estado.COMPLETADO,
+            metodo=Pago.Metodo.MERCADOPAGO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_sena, inscripcion=self.inscripcion, monto_aplicado=Decimal("2000.00")
+        )
+
+        pago_saldo = Pago.objects.create(
+            usuario=self.user,
+            periodo=self.periodo,
+            monto=Decimal("2000.00"),
+            estado=Pago.Estado.PENDIENTE,
+            metodo=Pago.Metodo.MERCADOPAGO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_saldo, inscripcion=self.inscripcion, monto_aplicado=Decimal("2000.00")
+        )
+
+        mock_fetch.return_value = self._mp_payment_response(pago_saldo)
+        self.client.get(
+            reverse("payments:success", args=[pago_saldo.id]) + "?payment_id=9003"
+        )
+
+        self.inscripcion.refresh_from_db()
+        self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.RESERVADA)
+
+    @patch("apps.payments.views.mercadopago_service.create_preference")
+    def test_pagar_saldo_cobra_solo_restante(self, mock_create_preference):
+        mock_create_preference.return_value = "http://mercadopago.mock/init"
+        PrecioDisciplina.objects.create(
+            disciplina=self.disciplina,
+            periodo=self.periodo,
+            monto=Decimal("4000.00"),
+        )
+        self.inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
+        self.inscripcion.save()
+
+        pago_sena = Pago.objects.create(
+            usuario=self.user,
+            periodo=self.periodo,
+            monto=Decimal("2000.00"),
+            estado=Pago.Estado.COMPLETADO,
+            metodo=Pago.Metodo.MERCADOPAGO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_sena, inscripcion=self.inscripcion, monto_aplicado=Decimal("2000.00")
+        )
+
+        url = reverse("payments:pagar", args=[self.inscripcion.id])
+        self.client.get(f"{url}?modalidad=SALDO")
+
+        pago_saldo = Pago.objects.filter(estado=Pago.Estado.PENDIENTE).last()
+        self.assertEqual(pago_saldo.monto, Decimal("2000.00"))
 
     @patch('apps.payments.views.mercadopago_service.create_preference')
     def test_pagar_inscripcion_creates_pago_inscripcion(self, mock_create_preference):
@@ -259,11 +337,13 @@ class PaymentLogicTests(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 404)
 
-    def test_success_callback_rejected_status(self):
-        # MP vuelve con rejected: el pago no se completa.
+    @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
+    def test_success_callback_rejected_status(self, mock_fetch):
+        # API MP rejected: el pago no se completa.
         pago = self._create_pending_pago(Decimal('4000.00'))
+        mock_fetch.return_value = self._mp_payment_response(pago, status="rejected")
         url = reverse('payments:success', args=[pago.id])
-        response = self.client.get(f"{url}?status=rejected")
+        response = self.client.get(f"{url}?payment_id=9004")
 
         pago.refresh_from_db()
         self.inscripcion.refresh_from_db()
@@ -275,27 +355,29 @@ class PaymentLogicTests(TestCase):
         messages = [str(m) for m in get_messages(response.wsgi_request)]
         self.assertIn("El pago no pudo ser completado.", messages[0])
 
-    def test_success_callback_without_status(self):
-        # Sin status en la URL, el pago sigue PENDIENTE.
+    def test_success_callback_without_payment_id(self):
+        # Sin payment_id no consultamos MP; el webhook puede confirmar después.
         pago = self._create_pending_pago(Decimal('4000.00'))
         url = reverse('payments:success', args=[pago.id])
         response = self.client.get(url)
 
         pago.refresh_from_db()
         self.assertEqual(pago.estado, Pago.Estado.PENDIENTE)
+        messages = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertIn("confirmando tu pago", messages[0].lower())
 
-    def test_success_callback_collection_status_approved(self):
-        # Acepta collection_status=approved (param legacy de MP).
+    @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
+    def test_success_callback_ignores_query_status_without_api(self, mock_fetch):
+        # ?status=approved en la URL no alcanza; hace falta payment_id + API.
         pago = self._create_pending_pago(Decimal('4000.00'))
-        url = reverse('payments:success', args=[pago.id])
-        self.client.get(f"{url}?collection_status=approved")
+        self.client.get(f"{reverse('payments:success', args=[pago.id])}?status=approved")
 
         pago.refresh_from_db()
-        self.inscripcion.refresh_from_db()
-        self.assertEqual(pago.estado, Pago.Estado.COMPLETADO)
-        self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.RESERVADA)
+        self.assertEqual(pago.estado, Pago.Estado.PENDIENTE)
+        mock_fetch.assert_not_called()
 
-    def test_success_callback_multiple_inscriptions(self):
+    @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
+    def test_success_callback_multiple_inscriptions(self, mock_fetch):
         # Un pago mensual con varias clases: todas quedan RESERVADA al aprobar.
         PrecioDisciplina.objects.create(
             disciplina=self.disciplina,
@@ -338,8 +420,8 @@ class PaymentLogicTests(TestCase):
         self.inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
         self.inscripcion.save()
 
-        url = reverse('payments:success', args=[pago.id])
-        self.client.get(f"{url}?status=approved")
+        mock_fetch.return_value = self._mp_payment_response(pago)
+        self.client.get(f"{reverse('payments:success', args=[pago.id])}?payment_id=9005")
 
         pago.refresh_from_db()
         self.inscripcion.refresh_from_db()
@@ -371,11 +453,13 @@ class PaymentLogicTests(TestCase):
         response = self.client.get(f"{url}?status=approved")
         self.assertEqual(response.status_code, 404)
 
-    def test_failure_marks_pago_as_fallido(self):
-        # Callback failure de MP: pago pasa a FALLIDO.
+    @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
+    def test_failure_marks_pago_as_fallido_when_api_rejected(self, mock_fetch):
+        # Callback failure + API rejected: pago pasa a FALLIDO.
         pago = self._create_pending_pago(Decimal('4000.00'))
+        mock_fetch.return_value = self._mp_payment_response(pago, status="rejected")
         url = reverse('payments:failure', args=[pago.id])
-        response = self.client.get(url)
+        response = self.client.get(f"{url}?payment_id=9010")
 
         pago.refresh_from_db()
         self.assertRedirects(
@@ -384,6 +468,15 @@ class PaymentLogicTests(TestCase):
         self.assertEqual(pago.estado, Pago.Estado.FALLIDO)
         messages = [str(m) for m in get_messages(response.wsgi_request)]
         self.assertIn("Pago fallido. Por favor intente nuevamente.", messages[0])
+
+    def test_failure_without_payment_id_does_not_mark_fallido(self):
+        pago = self._create_pending_pago(Decimal('4000.00'))
+        response = self.client.get(reverse('payments:failure', args=[pago.id]))
+
+        pago.refresh_from_db()
+        self.assertEqual(pago.estado, Pago.Estado.PENDIENTE)
+        messages = [str(m) for m in get_messages(response.wsgi_request)]
+        self.assertIn("Pago fallido", messages[0])
 
     def test_failure_requires_login(self):
         # Hay que estar logueado para procesar el callback de failure.
@@ -796,8 +889,8 @@ class MercadoPagoWebhookTests(TestCase):
         self.assertFalse(verify_mercadopago_webhook(request))
 
     @override_settings(MERCADO_PAGO_WEBHOOK_SECRET="testsecret")
-    @patch("apps.payments.views.mercadopago_service.sync_pago_from_mp_payment_id")
-    def test_webhook_syncs_with_valid_signature(self, mock_sync):
+    @patch("apps.payments.views.mercadopago_service.confirmar_pago_desde_mp")
+    def test_webhook_syncs_with_valid_signature(self, mock_confirmar):
         url = reverse("payments:mercadopago_webhook")
         response = self.client.post(
             f"{url}?data.id=123&type=payment",
@@ -805,7 +898,7 @@ class MercadoPagoWebhookTests(TestCase):
             HTTP_X_REQUEST_ID="req-2",
         )
         self.assertEqual(response.status_code, 200)
-        mock_sync.assert_called_once_with("123")
+        mock_confirmar.assert_called_once_with("123")
 
     @override_settings(MERCADO_PAGO_WEBHOOK_SECRET="testsecret")
     def test_webhook_returns_401_without_valid_signature(self):

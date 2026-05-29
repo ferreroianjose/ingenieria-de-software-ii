@@ -47,7 +47,11 @@
             {% if inscripcion.estado == 'RESERVADA' %}
             <span class="text-xs font-bold bg-green-100 text-green-800 rounded-full px-3 py-0.5">Reservada</span>
             {% elif inscripcion.estado == 'PENDIENTE_PAGO' %}
+            {% if item.pago.mostrar_pagar_saldo %}
+            <span class="text-xs font-bold bg-amber-100 text-amber-900 rounded-full px-3 py-0.5">Seña pagada — falta saldo</span>
+            {% else %}
             <span class="text-xs font-bold bg-orange-100 text-orange-800 rounded-full px-3 py-0.5">Pendiente de pago</span>
+            {% endif %}
             {% elif inscripcion.estado == 'ESPERA' %}
             <span class="text-xs font-bold bg-yellow-100 text-yellow-800 rounded-full px-3 py-0.5">En lista de espera</span>
             {% endif %}
@@ -64,7 +68,15 @@
 
         {# Actions: pagar si está pendiente y cancelar #}
         <div class="flex items-center gap-2">
-          {% if inscripcion.estado == 'PENDIENTE_PAGO' %}
+          {% if item.pago.mostrar_pagar_saldo %}
+          <form action="{% url 'payments:pagar' inscripcion.id %}?modalidad=SALDO" method="post">
+            {% csrf_token %}
+            <button type="submit"
+                    class="rounded-full bg-primary-400 text-white font-bold text-sm px-5 py-2 hover:bg-primary-600 transition-colors">
+              Pagar saldo
+            </button>
+          </form>
+          {% elif item.pago.mostrar_pagar %}
           <form action="{% url 'payments:pagar' inscripcion.id %}" method="post">
             {% csrf_token %}
             <button type="submit"

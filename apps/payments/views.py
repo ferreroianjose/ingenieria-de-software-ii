@@ -6,12 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from GYMFlow.access import staff_required
-from django.conf import settings
-from decimal import Decimal
 
 from apps.classes.models import Inscripcion
-from apps.payments.models import Pago, PagoInscripcion, PrecioDisciplina
-from apps.payments.services import aplicar_pago_aprobado, mercadopago_service
+from apps.payments.inscripcion_pago import monto_a_cobrar
+from apps.payments.models import Pago, PagoInscripcion
+from apps.payments.services import ConfirmacionMP, mercadopago_service
 from apps.payments.webhook_verify import verify_mercadopago_webhook
 
 
@@ -22,26 +21,22 @@ def staff_pagos(request):
 
 @login_required
 def pagar_inscripcion(request, inscripcion_id):
-    # Allow GET as well so callers can redirect after reserving
     inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id, usuario=request.user)
 
-    # Determinar el costo según Periodo y Disciplina
+    if inscripcion.estado == Inscripcion.Estado.RESERVADA:
+        messages.info(request, "Esta clase ya está reservada.")
+        return redirect("classes:mis_reservas")
+
+    modalidad = request.GET.get("modalidad", "TOTAL").upper()
     try:
-        precio_disciplina = PrecioDisciplina.objects.get(
-            disciplina=inscripcion.clase.disciplina,
-            periodo=inscripcion.periodo
-        )
-        base_amount = precio_disciplina.monto
-    except PrecioDisciplina.DoesNotExist:
-        # #TODO: Esto debería ser un ERROR, no un valor por defecto
-        base_amount = Decimal(getattr(settings, "CLASE_DEFAULT_PRICE", "2500.0"))
+        amount_to_pay = monto_a_cobrar(inscripcion, modalidad)
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return redirect("classes:mis_reservas")
 
-    amount_to_pay = base_amount
-
-    # No abonados: seña -> 50% o total -> 100%
-    modalidad_solicitada = request.GET.get('modalidad', 'TOTAL').upper()
-    if inscripcion.tipo == Inscripcion.Tipo.CLASE_SUELTA and modalidad_solicitada == 'SENA':
-        amount_to_pay = base_amount / Decimal('2.0')
+    if amount_to_pay <= 0:
+        messages.info(request, "Esta inscripción ya está paga.")
+        return redirect("classes:mis_reservas")
 
     # Crear pago en estado pendiente
     pago = Pago.objects.create(
@@ -49,10 +44,9 @@ def pagar_inscripcion(request, inscripcion_id):
         periodo=inscripcion.periodo,
         monto=amount_to_pay,
         metodo=Pago.Metodo.MERCADOPAGO,
-        estado=Pago.Estado.PENDIENTE
+        estado=Pago.Estado.PENDIENTE,
     )
 
-    # Crea el registro en la tabla intermedia
     PagoInscripcion.objects.create(
         pago=pago,
         inscripcion=inscripcion,
@@ -74,23 +68,66 @@ def pagar_inscripcion(request, inscripcion_id):
     return redirect(init_point)
 
 
+def _mp_payment_id_from_request(request):
+    return request.GET.get("payment_id") or request.GET.get("collection_id")
+
+
+def _retorno_checkout(request, pago_id, *, marcar_fallido_si_rechazado):
+    # MP exige back_urls distintas (success/failure/pending), pero el estado real
+    # sale siempre de consultar la API de MP por el id de pago.
+    # success y failure son alias: misma consulta; solo cambia el mensaje si no
+    # viene el id de pago y si marcamos FALLIDO al rechazar desde la URL de failure.
+    pago = get_object_or_404(Pago, id=pago_id, usuario=request.user)
+    destino = redirect("classes:mis_reservas")
+
+    if pago.estado == Pago.Estado.COMPLETADO:
+        messages.success(request, "Pago exitoso")
+        return destino
+
+    mp_payment_id = _mp_payment_id_from_request(request)
+    if not mp_payment_id:
+        if marcar_fallido_si_rechazado:
+            messages.error(request, "Pago fallido. Por favor intente nuevamente.")
+        else:
+            messages.info(
+                request,
+                "Estamos confirmando tu pago. Si ya pagaste, la reserva se actualizará en breve.",
+            )
+        return destino
+
+    resultado = mercadopago_service.confirmar_pago_desde_mp(mp_payment_id, pago.id)
+    if resultado in (ConfirmacionMP.APPROVED, ConfirmacionMP.ALREADY_COMPLETED):
+        messages.success(request, "Pago exitoso")
+    elif resultado == ConfirmacionMP.PENDING:
+        messages.info(
+            request,
+            "Tu pago está en proceso. Te avisaremos cuando se confirme.",
+        )
+    elif resultado == ConfirmacionMP.REJECTED and marcar_fallido_si_rechazado:
+        pago.estado = Pago.Estado.FALLIDO
+        pago.save(update_fields=["estado"])
+        messages.error(request, "Pago fallido. Por favor intente nuevamente.")
+    elif resultado == ConfirmacionMP.REJECTED:
+        messages.error(request, "El pago no pudo ser completado.")
+    else:
+        messages.error(
+            request,
+            "Pago fallido. Por favor intente nuevamente."
+            if marcar_fallido_si_rechazado
+            else "El pago no pudo ser completado.",
+        )
+
+    return destino
+
+
 @login_required
 def success(request, pago_id):
-    pago = get_object_or_404(Pago, id=pago_id, usuario=request.user)
+    return _retorno_checkout(request, pago_id, marcar_fallido_si_rechazado=False)
 
-    # Vuelta del checkout en el navegador; el webhook confirma por servidor si no llega acá.
-    collection_status = (
-        request.GET.get("status")
-        or request.GET.get("collection_status")
-    )
 
-    if collection_status and collection_status.lower() == "approved":
-        aplicar_pago_aprobado(pago)
-        messages.success(request, "Pago exitoso")
-    else:
-        messages.error(request, "El pago no pudo ser completado.")
-
-    return redirect("classes:mis_reservas")
+@login_required
+def failure(request, pago_id):
+    return _retorno_checkout(request, pago_id, marcar_fallido_si_rechazado=True)
 
 
 # MP notifica por servidor (no es el redirect del usuario).
@@ -107,15 +144,6 @@ def mercadopago_webhook(request):
     # El estado se consulta en la API de MP, por seguridad
     mp_payment_id = request.GET.get("data.id")
     if mp_payment_id:
-        mercadopago_service.sync_pago_from_mp_payment_id(mp_payment_id)
+        mercadopago_service.confirmar_pago_desde_mp(mp_payment_id)
 
     return HttpResponse(status=200)  # MP reintenta si no es 2xx
-
-
-@login_required
-def failure(request, pago_id):
-    pago = get_object_or_404(Pago, id=pago_id, usuario=request.user)
-    pago.estado = Pago.Estado.FALLIDO
-    pago.save()
-    messages.error(request, "Pago fallido. Por favor intente nuevamente.")
-    return redirect("classes:mis_reservas")
