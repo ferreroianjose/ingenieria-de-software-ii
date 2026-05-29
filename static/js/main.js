@@ -371,3 +371,39 @@ window.adminSelection = function (opts = {}) {
 };
 
 restoreAdminFlashFromSession();
+
+function toggleInscripcionModalidad(form) {
+	const tipo = form.querySelector('input[name="tipo"]:checked')?.value;
+	const fechas = form.querySelector("[data-inscripcion-fechas]");
+	const periodos = form.querySelector("[data-inscripcion-periodos]");
+	if (fechas) fechas.hidden = tipo !== "CLASE_SUELTA";
+	if (periodos) periodos.hidden = tipo !== "MENSUAL";
+}
+
+function bindInscripcionClaseForm(root) {
+	const form =
+		(root?.querySelector?.("#form-inscripcion-clase")) ||
+		document.getElementById("form-inscripcion-clase");
+	if (!form || form.dataset.bound === "1") return;
+	form.dataset.bound = "1";
+	form.querySelectorAll('input[name="tipo"]').forEach((el) => {
+		el.addEventListener("change", () => toggleInscripcionModalidad(form));
+	});
+	form.querySelectorAll('input[name="fecha_clase"]').forEach((el) => {
+		el.addEventListener("change", () => {
+			const label = document.getElementById("fecha-clase-label");
+			const text = el.dataset.fechaLabel;
+			if (label && text) label.textContent = text;
+		});
+	});
+	toggleInscripcionModalidad(form);
+}
+
+window.dismissFlashItem = function (btn) {
+	btn.closest(".flash-item")?.remove();
+};
+
+document.addEventListener("DOMContentLoaded", () => bindInscripcionClaseForm());
+document.body.addEventListener("htmx:afterSettle", (evt) => {
+	bindInscripcionClaseForm(evt.detail?.target || document);
+});

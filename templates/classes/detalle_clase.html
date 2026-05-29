@@ -1,0 +1,175 @@
+{% extends 'classes/_cliente_flow.html' %}
+
+{% block title %}{{ info.clase.disciplina.nombre }}{% endblock %}
+
+{% block flow_main %}
+<section class="cf-surface">
+  <div class="cf-surface__body">
+    <p class="cf-kicker">{{ info.clase.get_dia_semana_display }} · {{ info.clase.hora_inicio|time:"H:i" }} hs</p>
+    <h2 class="cf-title cf-title--lg">{{ info.clase.disciplina.nombre }}</h2>
+    <p class="cf-sub">{% if info.tiene_proximo_inicio %}{% include 'partials/cliente/flow/_fecha_hora.html' with dt=info.proximo_inicio con_ano=False %}{% else %}{{ info.subtitulo }}{% endif %}</p>
+
+    <div class="mt-6 grid gap-3 sm:grid-cols-3">
+      <div class="cf-meta">
+        <p class="cf-meta__label">Profesor</p>
+        <p class="cf-meta__value">{{ info.clase.profesor.nombre }} {{ info.clase.profesor.apellido }}</p>
+      </div>
+      <div class="cf-meta">
+        <p class="cf-meta__label">Cuándo</p>
+        <p class="cf-meta__value" id="fecha-clase-label">
+          {% if info.puede_inscribirse and periodos_inscripcion_data.CLASE_SUELTA|length == 1 %}
+          {% include 'partials/cliente/flow/_fecha_hora.html' with dt=periodos_inscripcion_data.CLASE_SUELTA.0.fecha_dt %}
+          {% elif info.proximo_inicio %}
+          {% include 'partials/cliente/flow/_fecha_hora.html' with dt=info.proximo_inicio %}
+          {% else %}
+          Horario a confirmar
+          {% endif %}
+        </p>
+      </div>
+      <div class="cf-meta">
+        <p class="cf-meta__label">Dónde</p>
+        <p class="cf-meta__value">{{ info.clase.sala.nombre }}</p>
+        <p class="text-xs text-white/50 mt-0.5">{{ info.clase.sala.sede.nombre }} · {{ info.clase.duracion_minutos }} min</p>
+      </div>
+    </div>
+
+    <div class="cf-divider"></div>
+
+    {% if info.puede_inscribirse %}
+    {% with suelta=periodos_inscripcion_data.CLASE_SUELTA mensual=periodos_inscripcion_data.MENSUAL %}
+    <p class="text-sm text-white/70 mb-1">
+      {% if suelta and mensual %}
+      Podés reservar <strong class="text-white/90">un día concreto</strong> o <strong class="text-white/90">todas las clases del mes</strong> para este horario.
+      {% elif suelta %}
+      Elegí el día en el que querés venir (hay fechas disponibles en las próximas 3 semanas).
+      {% else %}
+      Te inscribís a todas las clases de este día y horario durante el mes que elijas.
+      {% endif %}
+    </p>
+    <form action="{% url 'classes:inscribir' info.clase.id %}" method="post" class="mt-4 flex flex-col gap-5"
+          hx-boost="false"
+          id="form-inscripcion-clase"
+          data-default-tipo="{% if suelta %}CLASE_SUELTA{% else %}MENSUAL{% endif %}">
+      {% csrf_token %}
+      <fieldset class="cf-choices border-0 p-0 m-0 min-w-0">
+        <legend class="sr-only">Tipo de reserva</legend>
+        <p class="cf-choice__label mb-2 !text-xs uppercase tracking-widest text-white/50">¿Cómo querés reservar?</p>
+        {% if suelta %}
+        <label class="cf-choice">
+          <input type="radio" class="cf-choice__input" name="tipo" value="CLASE_SUELTA"
+                 {% if suelta %}checked{% endif %}>
+          <span class="cf-choice__dot" aria-hidden="true"></span>
+          <span>
+            <span class="cf-choice__label">Una clase</span>
+            <span class="cf-choice__hint">Un solo día y horario, dentro de las próximas 3 semanas</span>
+          </span>
+        </label>
+        {% endif %}
+        {% if mensual %}
+        <label class="cf-choice">
+          <input type="radio" class="cf-choice__input" name="tipo" value="MENSUAL"
+                 {% if not suelta %}checked{% endif %}>
+          <span class="cf-choice__dot" aria-hidden="true"></span>
+          <span>
+            <span class="cf-choice__label">Mes completo</span>
+            <span class="cf-choice__hint">Todas las clases de este día y horario en el mes que elijas</span>
+          </span>
+        </label>
+        {% endif %}
+      </fieldset>
+
+      {% if suelta %}
+      <fieldset data-inscripcion-fechas class="cf-choices border-0 p-0 m-0 min-w-0 cf-inscripcion-panel">
+        <legend class="sr-only">Fecha de la clase</legend>
+        <p class="cf-choice__label mb-2 !text-xs uppercase tracking-widest text-white/50">Fecha</p>
+        {% if suelta|length == 1 %}
+        <input type="hidden" name="fecha_clase" value="{{ suelta.0.fecha_clase }}">
+        <p class="text-sm text-white/80">{% include 'partials/cliente/flow/_fecha_hora.html' with dt=suelta.0.fecha_dt %}</p>
+        {% else %}
+        {% for o in suelta %}
+        <label class="cf-choice">
+          <input type="radio" class="cf-choice__input" name="fecha_clase" value="{{ o.fecha_clase }}" required
+                 data-fecha-label="{{ o.fecha_dt|date:'l d/m/Y'|capfirst }} · {{ o.fecha_dt|date:'H:i' }} hs">
+          <span class="cf-choice__dot" aria-hidden="true"></span>
+          <span>
+            <span class="cf-choice__label">{% include 'partials/cliente/flow/_fecha_hora.html' with dt=o.fecha_dt %}</span>
+            <span class="cf-choice__hint">Cobro correspondiente a {{ o.periodo_nombre }}</span>
+          </span>
+        </label>
+        {% endfor %}
+        {% endif %}
+      </fieldset>
+      {% endif %}
+
+      {% if mensual %}
+      <fieldset data-inscripcion-periodos class="cf-choices border-0 p-0 m-0 min-w-0 cf-inscripcion-panel{% if suelta %} cf-inscripcion-panel--periodos{% endif %}">
+        <legend class="sr-only">Mes</legend>
+        <p class="cf-choice__label mb-2 !text-xs uppercase tracking-widest text-white/50">¿Qué mes?</p>
+        {% if mensual|length == 1 %}
+        <input type="hidden" name="periodo_id" value="{{ mensual.0.id }}">
+        <p class="text-sm text-white/80 font-medium">{{ mensual.0.etiqueta }}</p>
+        <p class="text-xs text-white/50 mt-1">{{ mensual.0.hint }}</p>
+        {% else %}
+        {% for p in mensual %}
+        <label class="cf-choice">
+          <input type="radio" class="cf-choice__input" name="periodo_id" value="{{ p.id }}" required>
+          <span class="cf-choice__dot" aria-hidden="true"></span>
+          <span>
+            <span class="cf-choice__label">{{ p.etiqueta }}</span>
+            <span class="cf-choice__hint">{{ p.hint }}</span>
+          </span>
+        </label>
+        {% endfor %}
+        {% endif %}
+      </fieldset>
+      {% endif %}
+
+      {% include 'partials/ui/buttons/_primary_button.html' with label="Continuar al pago" type="submit" class="w-full !py-3.5" %}
+      <p class="text-xs text-white/45 text-center">Todavía no se reserva el cupo: primero elegís cómo pagar.</p>
+    </form>
+    {% endwith %}
+
+    {% elif info.puede_anotarse_espera %}
+    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='No hay cupos libres ahora. Si se libera uno, te avisamos: anotate en lista de espera.' level='warning' %}</div>
+    <form action="{% url 'classes:anotar_espera' info.clase.id %}" method="post" hx-boost="false">
+      {% csrf_token %}
+      <input type="hidden" name="tipo" value="CLASE_SUELTA">
+      {% include 'partials/ui/buttons/_primary_button.html' with label="Anotarme en lista de espera" type="submit" class="w-full !py-3.5" %}
+    </form>
+
+    {% elif info.ui_estado == 'en_espera' %}
+    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Estás en lista de espera para este horario. Si se libera un cupo, podrás completar el pago.' level='warning' %}</div>
+    <form action="{% url 'classes:abandonar_espera' info.mi_inscripcion.id %}" method="post" hx-boost="false"
+          onsubmit="return confirm('¿Abandonás la lista de espera?');">
+      {% csrf_token %}
+      {% include 'partials/ui/buttons/_secondary_button.html' with label="Abandonar lista de espera" type="submit" class="w-full rounded-full px-6 py-3" %}
+    </form>
+
+    {% elif info.ui_estado == 'en_pago' %}
+    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Tenés una reserva iniciada. Completá el pago para confirmar el cupo.' level='warning' %}</div>
+    <a href="{% url 'payments:seleccion_pago_clase' info.clase.id %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
+      Continuar al pago →
+    </a>
+
+    {% elif info.ui_estado == 'pendiente_pago' %}
+    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Estamos esperando la acreditación del pago. Te avisamos cuando quede confirmado.' level='warning' %}</div>
+    <a href="{% url 'payments:seleccion_pago' info.mi_inscripcion.id %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
+      Continuar al pago →
+    </a>
+
+    {% elif info.ui_estado == 'inscripto' %}
+    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Ya tenés este horario reservado.' level='success' %}</div>
+    <form action="{% url 'classes:cancelar_reserva' info.mi_inscripcion.id %}" method="post" hx-boost="false"
+          onsubmit="return confirm('¿Cancelás tu inscripción? Podrían aplicar políticas de reembolso.');">
+      {% csrf_token %}
+      <input type="hidden" name="destino" value="detalle">
+      {% include 'partials/ui/buttons/_secondary_button.html' with label="Cancelar inscripción" type="submit" class="w-full rounded-full px-6 py-3" %}
+    </form>
+
+    {% else %}
+    <p class="text-sm text-white/60">No hay acciones disponibles en este momento.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+

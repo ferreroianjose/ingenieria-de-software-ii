@@ -4,7 +4,12 @@ from datetime import date, time, timedelta
 from django.test import TestCase
 
 from apps.classes.models import Class, Disciplina, Inscripcion, Sede, Sala, Teacher
-from apps.payments.inscripcion_pago import monto_a_cobrar, resumen_pago_inscripcion
+from apps.classes.services import ocurrencias_clase_en_periodo
+from apps.payments.inscripcion_pago import (
+    monto_a_cobrar,
+    resumen_abono_mensual,
+    resumen_pago_inscripcion,
+)
 from apps.payments.models import Pago, PagoInscripcion, PeriodoCobro, PrecioDisciplina
 from django.contrib.auth import get_user_model
 
@@ -83,3 +88,31 @@ class InscripcionPagoHelpersTests(TestCase):
         )
 
         self.assertEqual(monto_a_cobrar(self.inscripcion, "SALDO"), Decimal("2000.00"))
+
+    def test_ocurrencias_clase_en_periodo_cuenta_horario_semanal(self):
+        # Miércoles en septiembre 2026: 2, 9, 16, 23 y 30.
+        self.assertEqual(
+            ocurrencias_clase_en_periodo(
+                self.clase, self.periodo, desde_fecha=date(2026, 9, 1)
+            ),
+            5,
+        )
+        self.assertEqual(
+            ocurrencias_clase_en_periodo(
+                self.clase, self.periodo, desde_fecha=date(2026, 9, 10)
+            ),
+            3,
+        )
+
+    def test_resumen_abono_mensual_precio_por_clase(self):
+        resumen = resumen_abono_mensual(self.clase, self.periodo)
+        self.assertEqual(resumen["cantidad_clases"], 5)
+        self.assertEqual(resumen["precio_unitario"], Decimal("4000.00"))
+        self.assertEqual(resumen["precio_total"], Decimal("20000.00"))
+
+    def test_precio_base_mensual_es_unitario_por_ocurrencias(self):
+        self.inscripcion.tipo = Inscripcion.Tipo.MENSUAL
+        self.inscripcion.save()
+        from apps.payments.inscripcion_pago import precio_base_inscripcion
+
+        self.assertEqual(precio_base_inscripcion(self.inscripcion), Decimal("20000.00"))

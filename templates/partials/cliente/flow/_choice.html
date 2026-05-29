@@ -1,0 +1,9 @@
+{% comment %}name, value, label; opcional: hint, checked{% endcomment %}
+<label class="cf-choice">
+  <input type="radio" class="cf-choice__input" name="{{ name }}" value="{{ value }}" {% if checked %}checked{% endif %}>
+  <span class="cf-choice__dot" aria-hidden="true"></span>
+  <span>
+    <span class="cf-choice__label">{{ label }}</span>
+    {% if hint %}<span class="cf-choice__hint">{{ hint }}</span>{% endif %}
+  </span>
+</label>

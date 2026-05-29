@@ -1,0 +1,11 @@
+{% comment %}Mensajes Django. Opcional: dismissible, wrapper_class, id.{% endcomment %}
+{% if messages %}
+<div
+  class="{% if wrapper_class %}{{ wrapper_class }}{% else %}flash-messages mb-6 flex flex-col gap-2{% endif %}"
+  {% if id %}id="{{ id }}"{% endif %}
+>
+  {% for message in messages %}
+  {% include 'partials/ui/_flash_item.html' with text=message level=message.tags dismissible=dismissible %}
+  {% endfor %}
+</div>
+{% endif %}

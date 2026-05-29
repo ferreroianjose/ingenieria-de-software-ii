@@ -1,0 +1,2 @@
+{% comment %}dt (datetime); con_ano (bool, default true){% endcomment %}
+{% if con_ano|default:True %}{{ dt|date:"l d/m/Y"|capfirst }}{% else %}{{ dt|date:"l d/m"|capfirst }}{% endif %} · {{ dt|date:"H:i" }} hs

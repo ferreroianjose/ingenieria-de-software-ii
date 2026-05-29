@@ -1,0 +1,52 @@
+{% extends 'classes/_cliente_flow.html' %}
+
+{% block title %}Elegir pago{% endblock %}
+
+{% block flow_main %}
+<section class="cf-surface">
+  <div class="cf-surface__body">
+    <p class="cf-kicker">Tu reserva</p>
+    <h2 class="cf-title">{{ clase.disciplina.nombre }}</h2>
+    <p class="cf-sub">
+      {% if fecha_clase %}
+      {% include 'partials/cliente/flow/_fecha_hora.html' with dt=fecha_clase %}
+      {% elif es_inscripcion_mensual %}
+      {{ periodo.nombre }} · este horario, mes completo
+      {% else %}
+      {{ clase.get_dia_semana_display }} · {{ clase.hora_inicio|time:"H:i" }} hs
+      {% endif %}
+    </p>
+
+    <div class="cf-divider"></div>
+
+    {% if abono_resumen %}
+    <p class="cf-kicker">Resumen del mes</p>
+    <div class="rounded-2xl border border-primary-400/30 bg-primary-400/10 px-4 py-4 text-sm text-white/85 mb-6">
+      <p class="font-bold text-white">
+        {{ abono_resumen.cantidad_clases }} clase{{ abono_resumen.cantidad_clases|pluralize }}
+        de este día y horario en {{ periodo.nombre }}
+      </p>
+      <p class="mt-2 text-white/70">
+        ${{ abono_resumen.precio_unitario }} por clase · Total ${{ abono_resumen.precio_total }}
+      </p>
+      <p class="mt-2 text-xs text-white/50">Con un solo pago en Mercado Pago confirmás todas esas clases.</p>
+    </div>
+    <form action="{{ pagar_url }}" method="post" hx-boost="false">
+      {% csrf_token %}
+      <input type="hidden" name="modalidad" value="TOTAL">
+      {% include 'partials/ui/buttons/_primary_button.html' with label="Pagar con Mercado Pago" type="submit" class="w-full !py-3.5" %}
+    </form>
+    {% else %}
+    <p class="cf-kicker">Forma de pago</p>
+    <p class="text-sm text-white/60 mb-3">Podés pagar el total o una seña del 50% y el saldo más adelante.</p>
+    <div class="mt-4 flex flex-col gap-3">
+      {% for opcion in opciones %}
+      {% include 'partials/cliente/flow/_pay_row.html' with pagar_url=pagar_url modalidad=opcion.modalidad titulo=opcion.titulo descripcion=opcion.descripcion monto=opcion.monto %}
+      {% empty %}
+      <p class="cf-empty !py-8">No hay opciones de pago disponibles.</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

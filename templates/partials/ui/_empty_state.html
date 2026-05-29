@@ -1,0 +1,9 @@
+<div class="rounded-3xl bg-gray-50 border border-gray-200 px-6 py-12 text-center text-gray-500">
+  <p>{{ message }}</p>
+  {% if action_url and action_label %}
+  <a href="{{ action_url }}"
+     class="inline-block mt-4 rounded-full bg-primary-400 hover:bg-primary-600 text-white font-bold px-6 py-2 text-sm transition-colors no-underline">
+    {{ action_label }}
+  </a>
+  {% endif %}
+</div>

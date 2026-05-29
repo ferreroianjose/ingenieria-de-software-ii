@@ -1,0 +1,14 @@
+{% comment %}pagar_url, modalidad, titulo, descripcion, monto{% endcomment %}
+<form action="{{ pagar_url }}" method="post" class="m-0" hx-boost="false">
+  {% csrf_token %}
+  <input type="hidden" name="modalidad" value="{{ modalidad }}">
+  <button type="submit" class="cf-pay group">
+    <span class="flex w-full items-stretch">
+      <span class="cf-pay__main">
+        <span class="cf-kicker !mb-1">{{ titulo }}</span>
+        <span class="text-sm text-white/70">{{ descripcion }}</span>
+      </span>
+      <span class="cf-pay__amount group-hover:bg-primary-500">${{ monto }}</span>
+    </span>
+  </button>
+</form>

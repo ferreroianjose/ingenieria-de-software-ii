@@ -1,0 +1,22 @@
+{% extends 'classes/_cliente_flow.html' %}
+
+{% block title %}{{ disciplina.nombre }}{% endblock %}
+
+{% block flow_main %}
+{% if not clases_info %}
+{% include 'partials/cliente/flow/_empty.html' with message="No hay clases publicadas para esta disciplina." action_url=actividades_back_url action_label="Volver a actividades" %}
+{% else %}
+<section class="cf-surface">
+  <div class="cf-surface__body">
+    <p class="cf-kicker">{{ disciplina.nombre }}</p>
+    <h2 class="cf-title">Elegí día y horario</h2>
+    <p class="text-sm text-white/60 mt-2">Es el mismo día de la semana cada semana (por ejemplo, todos los martes a las 10:00).</p>
+    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+      {% for item in clases_info %}
+      {% include 'partials/cliente/flow/_item.html' with href=item.detalle_url title=item.titulo lines=item.lineas proximo_inicio=item.proximo_inicio duracion_minutos=item.duracion_minutos badge=item.badge badge_tone=item.badge_tone %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

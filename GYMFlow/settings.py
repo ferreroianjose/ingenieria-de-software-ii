@@ -85,6 +85,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.payments.context_processors.cliente_creditos",
             ],
         },
     },
@@ -200,3 +201,6 @@ GYM_RESTRICTED_SCHEDULE = True
 
 # Precio por defecto para una clase (usado cuando no hay una tarifa por disciplina)
 CLASE_DEFAULT_PRICE = float(os.environ.get("CLASE_DEFAULT_PRICE", "2500.0"))
+VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS = int(
+    os.environ.get("VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", "21")
+)

@@ -1,0 +1,8 @@
+<section class="cf-surface">
+  <div class="cf-surface__body cf-empty">
+    <p class="text-lg font-bold text-white/90">{{ message }}</p>
+    {% if action_url and action_label %}
+    <a href="{{ action_url }}" class="cf-cta btn-auto mt-6 inline-flex">{{ action_label }}</a>
+    {% endif %}
+  </div>
+</section>

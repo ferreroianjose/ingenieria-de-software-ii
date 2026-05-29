@@ -65,9 +65,22 @@ urlpatterns = [
         views.delete_teacher,
         name="delete_teacher",
     ),
-    # Cliente: reservas
+    # Cliente: actividades → inscripción → pago
     path("browse/", views.browse_clases, name="browse"),
-    path("<int:clase_id>/reservar/", views.reservar_clase_view, name="reservar"),
+    path("actividades/", views.actividades, name="actividades"),
+    path(
+        "actividades/<int:disciplina_id>/",
+        views.cronograma_disciplina,
+        name="cronograma",
+    ),
+    path("clase/<int:clase_id>/", views.detalle_clase, name="detalle"),
+    path("clase/<int:clase_id>/inscribir/", views.inscribir_clase_view, name="inscribir"),
+    path("clase/<int:clase_id>/espera/", views.anotar_espera_view, name="anotar_espera"),
+    path(
+        "inscripciones/<int:inscripcion_id>/abandonar-espera/",
+        views.abandonar_espera_view,
+        name="abandonar_espera",
+    ),
     path("mis-reservas/", views.mis_reservas, name="mis_reservas"),
     path(
         "inscripciones/<int:inscripcion_id>/cancelar/",

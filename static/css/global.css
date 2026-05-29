@@ -22,3 +22,11 @@ body {
 .htmx-swapping #main-content {
   opacity: 0;
 }
+
+/* Inscripción clase: panel fecha vs mes */
+#form-inscripcion-clase:has(input[name="tipo"][value="MENSUAL"]:checked) [data-inscripcion-fechas] {
+  display: none;
+}
+#form-inscripcion-clase:has(input[name="tipo"][value="CLASE_SUELTA"]:checked) [data-inscripcion-periodos] {
+  display: none;
+}

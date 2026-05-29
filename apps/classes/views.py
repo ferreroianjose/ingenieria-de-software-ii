@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.utils import timezone
 from GYMFlow.access import admin_required
 from django.db.models import ProtectedError
 from django.http import HttpResponse
@@ -13,6 +14,7 @@ from .exceptions import InscripcionDuplicada
 from .services import proxima_ocurrencia
 from .search import apply_text_search
 from .htmx import hx_ok
+from . import cliente
 
 from urllib.parse import urlencode
 
@@ -952,41 +954,108 @@ def delete_teacher(request, teacher_id):
         )
 
 
-# ── Cliente: reservas ────────────────────────────────────────────────────────
+# ── Cliente: actividades → clase → pago ──────────────────────────────────────
 
 @login_required
 def browse_clases(request):
-    clases = (
-        Class.objects.filter(estado="disponible")
-        .select_related("profesor", "disciplina", "sala", "sala__sede")
-        .prefetch_related("inscripciones")
+    return redirect("classes:actividades")
+
+
+@login_required
+def actividades(request):
+    disciplinas = list(cliente.disciplinas_con_clases())
+    for disciplina in disciplinas:
+        disciplina.cronograma_url = reverse(
+            "classes:cronograma", args=[disciplina.pk]
+        )
+        n = cliente.clases_disponibles_qs().filter(disciplina=disciplina).count()
+        disciplina.num_clases = n
+        disciplina.lineas = [disciplina.descripcion] if disciplina.descripcion else []
+        disciplina.badge_horarios = f"{n} horario{'s' if n != 1 else ''}" if n else ""
+    return render(
+        request,
+        "classes/actividades.html",
+        {
+            "disciplinas": disciplinas,
+            "flow_step": "actividades",
+            "flow_title": "Actividades",
+            "flow_subtitle": "Disciplina, horario, fecha y pago: cuatro pasos para reservar tu lugar.",
+        },
     )
 
-    clases_con_info = []
-    for clase in clases:
-        activas = clase.inscripciones.filter(
-            estado__in=[
-                Inscripcion.Estado.RESERVADA,
-                Inscripcion.Estado.PENDIENTE_PAGO,
-            ]
-        ).count()
-        clases_con_info.append(
+
+@login_required
+def cronograma_disciplina(request, disciplina_id):
+    disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
+    clases = cliente.clases_disponibles_qs().filter(disciplina=disciplina)
+
+    if clases.count() == 1:
+        return redirect("classes:detalle", clase_id=clases.first().pk)
+
+    clases_info = []
+    for c in clases.order_by("dia_semana", "hora_inicio"):
+        inicio = proxima_ocurrencia(c)
+        hay_lugar = services.cupo_disponible(c) > 0
+        clases_info.append(
             {
-                "clase": clase,
-                "proximo_inicio": proxima_ocurrencia(clase),
-                "cupo_restante": max(0, clase.cupo_maximo - activas),
-                "en_espera": clase.inscripciones.filter(
-                    estado=Inscripcion.Estado.ESPERA
-                ).count(),
-                "mi_inscripcion": (
-                    clase.inscripciones.filter(usuario=request.user)
-                    .exclude(estado=Inscripcion.Estado.CANCELADA)
-                    .first()
-                ),
+                "detalle_url": reverse("classes:detalle", args=[c.pk]),
+                "titulo": c.get_dia_semana_display(),
+                "proximo_inicio": inicio,
+                "duracion_minutos": c.duracion_minutos,
+                "lineas": [f"{c.sala.nombre} · {c.sala.sede.nombre}"],
+                "hay_lugar": hay_lugar,
+                "badge": "Hay lugar" if hay_lugar else "Lista de espera",
+                "badge_tone": "ok" if hay_lugar else "wait",
             }
         )
 
-    return render(request, "classes/browse.html", {"clases_con_info": clases_con_info})
+    return render(
+        request,
+        "classes/cronograma.html",
+        {
+            "disciplina": disciplina,
+            "clases_info": clases_info,
+            "flow_step": "horarios",
+            "flow_back_url": reverse("classes:actividades"),
+            "flow_back_label": "Actividades",
+            "flow_title": disciplina.nombre,
+            "flow_subtitle": "Cada tarjeta es un día y horario fijo. Elegí el que mejor te quede.",
+            "actividades_back_url": reverse("classes:actividades"),
+        },
+    )
+
+
+@login_required
+def detalle_clase(request, clase_id):
+    clase = get_object_or_404(
+        cliente.clases_disponibles_qs(),
+        pk=clase_id,
+    )
+    from django.template.loader import render_to_string
+
+    info = cliente.info_clase_para_usuario(clase, request.user, request)
+    if info["tiene_proximo_inicio"]:
+        flow_subtitle = render_to_string(
+            "partials/cliente/flow/_fecha_hora.html",
+            {"dt": info["proximo_inicio"], "con_ano": False},
+        ).strip()
+    else:
+        flow_subtitle = info["subtitulo"]
+    return render(
+        request,
+        "classes/detalle_clase.html",
+        {
+            "info": info,
+            "periodos_inscripcion_data": info["periodos_inscripcion"],
+            "flow_step": "clase",
+            "flow_back_url": reverse(
+                "classes:cronograma", args=[clase.disciplina_id]
+            ),
+            "flow_back_label": clase.disciplina.nombre,
+            "flow_title": clase.disciplina.nombre,
+            "flow_subtitle": flow_subtitle or "Revisá los datos y elegí cómo inscribirte.",
+        },
+    )
 
 
 def _tipo_inscripcion_desde_post(request):
@@ -996,77 +1065,196 @@ def _tipo_inscripcion_desde_post(request):
     return tipo
 
 
-def _url_pagar_inscripcion(inscripcion_id, request):
-    """URL de checkout; modalidad TOTAL/SENA solo para clase suelta (query opcional)."""
-    params = {}
-    modalidad = request.POST.get("modalidad", "").upper()
-    if modalidad in ("TOTAL", "SENA"):
-        params["modalidad"] = modalidad
-    base = reverse("payments:pagar", args=[inscripcion_id])
-    if not params:
-        return base
-    return f"{base}?{urlencode(params)}"
+def _manejar_inscripcion_duplicada(request, exc: InscripcionDuplicada, clase_id):
+    from apps.payments.inscripcion_pago import inscripcion_tiene_intento_pago
 
-
-def _manejar_inscripcion_duplicada(request, exc: InscripcionDuplicada):
     if exc.pendiente_pago:
-        messages.info(request, "Ya tenés esta clase pendiente de pago.")
-        return redirect(_url_pagar_inscripcion(exc.inscripcion.id, request))
+        if inscripcion_tiene_intento_pago(exc.inscripcion):
+            messages.info(request, "Ya tenés el pago de esta clase pendiente.")
+            return redirect(
+                "payments:seleccion_pago", inscripcion_id=exc.inscripcion.id
+            )
+        try:
+            services.cancelar_reserva(exc.inscripcion.id, request.user)
+        except services.ReservaError:
+            pass
+        return None
     if exc.reservada:
         messages.info(request, "Ya tenés esta clase reservada.")
-        return redirect("classes:mis_reservas")
+        return redirect("classes:detalle", clase_id=clase_id)
     if exc.en_lista_espera:
         messages.warning(request, "Ya estás en la lista de espera de esta clase.")
     else:
         messages.warning(request, str(exc))
-    return redirect("classes:browse")
+    return redirect("classes:detalle", clase_id=clase_id)
 
 
-@login_required
-def reservar_clase_view(request, clase_id):
-    if request.method != "POST":
-        return redirect("classes:browse")
+def _periodo_desde_post(request, tipo):
+    from apps.payments.periodos import periodos_elegibles_para
+
+    periodo_id = request.POST.get("periodo_id")
+    elegibles = {str(p.id): p for p in periodos_elegibles_para(tipo)}
+    if periodo_id and periodo_id in elegibles:
+        return elegibles[periodo_id]
+    if len(elegibles) == 1:
+        return next(iter(elegibles.values()))
+    raise services.ReservaError("Elegí el período de cobro para continuar.")
+
+
+def _fecha_clase_desde_post(request, clase_id):
+    from django.utils.dateparse import parse_datetime
+
+    from apps.classes.models import Class
+    from apps.classes.services import fecha_clase_elegible, ocurrencias_clase_en_ventana
+    from apps.payments.periodos import periodo_conteniendo_fecha
+
+    raw = request.POST.get("fecha_clase")
+    if not raw:
+        ocurrencias = ocurrencias_clase_en_ventana(
+            get_object_or_404(Class, pk=clase_id, estado="disponible")
+        )
+        if len(ocurrencias) == 1:
+            return ocurrencias[0][0]
+        raise services.ReservaError("Elegí la fecha de la clase para continuar.")
+
+    dt = parse_datetime(raw)
+    if dt is None:
+        raise services.ReservaError("La fecha de la clase no es válida.")
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+    dt = timezone.localtime(dt).replace(microsecond=0)
+
+    clase = get_object_or_404(Class, pk=clase_id, estado="disponible")
+    if not fecha_clase_elegible(clase, dt):
+        raise services.ReservaError("La fecha elegida no está disponible.")
+
+    periodo = periodo_conteniendo_fecha(timezone.localdate(dt))
+    if not periodo:
+        raise services.ReservaError("No hay período de cobro para esa fecha.")
+    return dt, periodo
+
+
+def _ir_a_pantalla_pago(request, clase_id):
+    """Guarda modalidad y período en sesión; la inscripción se crea al intentar pagar."""
+    from apps.payments.inscripcion_pago import guardar_intencion_pago
+
+    fecha_clase = None
+    try:
+        tipo = _tipo_inscripcion_desde_post(request)
+        if tipo == Inscripcion.Tipo.CLASE_SUELTA:
+            fecha_clase, periodo = _fecha_clase_desde_post(request, clase_id)
+        else:
+            periodo = _periodo_desde_post(request, tipo)
+        services.validar_intencion_inscripcion(
+            request.user, clase_id, periodo, tipo, fecha_clase=fecha_clase
+        )
+    except InscripcionDuplicada as exc:
+        redirect_resp = _manejar_inscripcion_duplicada(request, exc, clase_id)
+        if redirect_resp is not None:
+            return redirect_resp
+        tipo = _tipo_inscripcion_desde_post(request)
+        if tipo == Inscripcion.Tipo.CLASE_SUELTA:
+            fecha_clase, periodo = _fecha_clase_desde_post(request, clase_id)
+        else:
+            fecha_clase = None
+            periodo = _periodo_desde_post(request, tipo)
+    except services.ReservaError as exc:
+        messages.error(request, str(exc))
+        return redirect("classes:detalle", clase_id=clase_id)
+
+    guardar_intencion_pago(
+        request,
+        clase_id=clase_id,
+        periodo_id=periodo.id,
+        tipo=tipo,
+        fecha_clase=fecha_clase,
+    )
+    return redirect("payments:seleccion_pago_clase", clase_id=clase_id)
+
+
+def _reservar_desde_detalle(request, clase_id):
+    clase = get_object_or_404(Class, pk=clase_id, estado="disponible")
+    if services.cupo_disponible(clase) > 0:
+        return _ir_a_pantalla_pago(request, clase_id)
 
     try:
         periodo = services.obtener_periodo_activo()
-        inscripcion, resultado = services.reservar_clase(
+        _, resultado = services.reservar_clase(
             request.user,
             clase_id,
             periodo=periodo,
             tipo=_tipo_inscripcion_desde_post(request),
         )
     except InscripcionDuplicada as exc:
-        return _manejar_inscripcion_duplicada(request, exc)
+        redirect_resp = _manejar_inscripcion_duplicada(request, exc, clase_id)
+        if redirect_resp is not None:
+            return redirect_resp
+        return redirect("classes:detalle", clase_id=clase_id)
     except services.ReservaError as exc:
         messages.error(request, str(exc))
-        return redirect("classes:browse")
+        return redirect("classes:detalle", clase_id=clase_id)
 
-    if resultado == "espera":
-        messages.info(
-            request,
-            f"Te anotamos en lista de espera para {inscripcion.clase.disciplina}.",
-        )
-        return redirect("classes:browse")
+    messages.success(request, "Te anotamos en la lista de espera.")
+    return redirect("classes:detalle", clase_id=clase_id)
 
-    messages.success(request, "Reservaste tu lugar. Completá el pago para confirmar.")
-    return redirect(_url_pagar_inscripcion(inscripcion.id, request))
+
+@login_required
+def inscribir_clase_view(request, clase_id):
+    if request.method != "POST":
+        return redirect("classes:detalle", clase_id=clase_id)
+    return _reservar_desde_detalle(request, clase_id)
+
+
+@login_required
+def anotar_espera_view(request, clase_id):
+    if request.method != "POST":
+        return redirect("classes:detalle", clase_id=clase_id)
+
+    clase = get_object_or_404(Class, pk=clase_id, estado="disponible")
+    if services.cupo_disponible(clase) > 0:
+        messages.info(request, "Hay cupos libres. Podés inscribirte directamente.")
+        return redirect("classes:detalle", clase_id=clase_id)
+    return _reservar_desde_detalle(request, clase_id)
+
+
+@login_required
+def abandonar_espera_view(request, inscripcion_id):
+    if request.method != "POST":
+        return redirect("classes:mis_reservas")
+
+    inscripcion = get_object_or_404(
+        Inscripcion,
+        id=inscripcion_id,
+        usuario=request.user,
+        estado=Inscripcion.Estado.ESPERA,
+    )
+    clase_id = inscripcion.clase_id
+    try:
+        services.cancelar_reserva(inscripcion_id, request.user)
+        messages.success(request, "Te eliminamos de la lista de espera.")
+    except services.ReservaError as exc:
+        messages.error(request, str(exc))
+    return redirect("classes:detalle", clase_id=clase_id)
 
 
 @login_required
 def mis_reservas(request):
+    from apps.payments.inscripcion_pago import (
+        filtro_inscripciones_en_reservas,
+        resumen_pago_inscripcion,
+    )
+
     inscripciones = (
         Inscripcion.objects.filter(usuario=request.user)
-        .exclude(estado=Inscripcion.Estado.CANCELADA)
+        .filter(filtro_inscripciones_en_reservas())
         .select_related("clase", "clase__profesor", "clase__disciplina", "clase__sala")
         .order_by("-fecha_inscripcion")
     )
 
-    from apps.payments.inscripcion_pago import resumen_pago_inscripcion
-
     inscripciones_con_info = [
         {
             "inscripcion": i,
-            "proximo_inicio": proxima_ocurrencia(i.clase),
+            "proximo_inicio": i.fecha_clase or proxima_ocurrencia(i.clase),
             "pago": resumen_pago_inscripcion(i),
         }
         for i in inscripciones
@@ -1075,7 +1263,12 @@ def mis_reservas(request):
     return render(
         request,
         "classes/mis_reservas.html",
-        {"inscripciones_con_info": inscripciones_con_info},
+        {
+            "inscripciones_con_info": inscripciones_con_info,
+            "flow_title": "Mis reservas",
+            "flow_subtitle": "Reservas confirmadas, pagos pendientes y lista de espera.",
+            "page_actions_template": "partials/classes/cliente/_mis_reservas_actions.html",
+        },
     )
 
 
@@ -1084,10 +1277,21 @@ def cancelar_reserva_view(request, inscripcion_id):
     if request.method != "POST":
         return redirect("classes:mis_reservas")
 
+    inscripcion = get_object_or_404(
+        Inscripcion,
+        id=inscripcion_id,
+        usuario=request.user,
+    )
+    clase_id = inscripcion.clase_id
+
     try:
         services.cancelar_reserva(inscripcion_id, request.user)
-        messages.success(request, "Tu inscripción fue cancelada correctamente.")
+        # TODO: política de cancelación — reintegrar crédito o retener pago.
+        # TODO: notificar por email al primero en lista de espera si se liberó cupo.
+        messages.success(request, "Inscripción cancelada con éxito.")
     except services.ReservaError as e:
         messages.error(request, str(e))
 
+    if request.POST.get("destino") == "detalle":
+        return redirect("classes:detalle", clase_id=clase_id)
     return redirect("classes:mis_reservas")

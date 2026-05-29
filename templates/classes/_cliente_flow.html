@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div
+  class="internal-page cliente-flow"
+  hx-boost="true"
+  hx-push-url="true"
+  hx-target="#main-content"
+  hx-select="#main-content"
+  hx-swap="outerHTML"
+>
+  <div class="internal-page__content max-w-5xl flex flex-col gap-6 overflow-visible">
+    {% if flow_back_url %}
+    <a href="{{ flow_back_url }}" class="text-sm font-semibold text-primary-300 hover:text-primary-200 no-underline inline-flex items-center gap-1">
+      <span aria-hidden="true">←</span> {{ flow_back_label|default:"Volver" }}
+    </a>
+    {% endif %}
+
+    {% include 'partials/cliente/flow/_page_header.html' with title=flow_title subtitle=flow_subtitle %}
+
+    {% block flow_stepper %}
+    {% if flow_step %}
+    {% include 'partials/cliente/flow/_stepper.html' with step=flow_step %}
+    {% endif %}
+    {% endblock %}
+
+    {% block flow_main %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

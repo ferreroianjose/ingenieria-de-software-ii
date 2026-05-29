@@ -9,7 +9,7 @@ from django.utils import timezone
 
 
 class Command(BaseCommand):
-    help = "Carga periodo de cobro, precios, inscripciones de ejemplo y pagos (idempotente)."
+    help = "Carga periodos de cobro, precios, inscripciones de ejemplo y pagos (idempotente)."
 
     def handle(self, *args, **options):
         User = apps.get_model("users", "User")
@@ -34,10 +34,23 @@ class Command(BaseCommand):
         with open(fixtures_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        periodo = self._load_periodo(PeriodoCobro, data.get("periodo", {}))
-        precios_created = self._load_precios(
-            PrecioDisciplina, Disciplina, periodo, data.get("precios_disciplina", [])
-        )
+        self._eliminar_periodos_legacy(PeriodoCobro, Inscripcion, data)
+
+        periodos_por_nombre = self._load_periodos(PeriodoCobro, data)
+        if not periodos_por_nombre:
+            self.stdout.write(self.style.ERROR("No se cargó ningún período."))
+            return
+
+        periodo_default = self._periodo_default(periodos_por_nombre, data)
+        precios_created = 0
+        for meta in periodos_por_nombre.values():
+            precios_created += self._load_precios(
+                PrecioDisciplina,
+                Disciplina,
+                meta["periodo"],
+                data.get("precios_disciplina", []),
+            )
+
         inscripciones_created = self._load_inscripciones(
             Inscripcion,
             User,
@@ -45,7 +58,8 @@ class Command(BaseCommand):
             Disciplina,
             Sede,
             Sala,
-            periodo,
+            periodos_por_nombre,
+            periodo_default,
             data.get("inscripciones", []),
         )
         pagos_created = self._load_pagos(
@@ -57,17 +71,29 @@ class Command(BaseCommand):
             Disciplina,
             Sede,
             Sala,
-            periodo,
+            periodos_por_nombre,
+            periodo_default,
             data.get("pagos", []),
         )
         creditos_created = self._load_creditos(
-            Credito, User, Disciplina, periodo, data.get("creditos", [])
+            Credito,
+            User,
+            Disciplina,
+            periodos_por_nombre,
+            periodo_default,
+            data.get("creditos", []),
         )
 
+        resumen_periodos = ", ".join(
+            f"«{p.nombre}» ({periodos_por_nombre[p.nombre]['estado']})"
+            for p in PeriodoCobro.objects.filter(
+                nombre__in=periodos_por_nombre.keys()
+            ).order_by("fecha_inicio_periodo")
+        )
         self.stdout.write(
             self.style.SUCCESS(
-                f"Payments seed: periodo «{periodo.nombre}», "
-                f"{precios_created} precios, {inscripciones_created} inscripciones, "
+                f"Payments seed: {resumen_periodos}; "
+                f"{precios_created} precios nuevos, {inscripciones_created} inscripciones, "
                 f"{pagos_created} pagos, {creditos_created} créditos."
             )
         )
@@ -75,19 +101,59 @@ class Command(BaseCommand):
     def _parse_date(self, value):
         return date.fromisoformat(value)
 
-    def _load_periodo(self, PeriodoCobro, periodo_data):
-        if not periodo_data:
-            raise ValueError("Fixture must define a periodo block.")
+    def _eliminar_periodos_legacy(self, PeriodoCobro, Inscripcion, data):
+        for nombre in data.get("eliminar_periodos", ["Ciclo de cobro (desarrollo)"]):
+            periodo = PeriodoCobro.objects.filter(nombre=nombre).first()
+            if not periodo:
+                continue
+            if periodo.inscripciones.exists() or periodo.pago_set.exists():
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"  Período legacy «{nombre}» no se eliminó (tiene inscripciones)."
+                    )
+                )
+                continue
+            periodo.delete()
+            self.stdout.write(
+                self.style.WARNING(f"  Eliminado período legacy: {nombre}")
+            )
 
-        nombre = periodo_data["nombre"]
-        defaults = {
-            "fecha_inicio_periodo": self._parse_date(periodo_data["fecha_inicio_periodo"]),
-            "fecha_fin_periodo": self._parse_date(periodo_data["fecha_fin_periodo"]),
-            "apertura_abonados": self._parse_date(periodo_data["apertura_abonados"]),
-            "apertura_general": self._parse_date(periodo_data["apertura_general"]),
-        }
-        periodo, _ = PeriodoCobro.objects.update_or_create(nombre=nombre, defaults=defaults)
+    def _load_periodos(self, PeriodoCobro, data):
+        """Carga periodos mensuales; conserva fechas del fixture (sin estirar a año completo)."""
+        periodos_data = data.get("periodos")
+        if not periodos_data and data.get("periodo"):
+            periodos_data = [{**data["periodo"], "ajustar_fechas": True}]
 
+        if not periodos_data:
+            raise ValueError("Fixture must define periodos[] or periodo.")
+
+        por_nombre = {}
+        for row in periodos_data:
+            nombre = row["nombre"]
+            estado = row.get("estado", "")
+            defaults = {
+                "fecha_inicio_periodo": self._parse_date(row["fecha_inicio_periodo"]),
+                "fecha_fin_periodo": self._parse_date(row["fecha_fin_periodo"]),
+                "apertura_abonados": self._parse_date(row["apertura_abonados"]),
+                "apertura_general": self._parse_date(row["apertura_general"]),
+            }
+            periodo, _ = PeriodoCobro.objects.update_or_create(
+                nombre=nombre, defaults=defaults
+            )
+
+            if row.get("ajustar_fechas"):
+                self._ajustar_periodo_a_hoy(periodo)
+
+            por_nombre[nombre] = {"periodo": periodo, "estado": estado}
+            self.stdout.write(
+                f"  · {nombre}: {defaults['fecha_inicio_periodo']} → "
+                f"{defaults['fecha_fin_periodo']} [{estado or 'sin etiqueta'}]"
+            )
+
+        return por_nombre
+
+    def _ajustar_periodo_a_hoy(self, periodo):
+        """Solo para el modo legacy de un único período de desarrollo."""
         today = timezone.now().date()
         if periodo.fecha_fin_periodo < today:
             periodo.fecha_fin_periodo = today + timedelta(days=180)
@@ -96,7 +162,23 @@ class Command(BaseCommand):
             periodo.fecha_inicio_periodo = today - timedelta(days=30)
             periodo.save(update_fields=["fecha_inicio_periodo"])
 
-        return periodo
+    def _periodo_default(self, periodos_por_nombre, data):
+        nombre = data.get("periodo_default")
+        if nombre and nombre in periodos_por_nombre:
+            return periodos_por_nombre[nombre]["periodo"]
+        for meta in periodos_por_nombre.values():
+            if meta.get("estado") == "activo":
+                return meta["periodo"]
+        return next(iter(periodos_por_nombre.values()))["periodo"]
+
+    def _resolve_periodo(self, periodos_por_nombre, periodo_default, row):
+        nombre = row.get("periodo")
+        if nombre:
+            meta = periodos_por_nombre.get(nombre)
+            if not meta:
+                raise ValueError(f"Período desconocido en fixture: {nombre!r}")
+            return meta["periodo"]
+        return periodo_default
 
     def _load_precios(self, PrecioDisciplina, Disciplina, periodo, precios_data):
         created = 0
@@ -129,28 +211,48 @@ class Command(BaseCommand):
             hora_inicio=self._parse_hora(slot["hora"]),
         )
 
-    def _resolve_inscripcion(self, Inscripcion, User, Class, Disciplina, Sede, Sala, periodo, slot):
+    def _resolve_inscripcion(
+        self, Inscripcion, User, Class, Disciplina, Sede, Sala, periodo, slot
+    ):
         usuario = User.objects.get(email=slot["usuario_email"])
         clase = self._resolve_class(Class, Disciplina, Sede, Sala, slot)
-        return Inscripcion.objects.filter(
-            usuario=usuario,
-            clase=clase,
-            periodo=periodo,
-        ).exclude(estado=Inscripcion.Estado.CANCELADA).first()
-
-    def _load_inscripciones(
-        self, Inscripcion, User, Class, Disciplina, Sede, Sala, periodo, inscripciones_data
-    ):
-        created = 0
-        for row in inscripciones_data:
-            usuario = User.objects.get(email=row["usuario_email"])
-            clase = self._resolve_class(Class, Disciplina, Sede, Sala, row)
-
-            if Inscripcion.objects.filter(
+        return (
+            Inscripcion.objects.filter(
                 usuario=usuario,
                 clase=clase,
                 periodo=periodo,
-            ).exclude(estado=Inscripcion.Estado.CANCELADA).exists():
+            )
+            .exclude(estado=Inscripcion.Estado.CANCELADA)
+            .first()
+        )
+
+    def _load_inscripciones(
+        self,
+        Inscripcion,
+        User,
+        Class,
+        Disciplina,
+        Sede,
+        Sala,
+        periodos_por_nombre,
+        periodo_default,
+        inscripciones_data,
+    ):
+        created = 0
+        for row in inscripciones_data:
+            periodo = self._resolve_periodo(periodos_por_nombre, periodo_default, row)
+            usuario = User.objects.get(email=row["usuario_email"])
+            clase = self._resolve_class(Class, Disciplina, Sede, Sala, row)
+
+            if (
+                Inscripcion.objects.filter(
+                    usuario=usuario,
+                    clase=clase,
+                    periodo=periodo,
+                )
+                .exclude(estado=Inscripcion.Estado.CANCELADA)
+                .exists()
+            ):
                 continue
 
             Inscripcion.objects.create(
@@ -173,11 +275,13 @@ class Command(BaseCommand):
         Disciplina,
         Sede,
         Sala,
-        periodo,
+        periodos_por_nombre,
+        periodo_default,
         pagos_data,
     ):
         created = 0
         for row in pagos_data:
+            periodo = self._resolve_periodo(periodos_por_nombre, periodo_default, row)
             usuario = User.objects.get(email=row["usuario_email"])
             monto = Decimal(row["monto"])
 
@@ -221,9 +325,18 @@ class Command(BaseCommand):
                 )
         return created
 
-    def _load_creditos(self, Credito, User, Disciplina, periodo, creditos_data):
+    def _load_creditos(
+        self,
+        Credito,
+        User,
+        Disciplina,
+        periodos_por_nombre,
+        periodo_default,
+        creditos_data,
+    ):
         created = 0
         for row in creditos_data:
+            periodo = self._resolve_periodo(periodos_por_nombre, periodo_default, row)
             usuario = User.objects.get(email=row["usuario_email"])
             disciplina = Disciplina.objects.get(nombre=row["disciplina"])
             _, was_created = Credito.objects.get_or_create(

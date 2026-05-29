@@ -1,0 +1,41 @@
+{% comment %}inscripcion, clase, proximo_inicio, pago{% endcomment %}
+<article class="cf-surface !p-5 sm:!p-6">
+  <div class="cf-surface__body cf-reserva">
+    <div class="min-w-0 flex-1 space-y-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <h2 class="cf-item__title !text-2xl">{{ clase.disciplina.nombre }}</h2>
+        <span class="cf-chip cf-chip--wait">{{ clase.sala.nombre }}</span>
+        {% if inscripcion.estado == 'RESERVADA' %}
+        {% include 'partials/ui/_status_badge.html' with level='success' label='Confirmada' %}
+        {% elif inscripcion.estado == 'PENDIENTE_PAGO' %}
+        {% if pago.mostrar_pagar_saldo %}
+        {% include 'partials/ui/_status_badge.html' with level='info' label='Seña pagada' %}
+        {% else %}
+        {% include 'partials/ui/_status_badge.html' with level='warning' label='Pendiente de pago' %}
+        {% endif %}
+        {% elif inscripcion.estado == 'ESPERA' %}
+        {% include 'partials/ui/_status_badge.html' with level='warning' label='En espera' %}
+        {% endif %}
+      </div>
+      <p class="cf-item__meta !mt-0">
+        Prof. {{ clase.profesor.nombre }} {{ clase.profesor.apellido }}
+        · {% include 'partials/cliente/flow/_fecha_hora.html' with dt=proximo_inicio %}
+        · {{ clase.duracion_minutos }} min
+      </p>
+    </div>
+    <div class="flex flex-col gap-2 sm:flex-row shrink-0">
+      {% if pago.mostrar_pagar_saldo or pago.mostrar_pagar %}
+      <a href="{% url 'payments:seleccion_pago' inscripcion.id %}" class="cf-cta btn-auto text-center">
+        {% if pago.mostrar_pagar_saldo %}Pagar saldo{% else %}Ir a pagar{% endif %}
+      </a>
+      {% endif %}
+      <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post"
+            x-data @submit.prevent="if(confirm('¿Confirmás la cancelación?')) $el.submit()">
+        {% csrf_token %}
+        <button type="submit" class="w-full rounded-full border border-red-400/50 px-5 py-2 text-sm font-bold text-red-300 hover:bg-red-500/10 btn-auto">
+          {% if inscripcion.estado == 'ESPERA' %}Salir de lista{% else %}Cancelar{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+</article>

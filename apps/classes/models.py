@@ -127,6 +127,11 @@ class Inscripcion(models.Model):
         default=Tipo.CLASE_SUELTA,
     )
     fecha_inscripcion = models.DateTimeField(auto_now_add=True)
+    fecha_clase = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Fecha/hora concreta reservada (clase suelta).",
+    )
     estado = models.CharField(
         max_length=20,
         choices=Estado.choices,

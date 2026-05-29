@@ -65,13 +65,18 @@ class PaymentLogicTests(TestCase):
             estado=Inscripcion.Estado.PENDIENTE_PAGO,
         )
 
+    def _post_pagar(self, inscripcion_id, modalidad="TOTAL"):
+        return self.client.post(
+            reverse("payments:pagar", args=[inscripcion_id]),
+            {"modalidad": modalidad},
+        )
+
     @patch('apps.payments.views.mercadopago_service.create_preference')
     def test_pagar_inscripcion_fallback_price(self, mock_create_preference):
         # Sin PrecioDisciplina, cobra CLASE_DEFAULT_PRICE y redirige a MP.
         mock_create_preference.return_value = "http://mercadopago.mock/init"
         
-        url = reverse('payments:pagar', args=[self.inscripcion.id])
-        response = self.client.get(f"{url}?modalidad=TOTAL")
+        response = self._post_pagar(self.inscripcion.id, "TOTAL")
         
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "http://mercadopago.mock/init")
@@ -97,8 +102,7 @@ class PaymentLogicTests(TestCase):
             monto=Decimal('5000.00')
         )
         
-        url = reverse('payments:pagar', args=[self.inscripcion.id])
-        self.client.get(f"{url}?modalidad=TOTAL")
+        self._post_pagar(self.inscripcion.id, "TOTAL")
         
         pago = Pago.objects.last()
         self.assertEqual(pago.monto, Decimal('5000.00'))
@@ -114,15 +118,14 @@ class PaymentLogicTests(TestCase):
             monto=Decimal('4000.00')
         )
         
-        url = reverse('payments:pagar', args=[self.inscripcion.id])
-        self.client.get(f"{url}?modalidad=SENA")
+        self._post_pagar(self.inscripcion.id, "SENA")
         
         pago = Pago.objects.last()
         self.assertEqual(pago.monto, Decimal('2000.00'))
 
     @patch('apps.payments.views.mercadopago_service.create_preference')
-    def test_pagar_inscripcion_mensual_ignores_sena(self, mock_create_preference):
-        # Abonado (MENSUAL) no puede pagar seña: siempre cobra el 100%.
+    def test_pagar_inscripcion_mensual_cobra_por_ocurrencias(self, mock_create_preference):
+        # Abonado: precio por clase × clases restantes del horario en el período.
         mock_create_preference.return_value = "http://mercadopago.mock/init"
         
         PrecioDisciplina.objects.create(
@@ -134,11 +137,11 @@ class PaymentLogicTests(TestCase):
         self.inscripcion.tipo = Inscripcion.Tipo.MENSUAL
         self.inscripcion.save()
         
-        url = reverse('payments:pagar', args=[self.inscripcion.id])
-        self.client.get(f"{url}?modalidad=SENA")
+        self._post_pagar(self.inscripcion.id, "TOTAL")
         
         pago = Pago.objects.last()
-        self.assertEqual(pago.monto, Decimal('6000.00'))
+        # 4 lunes en mayo × $6000 por clase (clase con dia_semana por defecto).
+        self.assertEqual(pago.monto, Decimal('24000.00'))
 
     def _mp_payment_response(self, pago, status="approved"):
         return {
@@ -268,8 +271,7 @@ class PaymentLogicTests(TestCase):
             pago=pago_sena, inscripcion=self.inscripcion, monto_aplicado=Decimal("2000.00")
         )
 
-        url = reverse("payments:pagar", args=[self.inscripcion.id])
-        self.client.get(f"{url}?modalidad=SALDO")
+        self._post_pagar(self.inscripcion.id, "SALDO")
 
         pago_saldo = Pago.objects.filter(estado=Pago.Estado.PENDIENTE).last()
         self.assertEqual(pago_saldo.monto, Decimal("2000.00"))
@@ -282,12 +284,10 @@ class PaymentLogicTests(TestCase):
             periodo=self.periodo,
             monto=Decimal("5000.00"),
         )
-        url = reverse("payments:pagar", args=[self.inscripcion.id])
-
-        self.client.get(url)
+        self._post_pagar(self.inscripcion.id, "TOTAL")
         primer_pago = Pago.objects.get(usuario=self.user)
 
-        self.client.get(url)
+        self._post_pagar(self.inscripcion.id, "TOTAL")
         self.assertEqual(Pago.objects.filter(usuario=self.user).count(), 1)
         self.assertEqual(Pago.objects.get(usuario=self.user).pk, primer_pago.pk)
         self.assertEqual(mock_create_preference.call_count, 2)
@@ -314,9 +314,7 @@ class PaymentLogicTests(TestCase):
             monto_aplicado=Decimal("4000.00"),
         )
 
-        self.client.get(
-            reverse("payments:pagar", args=[self.inscripcion.id]) + "?modalidad=SENA"
-        )
+        self._post_pagar(self.inscripcion.id, "SENA")
 
         pago_total.refresh_from_db()
         pago_sena = Pago.objects.filter(estado=Pago.Estado.PENDIENTE).get()
@@ -333,8 +331,7 @@ class PaymentLogicTests(TestCase):
             monto=Decimal('5000.00'),
         )
 
-        url = reverse('payments:pagar', args=[self.inscripcion.id])
-        self.client.get(url)
+        self._post_pagar(self.inscripcion.id, "TOTAL")
 
         pago = Pago.objects.get(usuario=self.user)
         detalle = PagoInscripcion.objects.get(pago=pago)
@@ -347,8 +344,7 @@ class PaymentLogicTests(TestCase):
         # Si MP no devuelve init_point, avisa error y vuelve a mis reservas.
         mock_create_preference.return_value = None
 
-        url = reverse('payments:pagar', args=[self.inscripcion.id])
-        response = self.client.get(url)
+        response = self._post_pagar(self.inscripcion.id, "TOTAL")
 
         self.assertRedirects(
             response, reverse('classes:mis_reservas'), fetch_redirect_response=False
@@ -360,16 +356,36 @@ class PaymentLogicTests(TestCase):
         messages = [str(m) for m in get_messages(response.wsgi_request)]
         self.assertIn("Pago fallido por error al intentar conectar al servidor", messages[0])
 
+    def test_pagar_get_redirige_a_seleccion(self):
+        response = self.client.get(
+            reverse("payments:pagar", args=[self.inscripcion.id])
+        )
+        self.assertRedirects(
+            response,
+            reverse("payments:seleccion_pago", args=[self.inscripcion.id]),
+            fetch_redirect_response=False,
+        )
+
+    def test_seleccion_pago_muestra_opciones(self):
+        PrecioDisciplina.objects.create(
+            disciplina=self.disciplina,
+            periodo=self.periodo,
+            monto=Decimal("4000.00"),
+        )
+        response = self.client.get(
+            reverse("payments:seleccion_pago", args=[self.inscripcion.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Pago total")
+        self.assertContains(response, "Seña")
+
     def test_pagar_inscripcion_requires_login(self):
-        # Hay que estar logueado para iniciar un pago.
         self.client.logout()
-        url = reverse('payments:pagar', args=[self.inscripcion.id])
-        response = self.client.get(url)
+        response = self._post_pagar(self.inscripcion.id, "TOTAL")
         self.assertEqual(response.status_code, 302)
         self.assertIn('/users/login/', response.url)
 
     def test_pagar_inscripcion_other_user_returns_404(self):
-        # No podés pagar la inscripción de otro cliente.
         other = User.objects.create_user(
             username='other@gymflow.com',
             email='other@gymflow.com',
@@ -381,9 +397,9 @@ class PaymentLogicTests(TestCase):
             clase=self.clase,
             periodo=self.periodo,
             tipo=Inscripcion.Tipo.CLASE_SUELTA,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
         )
-        url = reverse('payments:pagar', args=[other_inscripcion.id])
-        response = self.client.get(url)
+        response = self._post_pagar(other_inscripcion.id, "TOTAL")
         self.assertEqual(response.status_code, 404)
 
     @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")

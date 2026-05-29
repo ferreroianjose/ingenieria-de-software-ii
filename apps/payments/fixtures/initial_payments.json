@@ -1,11 +1,30 @@
 {
-  "periodo": {
-    "nombre": "Ciclo de cobro (desarrollo)",
-    "fecha_inicio_periodo": "2026-01-01",
-    "fecha_fin_periodo": "2026-12-31",
-    "apertura_abonados": "2025-12-01",
-    "apertura_general": "2026-01-01"
-  },
+  "periodos": [
+    {
+      "nombre": "Mayo 2026",
+      "estado": "cerrado",
+      "fecha_inicio_periodo": "2026-05-01",
+      "fecha_fin_periodo": "2026-05-31",
+      "apertura_abonados": "2026-04-15",
+      "apertura_general": "2026-05-01"
+    },
+    {
+      "nombre": "Junio 2026",
+      "estado": "activo",
+      "fecha_inicio_periodo": "2026-06-01",
+      "fecha_fin_periodo": "2026-06-30",
+      "apertura_abonados": "2026-05-20",
+      "apertura_general": "2026-06-01"
+    },
+    {
+      "nombre": "Julio 2026",
+      "estado": "proximo",
+      "fecha_inicio_periodo": "2026-07-01",
+      "fecha_fin_periodo": "2026-07-31",
+      "apertura_abonados": "2026-06-15",
+      "apertura_general": "2026-07-01"
+    }
+  ],
   "precios_disciplina": [
     {"disciplina": "Yoga", "monto": "5200.00"},
     {"disciplina": "Pilates", "monto": "5800.00"},
@@ -17,16 +36,7 @@
   ],
   "inscripciones": [
     {
-      "usuario_email": "martin.lopez@mail.com",
-      "disciplina": "Yoga",
-      "sede": "Sede Palermo",
-      "sala": "Sala Zen",
-      "dia_semana": 0,
-      "hora": "07:00",
-      "tipo": "CLASE_SUELTA",
-      "estado": "PENDIENTE_PAGO"
-    },
-    {
+      "periodo": "Mayo 2026",
       "usuario_email": "juan.perez@mail.com",
       "disciplina": "Funcional",
       "sede": "Sede Palermo",
@@ -37,6 +47,7 @@
       "estado": "RESERVADA"
     },
     {
+      "periodo": "Mayo 2026",
       "usuario_email": "diego.torres@mail.com",
       "disciplina": "Spinning",
       "sede": "Sede Belgrano",
@@ -47,6 +58,18 @@
       "estado": "RESERVADA"
     },
     {
+      "periodo": "Junio 2026",
+      "usuario_email": "martin.lopez@mail.com",
+      "disciplina": "Yoga",
+      "sede": "Sede Palermo",
+      "sala": "Sala Zen",
+      "dia_semana": 0,
+      "hora": "07:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "PENDIENTE_PAGO"
+    },
+    {
+      "periodo": "Junio 2026",
       "usuario_email": "sofia.ramirez@mail.com",
       "disciplina": "Pilates",
       "sede": "Sede Belgrano",
@@ -59,6 +82,7 @@
   ],
   "pagos": [
     {
+      "periodo": "Mayo 2026",
       "usuario_email": "juan.perez@mail.com",
       "monto": "4800.00",
       "metodo": "MERCADOPAGO",
@@ -74,6 +98,24 @@
       ]
     },
     {
+      "periodo": "Mayo 2026",
+      "usuario_email": "diego.torres@mail.com",
+      "monto": "20000.00",
+      "metodo": "MERCADOPAGO",
+      "estado": "COMPLETADO",
+      "inscripciones": [
+        {
+          "disciplina": "Spinning",
+          "sede": "Sede Belgrano",
+          "sala": "Sala Spin",
+          "dia_semana": 6,
+          "hora": "11:00",
+          "monto_aplicado": "20000.00"
+        }
+      ]
+    },
+    {
+      "periodo": "Junio 2026",
       "usuario_email": "sofia.ramirez@mail.com",
       "monto": "2900.00",
       "metodo": "MERCADOPAGO",
@@ -84,13 +126,21 @@
           "sede": "Sede Belgrano",
           "sala": "Sala Flow",
           "dia_semana": 0,
-          "hora": "08:00"
+          "hora": "08:00",
+          "monto_aplicado": "2900.00"
         }
       ]
     }
   ],
   "creditos": [
     {
+      "periodo": "Junio 2026",
+      "usuario_email": "enrique@email.com",
+      "disciplina": "Yoga",
+      "estado": "DISPONIBLE"
+    },
+    {
+      "periodo": "Julio 2026",
       "usuario_email": "enrique@email.com",
       "disciplina": "Yoga",
       "estado": "DISPONIBLE"

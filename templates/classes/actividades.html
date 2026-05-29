@@ -1,0 +1,22 @@
+{% extends 'classes/_cliente_flow.html' %}
+
+{% block title %}Actividades{% endblock %}
+
+{% block flow_main %}
+{% if not disciplinas %}
+{% include 'partials/cliente/flow/_empty.html' with message="No hay actividades disponibles en este momento." %}
+{% else %}
+<section class="cf-surface">
+  <div class="cf-surface__body">
+    <p class="cf-kicker">Paso 1</p>
+    <h2 class="cf-title">Elegí tu disciplina</h2>
+    <p class="text-sm text-white/60 mt-2">Después vas a ver los horarios fijos y vas a poder elegir fecha o mes.</p>
+    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+      {% for disciplina in disciplinas %}
+      {% include 'partials/cliente/flow/_item.html' with href=disciplina.cronograma_url eyebrow='Disciplina' title=disciplina.nombre lines=disciplina.lineas badge=disciplina.badge_horarios large=True %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
