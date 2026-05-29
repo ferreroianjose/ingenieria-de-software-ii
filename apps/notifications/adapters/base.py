@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Union
 
+from django.db import transaction
+
 
 class NotificationAdapter(ABC):
     @property
@@ -18,10 +20,23 @@ class NotificationAdapter(ABC):
 
     def send(self, recipient: Any, subject: str, message: str, use_transaction: bool = None, **kwargs: Any) -> bool:
         """
-        Punto de entrada principal. 
+        Punto de entrada principal.
+
+        use_transaction=True: envía al hacer commit de la transacción DB actual (síncrono).
+        use_transaction=False: envío síncrono inmediato.
+        use_transaction=None: usa default_async (django-q si True).
         """
-        # Si no se especifica, usamos el default del adaptador
-        should_async = use_transaction if use_transaction is not None else self.default_async
+        if use_transaction is True:
+            if not self.get_recipient_address(recipient):
+                return False
+
+            def _send_after_commit():
+                self._perform_send(recipient, subject, message, **kwargs)
+
+            transaction.on_commit(_send_after_commit)
+            return True
+
+        should_async = self.default_async if use_transaction is None else False
 
         if should_async:
             # Resolvemos el contacto para que el dato que viaje al worker sea serializable
