@@ -32,6 +32,7 @@ class Pago(models.Model):
     class Estado(models.TextChoices):
         PENDIENTE = 'PENDIENTE', 'Pendiente'
         COMPLETADO = 'COMPLETADO', 'Completado'
+        FALLIDO = 'FALLIDO', 'Fallido'
         REEMBOLSADO = 'REEMBOLSADO', 'Reembolsado'
 
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)

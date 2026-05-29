@@ -963,8 +963,8 @@ def browse_clases(request):
     for clase in clases:
         activas = clase.inscripciones.filter(
             estado__in=[
-                Inscripcion.ESTADO_RESERVADA,
-                Inscripcion.ESTADO_PENDIENTE_PAGO,
+                Inscripcion.Estado.RESERVADA,
+                Inscripcion.Estado.PENDIENTE_PAGO,
             ]
         ).count()
         clases_con_info.append(
@@ -973,11 +973,11 @@ def browse_clases(request):
                 "proximo_inicio": proxima_ocurrencia(clase),
                 "cupo_restante": max(0, clase.cupo_maximo - activas),
                 "en_espera": clase.inscripciones.filter(
-                    estado=Inscripcion.ESTADO_ESPERA
+                    estado=Inscripcion.Estado.ESPERA
                 ).count(),
                 "mi_inscripcion": (
                     clase.inscripciones.filter(usuario=request.user)
-                    .exclude(estado=Inscripcion.ESTADO_CANCELADA)
+                    .exclude(estado=Inscripcion.Estado.CANCELADA)
                     .first()
                 ),
             }
@@ -995,7 +995,7 @@ def reservar_clase_view(request, clase_id):
         inscripcion, resultado = services.reservar_clase(request.user, clase_id)
         if resultado == "reservada":
             # marcar como pendiente de pago y redirigir al checkout
-            inscripcion.estado = Inscripcion.ESTADO_PENDIENTE_PAGO
+            inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
             inscripcion.save()
             messages.info(request, "Iniciando pago...")
             return redirect(reverse("payments:pagar", args=[inscripcion.id]))
@@ -1023,7 +1023,7 @@ def reservar_clase_view(request, clase_id):
 def mis_reservas(request):
     inscripciones = (
         Inscripcion.objects.filter(usuario=request.user)
-        .exclude(estado=Inscripcion.ESTADO_CANCELADA)
+        .exclude(estado=Inscripcion.Estado.CANCELADA)
         .select_related("clase", "clase__profesor", "clase__disciplina", "clase__sala")
         .order_by("-fecha_inscripcion")
     )

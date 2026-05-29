@@ -45,7 +45,7 @@ def proxima_ocurrencia(clase):
 def cupo_disponible(clase):
     """Spots left: cupo_maximo minus active (RESERVADA + PENDIENTE_PAGO) inscriptions."""
     activas = clase.inscripciones.filter(
-        estado__in=[Inscripcion.ESTADO_RESERVADA, Inscripcion.ESTADO_PENDIENTE_PAGO]
+        estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
     ).count()
     return max(0, clase.cupo_maximo - activas)
 
@@ -78,7 +78,7 @@ def reservar_clase(usuario, clase_id):
 
         existing = (
             Inscripcion.objects.filter(usuario=usuario, clase=clase)
-            .exclude(estado=Inscripcion.ESTADO_CANCELADA)
+            .exclude(estado=Inscripcion.Estado.CANCELADA)
             .first()
         )
         if existing:
@@ -88,14 +88,14 @@ def reservar_clase(usuario, clase_id):
             inscripcion = Inscripcion.objects.create(
                 usuario=usuario,
                 clase=clase,
-                estado=Inscripcion.ESTADO_RESERVADA,
+                estado=Inscripcion.Estado.RESERVADA,
             )
             return inscripcion, 'reservada'
         else:
             inscripcion = Inscripcion.objects.create(
                 usuario=usuario,
                 clase=clase,
-                estado=Inscripcion.ESTADO_ESPERA,
+                estado=Inscripcion.Estado.ESPERA,
             )
             return inscripcion, 'espera'
 
@@ -118,25 +118,25 @@ def cancelar_reserva(inscripcion_id, usuario):
         except Inscripcion.DoesNotExist:
             raise ReservaError("Inscripción no encontrada.")
 
-        if inscripcion.estado == Inscripcion.ESTADO_CANCELADA:
+        if inscripcion.estado == Inscripcion.Estado.CANCELADA:
             raise ReservaError("La inscripción ya está cancelada.")
 
         era_reservada = inscripcion.estado in (
-            Inscripcion.ESTADO_RESERVADA,
-            Inscripcion.ESTADO_PENDIENTE_PAGO,
+            Inscripcion.Estado.RESERVADA,
+            Inscripcion.Estado.PENDIENTE_PAGO,
         )
-        inscripcion.estado = Inscripcion.ESTADO_CANCELADA
+        inscripcion.estado = Inscripcion.Estado.CANCELADA
         inscripcion.save()
 
         if era_reservada:
             primera_espera = (
                 Inscripcion.objects.select_for_update()
-                .filter(clase=inscripcion.clase, estado=Inscripcion.ESTADO_ESPERA)
+                .filter(clase=inscripcion.clase, estado=Inscripcion.Estado.ESPERA)
                 .order_by('fecha_inscripcion')
                 .first()
             )
             if primera_espera:
-                primera_espera.estado = Inscripcion.ESTADO_RESERVADA
+                primera_espera.estado = Inscripcion.Estado.RESERVADA
                 primera_espera.save()
 
     return inscripcion
