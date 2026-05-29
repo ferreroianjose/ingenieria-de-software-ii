@@ -8,4 +8,5 @@ urlpatterns = [
     path("inscripcion/<int:inscripcion_id>/pagar/", views.pagar_inscripcion, name="pagar"),
     path("pago/<int:pago_id>/success/", views.success, name="success"),
     path("pago/<int:pago_id>/failure/", views.failure, name="failure"),
+    path("webhooks/mercadopago/", views.mercadopago_webhook, name="mercadopago_webhook"),
 ]

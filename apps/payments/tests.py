@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.contrib.messages import get_messages
@@ -600,6 +600,7 @@ class MercadoPagoServiceTests(TestCase):
         init_point = MercadoPagoService().create_preference(pago, request)
         self.assertIsNone(init_point)
 
+    @override_settings(PUBLIC_WEBHOOK_BASE_URL="")
     @patch("apps.payments.services.mercadopago.SDK")
     def test_create_preference_includes_back_urls_and_external_reference(
         self, mock_sdk_class
@@ -628,6 +629,28 @@ class MercadoPagoServiceTests(TestCase):
         self.assertIn(f"/payments/pago/{pago.id}/failure/", preference_data["back_urls"]["failure"])
         self.assertNotIn("auto_return", preference_data)
 
+    @override_settings(PUBLIC_WEBHOOK_BASE_URL="https://siempregym.example.com")
+    @patch("apps.payments.services.mercadopago.SDK")
+    def test_create_preference_https_public_base_uses_auto_return(self, mock_sdk_class):
+        from apps.payments.services import MercadoPagoService
+
+        pago, request = self._build_single_item_pago()
+        mock_sdk_class.return_value.preference.return_value.create.return_value = {
+            "status": 201,
+            "response": {"init_point": "http://mercadopago.mock/init"},
+        }
+
+        MercadoPagoService().create_preference(pago, request)
+        preference_data = (
+            mock_sdk_class.return_value.preference.return_value.create.call_args[0][0]
+        )
+
+        self.assertEqual(
+            preference_data["back_urls"]["success"],
+            f"https://siempregym.example.com/payments/pago/{pago.id}/success/",
+        )
+        self.assertEqual(preference_data["auto_return"], "approved")
+
     @patch("apps.payments.services.mercadopago.SDK")
     def test_create_preference_uses_sandbox_init_point_when_debug(self, mock_sdk_class):
         # Credenciales de prueba: redirigir al checkout sandbox, no al de producción.
@@ -651,6 +674,7 @@ class MercadoPagoServiceTests(TestCase):
             "https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=x",
         )
 
+    @override_settings(PUBLIC_WEBHOOK_BASE_URL="")
     @patch("apps.payments.services.mercadopago.SDK")
     def test_create_preference_omits_auto_return_on_localhost(self, mock_sdk_class):
         # En desarrollo (http://localhost) MP rechaza auto_return; no lo enviamos.
@@ -734,3 +758,57 @@ class MercadoPagoServiceTests(TestCase):
         )
         request = RequestFactory().get("/")
         return pago, request
+
+
+class MercadoPagoWebhookTests(TestCase):
+    def _sign(self, secret, data_id, request_id, ts):
+        import hashlib
+        import hmac
+
+        manifest = f"id:{data_id};request-id:{request_id};ts:{ts};"
+        v1 = hmac.new(
+            secret.encode(), manifest.encode(), hashlib.sha256
+        ).hexdigest()
+        return f"ts={ts},v1={v1}"
+
+    @override_settings(MERCADO_PAGO_WEBHOOK_SECRET="testsecret")
+    def test_verify_accepts_valid_signature(self):
+        from apps.payments.webhook_verify import verify_mercadopago_webhook
+        from django.test import RequestFactory
+
+        request = RequestFactory().post(
+            "/payments/webhooks/mercadopago/?data.id=999&type=payment",
+            HTTP_X_SIGNATURE=self._sign("testsecret", "999", "req-1", "1704908010"),
+            HTTP_X_REQUEST_ID="req-1",
+        )
+        self.assertTrue(verify_mercadopago_webhook(request))
+
+    @override_settings(MERCADO_PAGO_WEBHOOK_SECRET="testsecret")
+    def test_verify_rejects_invalid_signature(self):
+        from apps.payments.webhook_verify import verify_mercadopago_webhook
+        from django.test import RequestFactory
+
+        request = RequestFactory().post(
+            "/payments/webhooks/mercadopago/?data.id=999",
+            HTTP_X_SIGNATURE="ts=1,v1=bad",
+            HTTP_X_REQUEST_ID="req-1",
+        )
+        self.assertFalse(verify_mercadopago_webhook(request))
+
+    @override_settings(MERCADO_PAGO_WEBHOOK_SECRET="testsecret")
+    @patch("apps.payments.views.mercadopago_service.sync_pago_from_mp_payment_id")
+    def test_webhook_syncs_with_valid_signature(self, mock_sync):
+        url = reverse("payments:mercadopago_webhook")
+        response = self.client.post(
+            f"{url}?data.id=123&type=payment",
+            HTTP_X_SIGNATURE=self._sign("testsecret", "123", "req-2", "1704908010"),
+            HTTP_X_REQUEST_ID="req-2",
+        )
+        self.assertEqual(response.status_code, 200)
+        mock_sync.assert_called_once_with("123")
+
+    @override_settings(MERCADO_PAGO_WEBHOOK_SECRET="testsecret")
+    def test_webhook_returns_401_without_valid_signature(self):
+        url = reverse("payments:mercadopago_webhook")
+        response = self.client.post(f"{url}?data.id=123&type=payment")
+        self.assertEqual(response.status_code, 401)

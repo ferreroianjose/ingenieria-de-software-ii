@@ -87,6 +87,7 @@ Referencia: [Compras de prueba – Checkout Pro](https://www.mercadopago.com.ar/
   - [Tus integraciones](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → **Credenciales de prueba**
   - `MERCADO_PAGO_PUBLIC_KEY`
   - `MERCADO_PAGO_ACCESS_TOKEN`
+  - `PUBLIC_WEBHOOK_BASE_URL`, `MERCADO_PAGO_WEBHOOK_SECRET` (ver `.env.example`)
 
   Reiniciá el contenedor: `docker compose restart web`
 
@@ -98,7 +99,7 @@ Referencia: [Compras de prueba – Checkout Pro](https://www.mercadopago.com.ar/
   - **Contraseña**
   - **User ID** (por si piden código: usá los últimos 6 dígitos)
 
-  Es más fácil usar esto, permite seleccionar la tarjeta de prueba, y no tener que ingresar cada dato de esta manualmente.
+  Es más fácil usar esto, permite seleccionar la tarjeta de prueba, y no tener que ingresar cada dato de esta manualmente. Ya que estás carga dinero al usuario.
 
 3. Reservar y abrir el checkout
 
@@ -112,6 +113,6 @@ Referencia: [Compras de prueba – Checkout Pro](https://www.mercadopago.com.ar/
 
   En el checkout, elegí **Ingresar** e ingresá el **Usuario** y **Contraseña** del comprador de prueba (paso 2).
 
-5. Pagar con tarjeta de prueba
+5. Pagar con dinero en cuenta.
 
-  Elegí alguna de las tarjetas, y pagá con el código de seguridad 123. Sino, ingresá manualmente sus valores para controlar el resultado del pago mediante el nombre del titular. [Fijate acá](https://www.mercadopago.com.ar/developers/es/docs/your-integrations/test/cards).
+   Sino, podés pagar con una tarjeta. Ingresá manualmente sus valores y controlá el resultado del pago mediante el nombre del titular. [Fijate acá](https://www.mercadopago.com.ar/developers/es/docs/your-integrations/test/cards).

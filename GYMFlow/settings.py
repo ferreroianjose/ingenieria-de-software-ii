@@ -28,6 +28,12 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() == "true"
 ALLOWED_HOSTS = os.environ.get(
     "DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]"
 ).split(" ")
+PUBLIC_WEBHOOK_BASE_URL = os.environ.get("PUBLIC_WEBHOOK_BASE_URL", "").rstrip("/")
+CSRF_TRUSTED_ORIGINS = [PUBLIC_WEBHOOK_BASE_URL] if PUBLIC_WEBHOOK_BASE_URL else []
+MERCADO_PAGO_WEBHOOK_SECRET = os.environ.get("MERCADO_PAGO_WEBHOOK_SECRET", "")
+if PUBLIC_WEBHOOK_BASE_URL.startswith("https://"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
 
 # Application definition
 INSTALLED_APPS = [
