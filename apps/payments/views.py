@@ -8,7 +8,7 @@ from django.views.decorators.http import require_POST
 from GYMFlow.access import staff_required
 
 from apps.classes.models import Inscripcion
-from apps.payments.inscripcion_pago import monto_a_cobrar
+from apps.payments.inscripcion_pago import monto_a_cobrar, preparar_pago_mercadopago
 from apps.payments.models import Pago, PagoInscripcion
 from apps.payments.services import ConfirmacionMP, mercadopago_service
 from apps.payments.webhook_verify import verify_mercadopago_webhook
@@ -38,20 +38,7 @@ def pagar_inscripcion(request, inscripcion_id):
         messages.info(request, "Esta inscripción ya está paga.")
         return redirect("classes:mis_reservas")
 
-    # Crear pago en estado pendiente
-    pago = Pago.objects.create(
-        usuario=request.user,
-        periodo=inscripcion.periodo,
-        monto=amount_to_pay,
-        metodo=Pago.Metodo.MERCADOPAGO,
-        estado=Pago.Estado.PENDIENTE,
-    )
-
-    PagoInscripcion.objects.create(
-        pago=pago,
-        inscripcion=inscripcion,
-        monto_aplicado=amount_to_pay
-    )
+    pago = preparar_pago_mercadopago(inscripcion, request.user, amount_to_pay)
 
     # Redirige al usuario a la página de MercadoPago para completar el pago
     init_point = mercadopago_service.create_preference(pago, request)

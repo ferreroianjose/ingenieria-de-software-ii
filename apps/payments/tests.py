@@ -274,6 +274,55 @@ class PaymentLogicTests(TestCase):
         pago_saldo = Pago.objects.filter(estado=Pago.Estado.PENDIENTE).last()
         self.assertEqual(pago_saldo.monto, Decimal("2000.00"))
 
+    @patch("apps.payments.views.mercadopago_service.create_preference")
+    def test_pagar_reutiliza_pago_pendiente_mismo_monto(self, mock_create_preference):
+        mock_create_preference.return_value = "http://mercadopago.mock/init"
+        PrecioDisciplina.objects.create(
+            disciplina=self.disciplina,
+            periodo=self.periodo,
+            monto=Decimal("5000.00"),
+        )
+        url = reverse("payments:pagar", args=[self.inscripcion.id])
+
+        self.client.get(url)
+        primer_pago = Pago.objects.get(usuario=self.user)
+
+        self.client.get(url)
+        self.assertEqual(Pago.objects.filter(usuario=self.user).count(), 1)
+        self.assertEqual(Pago.objects.get(usuario=self.user).pk, primer_pago.pk)
+        self.assertEqual(mock_create_preference.call_count, 2)
+        mock_create_preference.assert_called_with(primer_pago, mock_create_preference.call_args[0][1])
+
+    @patch("apps.payments.views.mercadopago_service.create_preference")
+    def test_pagar_nuevo_pago_si_monto_distinto_anula_pendiente_anterior(self, mock_create_preference):
+        mock_create_preference.return_value = "http://mercadopago.mock/init"
+        PrecioDisciplina.objects.create(
+            disciplina=self.disciplina,
+            periodo=self.periodo,
+            monto=Decimal("4000.00"),
+        )
+        pago_total = Pago.objects.create(
+            usuario=self.user,
+            periodo=self.periodo,
+            monto=Decimal("4000.00"),
+            estado=Pago.Estado.PENDIENTE,
+            metodo=Pago.Metodo.MERCADOPAGO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_total,
+            inscripcion=self.inscripcion,
+            monto_aplicado=Decimal("4000.00"),
+        )
+
+        self.client.get(
+            reverse("payments:pagar", args=[self.inscripcion.id]) + "?modalidad=SENA"
+        )
+
+        pago_total.refresh_from_db()
+        pago_sena = Pago.objects.filter(estado=Pago.Estado.PENDIENTE).get()
+        self.assertEqual(pago_total.estado, Pago.Estado.FALLIDO)
+        self.assertEqual(pago_sena.monto, Decimal("2000.00"))
+
     @patch('apps.payments.views.mercadopago_service.create_preference')
     def test_pagar_inscripcion_creates_pago_inscripcion(self, mock_create_preference):
         # Al pagar, crea Pago + PagoInscripcion con el monto aplicado correcto.

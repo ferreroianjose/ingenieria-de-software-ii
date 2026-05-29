@@ -84,6 +84,52 @@ def resumen_pago_inscripcion(inscripcion):
     }
 
 
+def pago_pendiente(inscripcion, monto):
+    return (
+        Pago.objects.filter(
+            estado=Pago.Estado.PENDIENTE,
+            detalles__inscripcion=inscripcion,
+            monto=monto,
+        )
+        .distinct()
+        .order_by("-pk")
+        .first()
+    )
+
+
+def _anular_otros_pendientes(inscripcion, excepto_pago_id=None):
+    qs = Pago.objects.filter(
+        estado=Pago.Estado.PENDIENTE,
+        detalles__inscripcion=inscripcion,
+    )
+    if excepto_pago_id is not None:
+        qs = qs.exclude(pk=excepto_pago_id)
+    qs.update(estado=Pago.Estado.FALLIDO)
+
+
+def preparar_pago_mercadopago(inscripcion, usuario, monto):
+    """Reutiliza un Pago PENDIENTE (mismo monto) o crea uno nuevo; anula otros pendientes."""
+    pago = pago_pendiente(inscripcion, monto)
+    if pago:
+        _anular_otros_pendientes(inscripcion, excepto_pago_id=pago.pk)
+        return pago
+
+    _anular_otros_pendientes(inscripcion)
+    pago = Pago.objects.create(
+        usuario=usuario,
+        periodo=inscripcion.periodo,
+        monto=monto,
+        metodo=Pago.Metodo.MERCADOPAGO,
+        estado=Pago.Estado.PENDIENTE,
+    )
+    PagoInscripcion.objects.create(
+        pago=pago,
+        inscripcion=inscripcion,
+        monto_aplicado=monto,
+    )
+    return pago
+
+
 def monto_a_cobrar(inscripcion, modalidad):
     """modalidad: TOTAL, SENA o SALDO."""
     base = precio_base_inscripcion(inscripcion)
