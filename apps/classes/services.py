@@ -124,6 +124,21 @@ def ocurrencias_clase_en_periodo(clase, periodo, desde_fecha=None):
     return total
 
 
+def desde_fecha_cobro_mensual(periodo, fecha=None):
+    """Desde qué día se cuentan las clases de un abono mensual."""
+    hoy = fecha or timezone.localdate()
+    if hoy < periodo.fecha_inicio_periodo:
+        return periodo.fecha_inicio_periodo
+    return hoy
+
+
+def clases_mensuales_cobrables(clase, periodo, fecha=None):
+    """Ocurrencias futuras del horario dentro del período (base del cobro mensual)."""
+    return ocurrencias_clase_en_periodo(
+        clase, periodo, desde_fecha=desde_fecha_cobro_mensual(periodo, fecha)
+    )
+
+
 def obtener_periodo_activo_si_hay():
     """Período vigente hoy, o None si no hay ninguno (no lanza excepción)."""
     from apps.payments.periodos import periodo_vigente
@@ -208,6 +223,10 @@ def validar_intencion_inscripcion(usuario, clase_id, periodo, tipo, fecha_clase=
             tipo=Inscripcion.Tipo.CLASE_SUELTA,
         )
     else:
+        if clases_mensuales_cobrables(clase, periodo) <= 0:
+            raise ReservaError(
+                "No quedan clases de este horario en el mes elegido."
+            )
         dup_qs = Inscripcion.objects.filter(
             usuario=usuario, clase=clase, periodo=periodo, tipo=tipo
         )

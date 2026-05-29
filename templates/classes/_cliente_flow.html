@@ -1,5 +1,26 @@
 {% extends 'base.html' %}
 
+{% block page_chrome_head %}
+<meta name="color-scheme" id="meta-color-scheme" content="dark">
+{% endblock %}
+
+{% block page_chrome_boot %}
+<style id="page-chrome-boot">
+	html,
+	body {
+		color-scheme: dark;
+	}
+	#page-canvas {
+		background: #000000;
+	}
+</style>
+{% endblock %}
+
+{% block footer_variant %}dark{% endblock %}
+{% block color_scheme %}dark{% endblock %}
+{% block page_canvas_background %}background:#000000;{% endblock %}
+{% block page_canvas_style %}background:#000000;{% endblock %}
+
 {% block content %}
 <div
   class="internal-page cliente-flow"

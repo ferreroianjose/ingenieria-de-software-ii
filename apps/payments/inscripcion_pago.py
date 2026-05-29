@@ -99,12 +99,13 @@ def precio_disciplina_periodo(disciplina, periodo):
 
 
 def _desde_fecha_cobro(periodo, tipo):
+    from apps.classes.services import desde_fecha_cobro_mensual
+
+    if tipo == Inscripcion.Tipo.MENSUAL:
+        return desde_fecha_cobro_mensual(periodo)
     from django.utils import timezone
 
-    hoy = timezone.localdate()
-    if tipo == Inscripcion.Tipo.MENSUAL and hoy < periodo.fecha_inicio_periodo:
-        return periodo.fecha_inicio_periodo
-    return hoy
+    return timezone.localdate()
 
 
 def precio_base_para_clase(clase, periodo, tipo):
@@ -155,7 +156,10 @@ def resumen_abono_mensual(clase, periodo, desde_fecha=None, tipo=None):
 def resumen_abono_para_clase(clase, periodo, tipo):
     if tipo != Inscripcion.Tipo.MENSUAL:
         return None
-    return resumen_abono_mensual(clase, periodo, tipo=tipo)
+    resumen = resumen_abono_mensual(clase, periodo, tipo=tipo)
+    if resumen["cantidad_clases"] <= 0:
+        return None
+    return resumen
 
 
 def resumen_abono_para_inscripcion(inscripcion):

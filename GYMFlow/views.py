@@ -1,11 +1,14 @@
-from collections import OrderedDict
-
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
+from GYMFlow.page_chrome import (
+    PAGE_CHROME_DASHBOARD_CLIENTE,
+    PAGE_CHROME_LIGHT,
+    merge_page_chrome,
+)
 from apps.classes.models import Disciplina, Inscripcion
 from apps.classes.services import proxima_ocurrencia
 from apps.payments.models import Pago, PeriodoCobro
@@ -97,6 +100,71 @@ def _proximas_clases_para_dashboard(user, limite=4):
     return [{k: v for k, v in item.items() if k != "_sort_key"} for item in proximas[:limite]]
 
 
+def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
+    clase = inscripcion.clase
+    disciplina = getattr(clase, "disciplina", None)
+    periodo = inscripcion.periodo
+    if not disciplina or not periodo:
+        return None
+
+    if periodo.fecha_inicio_periodo > hoy:
+        return {
+            "label": disciplina.nombre,
+            "tag": "Próximo",
+            "subtitle": periodo.nombre,
+            "is_future": True,
+        }
+
+    if vigente and periodo.id == vigente.id:
+        return {
+            "label": disciplina.nombre,
+            "tag": "Activo",
+            "subtitle": f"Este mes · {periodo.nombre}",
+            "is_future": False,
+        }
+
+    if periodo_anterior and periodo.id == periodo_anterior.id:
+        return {
+            "label": disciplina.nombre,
+            "tag": "Activo",
+            "subtitle": f"Mes anterior · {periodo.nombre}",
+            "is_future": False,
+        }
+
+    return {
+        "label": disciplina.nombre,
+        "tag": "Activo",
+        "subtitle": periodo.nombre,
+        "is_future": False,
+    }
+
+
+def _hint_membresia_dashboard(items):
+    activas = sum(1 for item in items if not item["is_future"])
+    proximas = sum(1 for item in items if item["is_future"])
+    if activas and proximas:
+        return (
+            f"{activas} disciplina{'s' if activas != 1 else ''} este mes · "
+            f"{proximas} confirmada{'s' if proximas != 1 else ''} para el próximo"
+        )
+    if proximas:
+        return (
+            f"{proximas} disciplina{'s' if proximas != 1 else ''} "
+            f"confirmada{'s' if proximas != 1 else ''} para el próximo mes"
+        )
+    if activas:
+        return f"{activas} disciplina{'s' if activas != 1 else ''} incluidas este mes"
+    return "Tus clases mensuales están al día"
+
+
+def _titulo_membresia_dashboard(*, tiene_activo, tiene_proximo):
+    if tiene_activo and tiene_proximo:
+        return "Este mes y el próximo"
+    if tiene_proximo:
+        return "Próximo mes confirmado"
+    return "Mes en curso"
+
+
 def _estado_cliente_para_dashboard(user):
     hoy = timezone.localdate()
     vigente = periodo_vigente(hoy)
@@ -104,8 +172,9 @@ def _estado_cliente_para_dashboard(user):
         return {
             "show_membership_status": False,
             "membership_status_label": "",
-            "status_badges": [],
-            "membership_action_label": "",
+            "membership_status_hint": "",
+            "membership_items": [],
+            "membership_pending_payments": 0,
         }
 
     inscripciones_mensuales = Inscripcion.objects.filter(
@@ -125,52 +194,64 @@ def _estado_cliente_para_dashboard(user):
     tiene_anterior_valido = bool(
         periodo_anterior and inscripciones_mensuales.filter(periodo=periodo_anterior).exists()
     )
-    es_abonado = tiene_vigente or tiene_anterior_valido
+    tiene_futuro = inscripciones_mensuales.filter(periodo__fecha_inicio_periodo__gt=hoy).exists()
+    es_abonado = tiene_vigente or tiene_anterior_valido or tiene_futuro
     if not es_abonado:
         return {
             "show_membership_status": False,
             "membership_status_label": "",
-            "status_badges": [],
-            "membership_action_label": "",
+            "membership_status_hint": "",
+            "membership_items": [],
+            "membership_pending_payments": 0,
         }
 
-    periodos_visibles = [vigente]
+    periodos_visibles = {vigente.id}
     if tiene_anterior_valido and periodo_anterior:
-        periodos_visibles.append(periodo_anterior)
+        periodos_visibles.add(periodo_anterior.id)
+    periodos_visibles.update(
+        inscripciones_mensuales.filter(periodo__fecha_inicio_periodo__gt=hoy).values_list(
+            "periodo_id", flat=True
+        )
+    )
 
     inscripciones = (
-        inscripciones_mensuales.filter(periodo__in=periodos_visibles)
-        .select_related("clase__disciplina")
-        .order_by("fecha_inscripcion")
+        inscripciones_mensuales.filter(periodo_id__in=periodos_visibles)
+        .select_related("clase__disciplina", "periodo")
+        .order_by("periodo__fecha_inicio_periodo", "clase__disciplina__nombre")
     )
-    por_disciplina = OrderedDict()
-    for inscripcion in inscripciones:
-        clase = inscripcion.clase
-        disciplina = getattr(clase, "disciplina", None)
-        if not disciplina:
-            continue
-        if disciplina.nombre not in por_disciplina:
-            por_disciplina[disciplina.nombre] = inscripcion.fecha_inscripcion
 
-    badges = [
-        {
-            "label": nombre,
-            "subtitle": f"Desde {_mes_ano_es(fecha)}",
-        }
-        for nombre, fecha in por_disciplina.items()
-    ]
+    items = []
+    vistos = set()
+    for inscripcion in inscripciones:
+        disciplina = getattr(inscripcion.clase, "disciplina", None)
+        if not disciplina or not inscripcion.periodo_id:
+            continue
+        clave = (disciplina.id, inscripcion.periodo_id)
+        if clave in vistos:
+            continue
+        vistos.add(clave)
+        item = _item_membresia_dashboard(
+            inscripcion,
+            hoy=hoy,
+            vigente=vigente,
+            periodo_anterior=periodo_anterior,
+        )
+        if item:
+            items.append(item)
 
     pagos_pendientes = Pago.objects.filter(usuario=user, estado=Pago.Estado.PENDIENTE).count()
-    if pagos_pendientes:
-        accion = f"{pagos_pendientes} pago{'s' if pagos_pendientes != 1 else ''} pendiente{'s' if pagos_pendientes != 1 else ''}"
-    else:
-        accion = "Ver mis reservas"
+    tiene_proximo = any(item["is_future"] for item in items)
+    tiene_activo = any(not item["is_future"] for item in items)
 
     return {
         "show_membership_status": True,
-        "membership_status_label": "Con clases activas" if badges else "Sin clases activas",
-        "status_badges": badges[:3],
-        "membership_action_label": accion,
+        "membership_status_label": _titulo_membresia_dashboard(
+            tiene_activo=tiene_activo,
+            tiene_proximo=tiene_proximo,
+        ),
+        "membership_status_hint": _hint_membresia_dashboard(items),
+        "membership_items": items,
+        "membership_pending_payments": pagos_pendientes,
     }
 
 
@@ -241,12 +322,14 @@ def dashboard(request):
         request,
         "dashboards/cliente.html",
         {
+            **merge_page_chrome(PAGE_CHROME_DASHBOARD_CLIENTE),
             "next_classes": _proximas_clases_para_dashboard(user),
             "featured_disciplines": _cartelera_para_dashboard(),
             "payment_history": _historial_pagos_para_dashboard(user),
             "membership_status_label": estado["membership_status_label"],
-            "status_badges": estado["status_badges"],
-            "membership_action_label": estado["membership_action_label"],
+            "membership_status_hint": estado["membership_status_hint"],
+            "membership_items": estado["membership_items"],
+            "membership_pending_payments": estado["membership_pending_payments"],
             "show_membership_status": estado["show_membership_status"],
             "activities_url": reverse("classes:actividades"),
             "my_reservations_url": reverse("classes:mis_reservas"),
@@ -257,4 +340,4 @@ def dashboard(request):
 
 @login_required
 def faq(request):
-    return render(request, "support/faq.html")
+    return render(request, "support/faq.html", merge_page_chrome(PAGE_CHROME_LIGHT))

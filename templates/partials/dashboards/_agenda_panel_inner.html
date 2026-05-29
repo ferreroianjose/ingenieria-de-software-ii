@@ -1,7 +1,7 @@
 {% comment %}Contenido de Tu agenda (sin calendario; va en _agenda_panel_shell).{% endcomment %}
 <div class="relative z-10">
   <div class="flex flex-wrap items-start justify-between gap-3">
-    <div class="min-w-0 pr-24 md:pr-0">
+    <div class="min-w-0 dash-agenda-head">
       <p class="text-xs font-black uppercase tracking-widest text-secondary-300">Tu agenda</p>
       <h2 class="dash-title !text-white mt-1">Tus próximas clases</h2>
     </div>
@@ -10,7 +10,7 @@
     </a>
   </div>
 
-  <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="dash-agenda-grid mt-6">
     {% for item in next_classes %}
       <a href="{{ item.detail_url }}" class="dash-agenda-class">
         <div class="min-w-0">
@@ -21,7 +21,7 @@
         </div>
       </a>
     {% empty %}
-      <div class="dash-agenda-class p-6 md:col-span-2">
+      <div class="dash-agenda-class p-6 dash-agenda-grid__full">
         <p class="text-sm font-semibold text-white/75 max-w-md">
           No tenés clases próximas cargadas. Cuando reserves una, te va a aparecer acá.
         </p>

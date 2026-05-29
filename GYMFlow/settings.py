@@ -86,6 +86,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.payments.context_processors.cliente_creditos",
+                "GYMFlow.context_processors.page_chrome",
             ],
         },
     },

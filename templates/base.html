@@ -4,8 +4,21 @@
 
 <head>
 	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="theme-color" content="#101828">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+	{% block page_chrome_head %}
+	<meta name="color-scheme" id="meta-color-scheme" content="{% firstof color_scheme 'dark' %}">
+	{% endblock %}
+	{% block page_chrome_boot %}
+	<style id="page-chrome-boot">
+		html,
+		body {
+			color-scheme: {% firstof color_scheme 'dark' %};
+		}
+		#page-canvas {
+			{% firstof page_background '' %}
+		}
+	</style>
+	{% endblock %}
 	<title>
 		SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
 	</title>
@@ -123,11 +136,23 @@
 
 	      /* Flujo cliente (cf-*): una superficie oscura + ítems glass por pantalla */
 	      	      .internal-page.cliente-flow {
-	      	        @apply text-on-dark-bg-500 bg-dark-bg-500;
+	      	        @apply text-on-dark-bg-500 bg-black;
+	      	        --cf-rim-strong: rgba(255, 255, 255, 0.24);
+	      	        --cf-rim-soft: rgba(255, 255, 255, 0.1);
+	      	        --cf-glow-magenta: rgba(255, 0, 255, 0.14);
+	      	        --cf-text-muted: rgba(255, 255, 255, 0.7);
+	      	        --cf-text-soft: rgba(255, 255, 255, 0.56);
+	      	        --cf-accent-line: linear-gradient(
+	      	          90deg,
+	      	          transparent 0%,
+	      	          rgba(223, 2, 255, 0.55) 22%,
+	      	          rgba(92, 225, 230, 0.5) 78%,
+	      	          transparent 100%
+	      	        );
 	      	      }
 	      	      .internal-page.cliente-flow::before {
 	      	        content: '';
-	      	        @apply pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-primary-400/15 to-transparent;
+	      	        @apply pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-primary-400/20 to-transparent;
 	      	      }
 	      	      #main-content:has(.internal-page.cliente-flow)::before {
 	      	        @apply hidden;
@@ -142,12 +167,32 @@
 	      	        @apply inline-flex shrink-0 items-center justify-center rounded-full bg-primary-400 px-5 py-2 text-sm font-bold text-white no-underline transition-colors hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-400/40 focus:ring-offset-2 focus:ring-offset-[rgb(12,16,18)];
 	      	      }
 	      	      .cliente-flow .cf-surface {
-	      	        @apply relative rounded-4xl border-white/32 p-6 sm:p-8;
+	      	        @apply relative overflow-hidden bg-gray-950 rounded-4xl p-6 sm:p-8;
 	      	        box-shadow:
-	      	          -1px -1px 0px 0 rgba(255, 255, 255, 0.05),
-	      	          0 0 10px rgba(255, 255, 255, 0.1),
-	      	          0 0 45px rgba(255, 255, 255, 0.15);
-	      	        /* filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.18)) drop-shadow(0 0 48px rgba(255, 255, 255, 0.08)); */
+	      	          inset -1px -1px 0 0 var(--cf-rim-strong),
+	      	          inset 1px 1px 0 0 var(--cf-rim-soft),
+	      	          inset 0 0 50px rgba(255, 255, 255, 0.06),
+	      	          0 0 12px var(--cf-glow-magenta),
+	      	          0 0 40px rgba(255, 0, 255, 0.12);
+	      	        filter: drop-shadow(0 0 24px rgba(255, 255, 255, 0.16)) drop-shadow(0 0 48px rgba(255, 255, 255, 0.07));
+	      	      }
+	      	      .cliente-flow .cf-surface::before {
+	      	        content: '';
+	      	        position: absolute;
+	      	        top: 0;
+	      	        left: 8%;
+	      	        right: 8%;
+	      	        height: 1px;
+	      	        background: var(--cf-accent-line);
+	      	        pointer-events: none;
+	      	        z-index: 11;
+	      	      }
+	      	      .cliente-flow .cf-surface::after {
+	      	        content: '';
+	      	        position: absolute;
+	      	        inset: 0;
+	      	        background: linear-gradient(-135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 12%);
+	      	        pointer-events: none;
 	      	      }
 	      	      .cliente-flow .cf-surface__body {
 	      	        @apply relative z-10;
@@ -162,13 +207,15 @@
 	      	        @apply text-4xl sm:text-5xl leading-[0.95];
 	      	      }
 	      	      .cliente-flow .cf-sub {
-	      	        @apply mt-2 text-sm font-medium text-white/65;
+	      	        @apply mt-2 text-sm font-medium;
+	      	        color: var(--cf-text-muted);
 	      	      }
 	      	      .cliente-flow .cf-item {
-	      	        @apply block rounded-3xl border border-white/20 p-5 no-underline shadow-fair-lg transition-all hover:border-primary-400/60 sm:p-6;
+	      	        @apply block rounded-3xl border p-5 no-underline shadow-fair-lg transition-all hover:border-primary-400/60 sm:p-6;
+	      	        border-color: rgba(255, 255, 255, 0.22);
 	      	        background:
-	      	          radial-gradient(ellipse 80% 60% at 100% 0%, oklch(0.702 0.322 328.37 / 0.2), transparent 55%),
-	      	          rgba(0, 0, 0, 0.3);
+	      	          radial-gradient(ellipse 80% 60% at 100% 0%, oklch(0.702 0.322 328.37 / 0.22), transparent 55%),
+	      	          rgba(0, 0, 0, 0.34);
 	      	        box-shadow: var(--shadow-fair-lg), 0 0 24px oklch(0.702 0.322 328.37 / 0.14);
 	      	      }
 	      	      .cliente-flow .cf-item:hover {
@@ -187,7 +234,8 @@
 	      	        @apply text-3xl sm:text-4xl;
 	      	      }
 	      	      .cliente-flow .cf-item__meta {
-	      	        @apply mt-1.5 text-sm text-white/55;
+	      	        @apply mt-1.5 text-sm;
+	      	        color: rgba(255, 255, 255, 0.62);
 	      	      }
 	      	      .cliente-flow .cf-item__foot {
 	      	        @apply mt-4 flex flex-wrap items-center justify-between gap-2;
@@ -202,10 +250,12 @@
 	      	        @apply border-secondary-300/35 bg-secondary-400/15 text-secondary-100;
 	      	      }
 	      	      .cliente-flow .cf-meta {
-	      	        @apply rounded-2xl border border-white/10 bg-black/25 p-4;
+	      	        @apply rounded-2xl border p-4;
+	      	        border-color: rgba(255, 255, 255, 0.16);
+	      	        background: rgba(0, 0, 0, 0.36);
 	      	      }
 	      	      .cliente-flow .cf-meta__label {
-	      	        @apply mb-1 text-xs font-black uppercase tracking-widest text-primary-300/75;
+	      	        @apply mb-1 text-xs font-black uppercase tracking-widest text-primary-300/85;
 	      	      }
 	      	      .cliente-flow .cf-meta__value {
 	      	        @apply font-bold text-white text-sm;
@@ -216,8 +266,13 @@
 	      	      .cliente-flow .cf-choices {
 	      	        @apply flex flex-col gap-2;
 	      	      }
+	      	      .cliente-flow .cf-choices > p {
+	      	        color: rgba(255, 255, 255, 0.66);
+	      	      }
 	      	      .cliente-flow .cf-choice {
-	      	        @apply flex cursor-pointer items-start gap-3 rounded-2xl border border-white/12 bg-black/20 px-4 py-3 transition-colors has-[:checked]:border-primary-400/60 has-[:checked]:bg-primary-400/10;
+	      	        @apply flex cursor-pointer items-start gap-3 rounded-2xl border px-4 py-3 transition-colors has-[:checked]:border-primary-400/60 has-[:checked]:bg-primary-400/10;
+	      	        border-color: rgba(255, 255, 255, 0.18);
+	      	        background: rgba(0, 0, 0, 0.32);
 	      	      }
 	      	      .cliente-flow .cf-choice__input {
 	      	        @apply sr-only;
@@ -233,7 +288,8 @@
 	      	        @apply block text-sm font-bold text-white;
 	      	      }
 	      	      .cliente-flow .cf-choice__hint {
-	      	        @apply mt-0.5 block text-xs text-white/55;
+	      	        @apply mt-0.5 block text-xs;
+	      	        color: rgba(255, 255, 255, 0.66);
 	      	      }
 	      	      .cliente-flow .cf-pay {
 	      	        @apply w-full overflow-hidden rounded-3xl border border-white/12 bg-black/30 text-left transition-all hover:border-primary-400/45 p-0;
@@ -248,19 +304,45 @@
 	      	        @apply py-12 text-center text-white/70;
 	      	      }
 	      	      .cliente-flow .cf-stepper {
-	      	        @apply flex w-full min-w-0 items-center rounded-4xl border border-white/10 bg-black/35 px-4 py-4 backdrop-blur-sm sm:px-5;
+	      	        @apply relative flex w-full min-w-0 items-center overflow-hidden rounded-4xl border px-4 py-4 backdrop-blur-sm sm:px-5;
+	      	        border-color: rgba(255, 255, 255, 0.14);
+	      	        background: rgba(3, 7, 18, 0.88);
+	      	        box-shadow:
+	      	          inset -1px -1px 0 0 var(--cf-rim-strong),
+	      	          inset 1px 1px 0 0 var(--cf-rim-soft),
+	      	          inset 0 0 28px rgba(255, 255, 255, 0.04),
+	      	          0 0 20px var(--cf-glow-magenta);
+	      	      }
+	      	      .cliente-flow .cf-stepper::before {
+	      	        content: '';
+	      	        position: absolute;
+	      	        top: 0;
+	      	        left: 6%;
+	      	        right: 6%;
+	      	        height: 1px;
+	      	        background: var(--cf-accent-line);
+	      	        pointer-events: none;
+	      	      }
+	      	      .cliente-flow .cf-stepper::after {
+	      	        content: '';
+	      	        position: absolute;
+	      	        inset: 0;
+	      	        background: linear-gradient(-135deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0) 14%);
+	      	        pointer-events: none;
 	      	      }
 	      	      .cliente-flow .cf-step {
-	      	        @apply flex shrink-0 items-center gap-1.5 sm:gap-2;
+	      	        @apply relative z-10 flex shrink-0 items-center gap-1.5 sm:gap-2;
 	      	      }
 	      	      .cliente-flow .cf-step__connector {
-	      	        @apply flex min-w-2 flex-1 items-center px-1;
+	      	        @apply relative z-10 flex min-w-2 flex-1 items-center px-1;
 	      	      }
 	      	      .cliente-flow .cf-step__dot {
 	      	        @apply flex size-8 items-center justify-center rounded-full border-2 text-[10px] font-black sm:size-9;
 	      	      }
 	      	      .cliente-flow .cf-step__dot.is-done {
-	      	        @apply border-primary-400 bg-primary-400 text-white;
+	      	        border-color: rgba(223, 2, 255, 0.55);
+	      	        background: rgba(223, 2, 255, 0.22);
+	      	        color: rgba(255, 255, 255, 0.88);
 	      	      }
 	      	      .cliente-flow .cf-step__dot.is-current {
 	      	        background-color: rgb(12, 16, 18);
@@ -270,19 +352,21 @@
 	      	        @apply border-white/20 text-white/40;
 	      	      }
 	      	      .cliente-flow .cf-step__label {
-	      	        @apply hidden text-[10px] font-black uppercase tracking-wider text-white/45 sm:block;
+	      	        @apply hidden text-[10px] font-black uppercase tracking-wider sm:block;
+	      	        color: rgba(255, 255, 255, 0.48);
 	      	      }
 	      	      .cliente-flow .cf-step__label.is-current {
 	      	        @apply text-primary-300;
 	      	      }
 	      	      .cliente-flow .cf-step__label.is-done {
-	      	        @apply text-white/75;
+	      	        color: rgba(255, 255, 255, 0.68);
 	      	      }
 	      	      .cliente-flow .cf-step__line {
-	      	        @apply block h-0.5 w-full rounded-full bg-white/15;
+	      	        @apply block h-0.5 w-full rounded-full;
+	      	        background: rgba(255, 255, 255, 0.16);
 	      	      }
 	      	      .cliente-flow .cf-step__line.is-done {
-	      	        @apply bg-primary-400/75;
+	      	        background: rgba(223, 2, 255, 0.42);
 	      	      }
 	      	      .cliente-flow .cf-reserva {
 	      	        @apply flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between;
@@ -345,12 +429,6 @@
         }
         .internal-page__content {
           @apply max-w-7xl mx-auto;
-        }
-        .internal-page::before {
-          content: '';
-          @apply pointer-events-none absolute inset-x-0 -z-10 bg-gradient-to-b from-primary-100/55 via-primary-50/25 to-transparent;
-          top: -6rem;
-          height: calc(20rem + 6rem);
         }
         @media (min-width: 768px) {
           .internal-page::before {
@@ -586,6 +664,13 @@
 	      .modal-footer {
 	        @apply isolate;
 	      }
+	      .modal-footer__ambient {
+	        position: absolute;
+	        inset: 0;
+	        z-index: 0;
+	        overflow: hidden;
+	        pointer-events: none;
+	      }
 	      
 	      /* Formularios */
 	      label {
@@ -631,20 +716,156 @@
 	      .hide-scroll::-webkit-scrollbar { display: none; }
 	      .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
 
-	      /* Dashboard cliente: estilos globales para evitar quiebres en swaps HTMX */
+	      /* Dashboard cliente: layout por ancho del contenedor (sidebar incluido). */
 	      .dashboard-shell {
-	        @apply min-h-screen w-full mx-auto px-4 md:px-4 lg:px-8 py-8 relative z-10 bg-white;
-	        background:
-	          radial-gradient(circle at 8% 0%, rgba(223, 2, 255, 0.14), transparent 32%),
-	          radial-gradient(circle at 92% 10%, rgba(92, 225, 230, 0.14), transparent 28%),
-	          linear-gradient(180deg, #ffffff 0%, #f8f9ff 40%, #f5f7ff 100%);
+	        @apply min-h-screen w-full mx-auto px-4 md:px-4 lg:px-8 py-8 relative z-10;
+	        overflow-x: hidden;
+	      }
+	      @supports (overflow: clip) {
+	        .dashboard-shell {
+	          overflow-x: clip;
+	        }
 	      }
 	      .dashboard-content {
-	        @apply max-w-6xl mx-auto space-y-6;
+	        @apply w-full max-w-6xl mx-auto space-y-6;
+	        container-type: inline-size;
+	        container-name: dashboard;
+	      }
+
+	      .dash-layout-head,
+	      .dash-layout-bottom {
+	        display: grid;
+	        gap: 1.5rem;
+	        grid-template-columns: 1fr;
+	      }
+	      .dash-layout-head > *,
+	      .dash-layout-bottom > * {
+	        min-width: 0;
+	      }
+	      @container dashboard (min-width: 44rem) {
+	        .dash-layout-head {
+	          grid-template-columns: minmax(18rem, 20rem) minmax(0, 1fr);
+	          align-items: stretch;
+	        }
+	      }
+	      @container dashboard (min-width: 52rem) {
+	        .dash-layout-bottom {
+	          grid-template-columns: minmax(0, 1.35fr) minmax(17.5rem, 1fr);
+	          align-items: start;
+	        }
+	      }
+
+	      .dash-badges-grid {
+	        display: grid;
+	        gap: 0.75rem;
+	        grid-template-columns: 1fr;
+	      }
+	      @container dashboard (min-width: 30rem) {
+	        .dash-badges-grid {
+	          grid-template-columns: repeat(2, minmax(0, 1fr));
+	        }
+	        .dash-badges-grid__full {
+	          grid-column: 1 / -1;
+	        }
+	      }
+
+	      .dash-agenda-head {
+	        padding-right: 6rem;
+	      }
+	      @container dashboard (min-width: 48rem) {
+	        .dash-agenda-head {
+	          padding-right: 0;
+	        }
+	      }
+	      .dash-agenda-grid {
+	        display: grid;
+	        gap: 1rem;
+	        grid-template-columns: 1fr;
+	      }
+	      @container dashboard (min-width: 36rem) {
+	        .dash-agenda-grid {
+	          grid-template-columns: repeat(2, minmax(0, 1fr));
+	        }
+	        .dash-agenda-grid__full {
+	          grid-column: 1 / -1;
+	        }
+	      }
+
+	      .dash-cartelera-title-break {
+	        display: inline;
+	      }
+	      @container dashboard (min-width: 36rem) {
+	        .dash-cartelera-title-break {
+	          display: none;
+	        }
+	      }
+
+	      @container dashboard (min-width: 42rem) {
+	        .dashboard-shell .dash-panel {
+	          @apply p-8;
+	        }
+	        .dashboard-shell .dash-title {
+	          @apply text-3xl;
+	        }
+	        .dash-cartelera-card__body {
+	          padding: 1.75rem;
+	        }
+	        .dash-cartelera-card__title {
+	          font-size: 1.875rem;
+	          line-height: 2.25rem;
+	        }
+	        .dash-cartelera-card__subtitle {
+	          font-size: 0.875rem;
+	          line-height: 1.25rem;
+	        }
+	      }
+	      @container dashboard (min-width: 48rem) {
+	        .dashboard-shell .dash-panel {
+	          @apply rounded-6xl;
+	        }
 	      }
 	      .dash-panel {
-	        @apply rounded-5xl md:rounded-6xl border shadow-fair-lg p-6 sm:p-8 relative overflow-hidden;
+	        @apply rounded-5xl border shadow-fair-lg p-6 relative overflow-hidden;
+	        isolation: isolate;
+	        -webkit-transform: translateZ(0);
+	        transform: translateZ(0);
 	        transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease, background-color 260ms ease;
+	      }
+	      .dash-qr-box {
+	        width: min(100%, 13rem);
+	        aspect-ratio: 1;
+	        margin-inline: auto;
+	      }
+	      .dash-payment-row {
+	        min-width: 0;
+	      }
+	      .dash-payment-row__meta {
+	        min-width: 0;
+	      }
+	      .dash-payment-row__meta p {
+	        overflow: hidden;
+	        text-overflow: ellipsis;
+	        white-space: nowrap;
+	      }
+	      .dash-payment-row__amount {
+	        flex-shrink: 0;
+	      }
+	      @container dashboard (max-width: 60rem) {
+	        .dash-layout-bottom .dash-payment-row {
+	          gap: 0.75rem;
+	        }
+	        .dash-layout-bottom .dash-payment-row__amount {
+	          font-size: 1rem;
+	          line-height: 1.5rem;
+	        }
+	      }
+	      .dash-panel__ambient {
+	        position: absolute;
+	        inset: 0;
+	        z-index: 0;
+	        overflow: hidden;
+	        border-radius: inherit;
+	        pointer-events: none;
 	      }
 	      .dash-panel:hover {
 	        transform: translateY(-2px);
@@ -666,10 +887,142 @@
 	          linear-gradient(160deg, #161a28 0%, #0c1018 55%, #080b12 100%);
 	        box-shadow:
 	          0 14px 38px rgba(10, 14, 24, 0.55),
-	          0 0 28px rgba(223, 2, 255, 0.22);
+	          inset 0 0 28px rgba(223, 2, 255, 0.14);
+	      }
+	      .dash-panel-premium {
+	        border-color: rgba(92, 225, 230, 0.38);
+	        color: #fff;
+	        background:
+	          radial-gradient(circle at 100% 0%, rgba(223, 2, 255, 0.42), transparent 38%),
+	          radial-gradient(circle at 0% 100%, rgba(92, 225, 230, 0.28), transparent 42%),
+	          linear-gradient(152deg, #1b1429 0%, #101525 42%, #090d16 100%);
+	        box-shadow:
+	          0 18px 44px rgba(10, 14, 24, 0.58),
+	          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+	          inset 0 0 36px rgba(223, 2, 255, 0.12);
+	      }
+	      .dash-membership-shimmer {
+	        position: absolute;
+	        inset: 0;
+	        background: linear-gradient(
+	          115deg,
+	          transparent 35%,
+	          rgba(255, 255, 255, 0.05) 50%,
+	          transparent 65%
+	        );
+	        opacity: 0.8;
+	        pointer-events: none;
+	      }
+	      .dash-membership-kicker__label {
+	        font-size: 0.6875rem;
+	        font-weight: 800;
+	        letter-spacing: 0.16em;
+	        text-transform: uppercase;
+	        color: rgba(234, 234, 240, 0.62);
+	      }
+	      .dash-membership-hint {
+	        font-size: 0.875rem;
+	        font-weight: 600;
+	        line-height: 1.45;
+	        color: rgba(234, 234, 240, 0.72);
+	      }
+	      .dash-membership-mark {
+	        position: relative;
+	        display: grid;
+	        place-items: center;
+	        width: 3.5rem;
+	        height: 3.5rem;
+	        flex-shrink: 0;
+	        align-self: center;
+	        color: rgba(255, 255, 255, 0.92);
+	      }
+	      .dash-membership-mark::before {
+	        content: "";
+	        position: absolute;
+	        inset: 0;
+	        border-radius: 9999px;
+	        border: 1px solid rgba(92, 225, 230, 0.45);
+	        background:
+	          radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.16), transparent 55%),
+	          rgba(255, 255, 255, 0.04);
+	        box-shadow: inset 0 0 20px rgba(223, 2, 255, 0.18);
+	      }
+	      .dash-membership-mark svg {
+	        position: relative;
+	        z-index: 1;
+	        filter: drop-shadow(0 0 8px rgba(92, 225, 230, 0.35));
+	      }
+	      .dash-membership-alert {
+	        border-radius: 9999px;
+	        border: 1px solid rgba(255, 196, 86, 0.35);
+	        background: rgba(255, 196, 86, 0.12);
+	        padding: 0.625rem 1rem;
+	        font-size: 0.8125rem;
+	        font-weight: 700;
+	        color: rgba(255, 232, 170, 0.95);
+	      }
+	      .dash-membership-list {
+	        display: grid;
+	        gap: 0.75rem;
+	      }
+	      @container dashboard (min-width: 36rem) {
+	        .dash-membership-list {
+	          grid-template-columns: repeat(2, minmax(0, 1fr));
+	        }
+	      }
+	      .dash-membership-item {
+	        position: relative;
+	        overflow: hidden;
+	        border-radius: 1.25rem;
+	        border: 1px solid rgba(255, 255, 255, 0.12);
+	        padding: 0.875rem 1rem;
+	        background: rgba(255, 255, 255, 0.05);
+	        backdrop-filter: blur(12px);
+	        -webkit-backdrop-filter: blur(12px);
+	      }
+	      .dash-membership-item__accent {
+	        position: absolute;
+	        inset: 0 auto 0 0;
+	        width: 3px;
+	        background: linear-gradient(180deg, #df02ff 0%, #5ce1e6 100%);
+	      }
+	      .dash-membership-item--future .dash-membership-item__accent {
+	        background: linear-gradient(180deg, rgba(92, 225, 230, 0.95) 0%, rgba(92, 225, 230, 0.35) 100%);
+	      }
+	      .dash-membership-item__title {
+	        font-size: 0.875rem;
+	        font-weight: 900;
+	        letter-spacing: 0.04em;
+	        text-transform: uppercase;
+	        color: rgba(255, 255, 255, 0.95);
+	      }
+	      .dash-membership-item__subtitle {
+	        margin-top: 0.25rem;
+	        font-size: 0.6875rem;
+	        font-weight: 700;
+	        letter-spacing: 0.03em;
+	        text-transform: uppercase;
+	        color: rgba(234, 234, 240, 0.58);
+	      }
+	      .dash-membership-item__tag {
+	        flex-shrink: 0;
+	        border-radius: 9999px;
+	        padding: 0.25rem 0.625rem;
+	        font-size: 0.5625rem;
+	        font-weight: 900;
+	        letter-spacing: 0.12em;
+	        text-transform: uppercase;
+	        color: #fff;
+	        background: rgba(223, 2, 255, 0.55);
+	        border: 1px solid rgba(255, 255, 255, 0.18);
+	      }
+	      .dash-membership-item--future .dash-membership-item__tag {
+	        color: #0c1018;
+	        background: rgba(92, 225, 230, 0.92);
+	        border-color: rgba(255, 255, 255, 0.35);
 	      }
 	      .dash-title {
-	        @apply text-2xl sm:text-3xl font-black uppercase tracking-tight;
+	        @apply text-2xl font-black uppercase tracking-tight;
 	      }
 	      .dash-chip {
 	        @apply inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wider;
@@ -680,14 +1033,12 @@
 	        color: #ffffff !important;
 	        background: linear-gradient(90deg, #df02ff 0%, #5ce1e6 100%);
 	        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
-	        box-shadow: 0 0 18px rgba(223, 2, 255, 0.35);
+	        box-shadow: 0 4px 14px rgba(223, 2, 255, 0.28);
 	      }
 	      .dashboard-shell .dash-cta:hover {
 	        color: #ffffff !important;
 	        filter: brightness(1.05);
-	        box-shadow:
-	          0 0 24px rgba(223, 2, 255, 0.4),
-	          0 0 32px rgba(92, 225, 230, 0.2);
+	        box-shadow: 0 6px 18px rgba(223, 2, 255, 0.32);
 	      }
 	      .dash-ghost-cta {
 	        @apply no-underline rounded-full border py-2 px-4 font-bold transition-colors;
@@ -722,9 +1073,9 @@
 	        opacity: 0.42;
 	        pointer-events: none;
 	        right: 0.75rem;
-	        width: min(42vw, 10.5rem);
+	        width: min(42cqw, 10.5rem);
 	      }
-	      @media (max-width: 767px) {
+	      @container dashboard (max-width: 47.99rem) {
 	        .dash-agenda-host .dash-agenda-calendar-deco {
 	          top: 0.5rem;
 	          bottom: auto;
@@ -732,7 +1083,7 @@
 	          transform-origin: top right;
 	        }
 	      }
-	      @media (min-width: 768px) {
+	      @container dashboard (min-width: 48rem) {
 	        .dash-agenda-host .dash-agenda-calendar-deco {
 	          top: auto;
 	          bottom: 1.25rem;
@@ -741,7 +1092,7 @@
 	          transform-origin: bottom right;
 	        }
 	      }
-	      @media (min-width: 1024px) {
+	      @container dashboard (min-width: 56rem) {
 	        .dash-agenda-host .dash-agenda-calendar-deco {
 	          opacity: 0.5;
 	          width: min(36%, 15rem);
@@ -749,7 +1100,7 @@
 	          right: 1.5rem;
 	        }
 	      }
-	      @media (min-width: 1280px) {
+	      @container dashboard (min-width: 64rem) {
 	        .dash-agenda-host .dash-agenda-calendar-deco {
 	          width: min(40%, 17rem);
 	        }
@@ -757,6 +1108,61 @@
 	      .dash-agenda-host .dash-agenda-calendar-deco > * {
 	        width: 100%;
 	      }
+
+	      .dash-mini-cal__header {
+	        height: 2rem;
+	        padding-inline: 1rem;
+	      }
+	      .dash-mini-cal__ring {
+	        width: 0.625rem;
+	        height: 1rem;
+	        margin-top: -1rem;
+	        box-shadow: 0 0 0 2px var(--color-primary-400);
+	      }
+	      .dash-mini-cal__grid {
+	        padding: 0.5rem;
+	        gap: 0.25rem;
+	      }
+	      .dash-mini-cal__dot {
+	        width: 0.25rem;
+	        height: 0.25rem;
+	      }
+	      .dash-mini-cal__footer {
+	        padding: 0.375rem;
+	      }
+	      .dash-mini-cal__month {
+	        font-size: 0.5rem;
+	      }
+	      @container dashboard (min-width: 42rem) {
+	        .dash-mini-cal {
+	          transform: rotate(2deg);
+	        }
+	        .dash-mini-cal__header {
+	          height: 2.5rem;
+	          padding-inline: 1.5rem;
+	        }
+	        .dash-mini-cal__ring {
+	          width: 0.875rem;
+	          height: 1.5rem;
+	          margin-top: -1.5rem;
+	          box-shadow: 0 0 0 4px var(--color-primary-400);
+	        }
+	        .dash-mini-cal__grid {
+	          padding: 1rem;
+	          gap: 0.375rem;
+	        }
+	        .dash-mini-cal__dot {
+	          width: 0.375rem;
+	          height: 0.375rem;
+	        }
+	        .dash-mini-cal__footer {
+	          padding: 0.5rem;
+	        }
+	        .dash-mini-cal__month {
+	          font-size: 0.5625rem;
+	        }
+	      }
+
 	      .dash-cartelera {
 	        border-color: rgba(255, 255, 255, 0.35);
 	        background:
@@ -771,6 +1177,22 @@
 	        pointer-events: none;
 	        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 4 4'%3E%3Cpath fill='%239C92AC' fill-opacity='0.4' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
 	      }
+	      .dash-cartelera-scroll {
+	        overflow-x: auto;
+	        overflow-y: hidden;
+	        -webkit-overflow-scrolling: touch;
+	        margin-inline: -0.75rem;
+	        padding-inline: 0.75rem;
+	        padding-block: 1rem 2.25rem;
+	        margin-block: -1rem -2.25rem;
+	        scroll-padding-inline: 0.75rem;
+	      }
+	      .dash-cartelera-track {
+	        display: flex;
+	        gap: 1rem;
+	        width: max-content;
+	        min-width: 100%;
+	      }
 	      .dash-cartelera-card {
 	        position: relative;
 	        display: block;
@@ -779,6 +1201,8 @@
 	        height: 15.5rem;
 	        flex-shrink: 0;
 	        overflow: hidden;
+	        isolation: isolate;
+	        contain: paint;
 	        border-radius: 2rem;
 	        border: 1px solid rgba(255, 255, 255, 0.14);
 	        background: #0c1018;
@@ -791,7 +1215,7 @@
 	        width: 19.5rem;
 	        height: 16.5rem;
 	      }
-	      @media (min-width: 768px) {
+	      @container dashboard (min-width: 42rem) {
 	        .dash-cartelera-card--featured {
 	          min-width: 22rem;
 	          width: 22rem;
@@ -801,9 +1225,21 @@
 	      .dash-cartelera-card:hover {
 	        transform: translateY(-4px) scale(1.01);
 	        border-color: rgba(223, 2, 255, 0.55);
-	        box-shadow:
-	          0 16px 40px rgba(10, 14, 24, 0.55),
-	          0 0 32px rgba(223, 2, 255, 0.22);
+	        box-shadow: 0 16px 40px rgba(10, 14, 24, 0.55);
+	      }
+	      .dash-cartelera-card::after {
+	        content: "";
+	        position: absolute;
+	        inset: 0;
+	        z-index: 2;
+	        border-radius: inherit;
+	        pointer-events: none;
+	        opacity: 0;
+	        box-shadow: inset 0 0 52px rgba(223, 2, 255, 0.2);
+	        transition: opacity 260ms ease;
+	      }
+	      .dash-cartelera-card:hover::after {
+	        opacity: 1;
 	      }
 	      .dash-cartelera-card__index {
 	        position: absolute;
@@ -840,6 +1276,28 @@
 	      }
 	      .dash-cartelera-card:hover .dash-cartelera-card__glow {
 	        opacity: 1;
+	      }
+
+	      .page-canvas {
+	        @apply flex flex-1 flex-col min-h-full;
+	      }
+	      .site-footer {
+	        @apply relative w-full z-0;
+	        background: transparent;
+	      }
+	      .site-footer__inner {
+	        @apply relative flex min-h-16 w-full items-center justify-center px-4;
+	        background: transparent;
+	      }
+	      .site-footer__copy {
+	        @apply text-center text-xs;
+	        color: var(--site-footer-fg, rgba(234, 234, 240, 0.72));
+	      }
+	      .site-footer--dark {
+	        --site-footer-fg: rgba(234, 234, 240, 0.72);
+	      }
+	      .site-footer--light {
+	        --site-footer-fg: rgba(26, 26, 26, 0.62);
 	      }
 	      }
 		</style>
@@ -879,22 +1337,33 @@
 	{% endblock %}
 
 	<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
-		<main id="main-content" class="flex-1 flex flex-col">
+		<main id="main-content" class="flex-1 flex flex-col min-h-0">
 			<div
-				class="flex-1 transition-[padding] duration-350 ease-out {% block main_class %}sidebar-pl topbar-pt md:pt-0{% endblock %}">
-				{% block content %}
-				<!-- Contenido de cada página -->
-				{% endblock %}
-			</div>
+				id="page-canvas"
+				class="page-canvas"
+				data-page-chrome
+				data-footer-variant="{% block footer_variant %}{% firstof footer_variant 'dark' %}{% endblock %}"
+				data-color-scheme="{% block color_scheme %}{% firstof color_scheme 'dark' %}{% endblock %}"
+				data-page-background="{% block page_canvas_background %}{% firstof page_background '' %}{% endblock %}"
+				style="{% block page_canvas_style %}{% firstof page_background '' %}{% endblock %}"
+			>
+				<div
+					class="flex-1 transition-[padding] duration-350 ease-out {% block main_class %}sidebar-pl topbar-pt md:pt-0{% endblock %}">
+					{% block content %}
+					<!-- Contenido de cada página -->
+					{% endblock %}
+				</div>
 
-			{% block footer %}
-			<div class="transition-[padding] duration-350 ease-out {% block footer_class %}sidebar-pl{% endblock %}">
-				{% include 'partials/layout/_footer.html' %}
+				{% block footer %}
+				<div class="transition-[padding] duration-350 ease-out {% block footer_class %}sidebar-pl{% endblock %}">
+					{% include 'partials/layout/_footer.html' %}
+				</div>
+				{% endblock %}
+
+				{% block page_modals %}{% endblock %}
 			</div>
-			{% endblock %}
 
 			<div id="global-spinner" class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"></div>
-		{% block page_modals %}{% endblock %}
 		</main>
 	</div>
 

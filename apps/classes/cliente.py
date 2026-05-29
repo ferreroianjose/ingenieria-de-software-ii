@@ -70,6 +70,8 @@ def periodos_inscripcion_para_clase(clase):
             }
         )
 
+    from apps.classes.services import clases_mensuales_cobrables
+
     mensual = [
         {
             "id": p.id,
@@ -78,6 +80,7 @@ def periodos_inscripcion_para_clase(clase):
             "hint": hint_periodo_mensual(p),
         }
         for p in periodos_elegibles_mensual()
+        if clases_mensuales_cobrables(clase, p) > 0
     ]
 
     return {"CLASE_SUELTA": suelta, "MENSUAL": mensual}

@@ -370,14 +370,67 @@ window.adminSelection = function (opts = {}) {
 	};
 };
 
+function syncPageChrome(root) {
+	const main = document.getElementById("main-content");
+	const scope =
+		(root?.id === "main-content" && root) ||
+		root?.closest?.("#main-content") ||
+		main;
+	const canvas = scope?.querySelector?.("[data-page-chrome]") || scope;
+	if (!canvas?.dataset) return;
+
+	const { footerVariant, colorScheme, pageBackground } = canvas.dataset;
+	const footer = document.querySelector(".site-footer");
+	if (footer && footerVariant) {
+		footer.classList.remove("site-footer--dark", "site-footer--light");
+		footer.classList.add(`site-footer--${footerVariant}`);
+	}
+
+	const metaScheme = document.getElementById("meta-color-scheme");
+	if (metaScheme && colorScheme) {
+		metaScheme.setAttribute("content", colorScheme);
+	}
+
+	if (colorScheme) {
+		document.documentElement.style.colorScheme = colorScheme;
+	}
+
+	if (pageBackground) {
+		canvas.setAttribute("style", pageBackground);
+	} else {
+		canvas.removeAttribute("style");
+	}
+
+	const boot = document.getElementById("page-chrome-boot");
+	if (boot) {
+		boot.textContent = `
+html,
+body {
+  color-scheme: ${colorScheme || "dark"};
+}
+#page-canvas {
+  ${pageBackground || ""}
+}
+`.trim();
+	}
+}
+
 restoreAdminFlashFromSession();
 
 function toggleInscripcionModalidad(form) {
 	const tipo = form.querySelector('input[name="tipo"]:checked')?.value;
 	const fechas = form.querySelector("[data-inscripcion-fechas]");
 	const periodos = form.querySelector("[data-inscripcion-periodos]");
-	if (fechas) fechas.hidden = tipo !== "CLASE_SUELTA";
-	if (periodos) periodos.hidden = tipo !== "MENSUAL";
+	const esSuelta = tipo === "CLASE_SUELTA";
+	const esMensual = tipo === "MENSUAL";
+	if (fechas) {
+		fechas.hidden = !esSuelta;
+		fechas.disabled = !esSuelta;
+	}
+	if (periodos) {
+		periodos.hidden = !esMensual;
+		periodos.disabled = !esMensual;
+	}
 }
 
 function bindInscripcionClaseForm(root) {
@@ -403,7 +456,11 @@ window.dismissFlashItem = function (btn) {
 	btn.closest(".flash-item")?.remove();
 };
 
-document.addEventListener("DOMContentLoaded", () => bindInscripcionClaseForm());
+document.addEventListener("DOMContentLoaded", () => {
+	bindInscripcionClaseForm();
+	syncPageChrome(document);
+});
 document.body.addEventListener("htmx:afterSettle", (evt) => {
 	bindInscripcionClaseForm(evt.detail?.target || document);
+	syncPageChrome(evt.detail?.target || document);
 });

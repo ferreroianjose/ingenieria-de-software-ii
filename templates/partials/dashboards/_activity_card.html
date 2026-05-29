@@ -9,17 +9,17 @@
   <span class="dash-cartelera-card__index" aria-hidden="true">{{ index|default:"01" }}</span>
   <div class="dash-cartelera-card__glow" aria-hidden="true"></div>
 
-  <div class="relative z-10 flex h-full flex-col justify-between p-6 sm:p-7">
+  <div class="dash-cartelera-card__body relative z-10 flex h-full flex-col justify-between p-6">
     <div class="flex items-start justify-between gap-3">
-      <span class="dash-chip bg-primary-400/90 text-white border border-white/20 shadow-lg">{{ badge }}</span>
+      <span class="dash-chip bg-primary-400/90 text-white border border-white/20">{{ badge }}</span>
       <span class="text-white/40 text-xs font-black uppercase tracking-widest group-hover:text-primary-300 transition-colors">→</span>
     </div>
 
     <div class="mt-auto pt-6">
-      <h3 class="text-white font-black text-2xl sm:text-3xl uppercase tracking-tighter leading-tight group-hover:text-primary-200 transition-colors">
+      <h3 class="dash-cartelera-card__title text-white font-black text-2xl uppercase tracking-tighter leading-tight group-hover:text-primary-200 transition-colors">
         {{ title }}
       </h3>
-      <p class="text-white/60 text-xs sm:text-sm font-semibold mt-2 line-clamp-2">{{ subtitle }}</p>
+      <p class="dash-cartelera-card__subtitle text-white/60 text-xs font-semibold mt-2 line-clamp-2">{{ subtitle }}</p>
       <p class="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-secondary-200/90">Ver horarios</p>
     </div>
   </div>

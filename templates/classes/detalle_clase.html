@@ -88,7 +88,7 @@
         {% else %}
         {% for o in suelta %}
         <label class="cf-choice">
-          <input type="radio" class="cf-choice__input" name="fecha_clase" value="{{ o.fecha_clase }}" required
+          <input type="radio" class="cf-choice__input" name="fecha_clase" value="{{ o.fecha_clase }}"
                  data-fecha-label="{{ o.fecha_dt|date:'l d/m/Y'|capfirst }} · {{ o.fecha_dt|date:'H:i' }} hs">
           <span class="cf-choice__dot" aria-hidden="true"></span>
           <span>
@@ -112,7 +112,7 @@
         {% else %}
         {% for p in mensual %}
         <label class="cf-choice">
-          <input type="radio" class="cf-choice__input" name="periodo_id" value="{{ p.id }}" required>
+          <input type="radio" class="cf-choice__input" name="periodo_id" value="{{ p.id }}">
           <span class="cf-choice__dot" aria-hidden="true"></span>
           <span>
             <span class="cf-choice__label">{{ p.etiqueta }}</span>

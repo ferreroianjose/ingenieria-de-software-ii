@@ -104,6 +104,13 @@ def seleccion_pago_clase(request, clase_id):
         return redirect("classes:detalle", clase_id=clase_id)
 
     abono_resumen = resumen_abono_para_clase(clase, periodo, tipo)
+    if tipo == Inscripcion.Tipo.MENSUAL and not abono_resumen:
+        messages.error(
+            request, "No quedan clases de este horario en el mes elegido."
+        )
+        limpiar_intencion_pago(request)
+        return redirect("classes:detalle", clase_id=clase_id)
+
     opciones = opciones_pago_para_clase(clase, periodo, tipo)
     pagar_url = reverse("payments:pagar_clase", args=[clase_id])
     return render(
@@ -170,7 +177,12 @@ def pagar_clase(request, clase_id):
         return fallo
 
     if amount_to_pay <= 0:
-        messages.info(request, "No hay monto pendiente de pago.")
+        if tipo == Inscripcion.Tipo.MENSUAL:
+            messages.error(
+                request, "No quedan clases de este horario en el mes elegido."
+            )
+        else:
+            messages.info(request, "No hay monto pendiente de pago.")
         limpiar_intencion_pago(request)
         return redirect("classes:detalle", clase_id=clase_id)
 
@@ -206,6 +218,11 @@ def seleccion_pago(request, inscripcion_id):
     abono_resumen = resumen_abono_para_inscripcion(inscripcion)
     opciones = opciones_pago_inscripcion(inscripcion)
     if abono_resumen is None and not opciones:
+        if inscripcion.tipo == Inscripcion.Tipo.MENSUAL:
+            messages.error(
+                request, "No quedan clases de este horario en el mes elegido."
+            )
+            return redirect("classes:detalle", clase_id=inscripcion.clase_id)
         messages.info(request, "Esta inscripción ya está paga.")
         return redirect("classes:mis_reservas")
 
