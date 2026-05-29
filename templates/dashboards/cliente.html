@@ -3,6 +3,50 @@
 {% block title %}Mi Dashboard{% endblock %}
 
 {% block content %}
+<style type="text/tailwindcss">
+    /* Dashboard Container */
+    /* Grid Layouts */
+    .dash-grid-top {
+        @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-4 xl:gap-6;
+    }
+    .dash-grid-footer {
+        @apply grid grid-cols-1 lg:grid-cols-2 gap-6;
+    }
+
+    /* Cards */
+    .dash-card {
+        @apply rounded-6xl md:rounded-8xl p-8 lg:p-6 xl:p-8 flex flex-col justify-between transition-transform relative overflow-hidden shadow-fair-lg isolate;
+        transform: translateZ(0);
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+    .dash-card-primary {
+        @apply bg-primary-400 text-white hover:scale-[1.02];
+    }
+    .dash-card-secondary {
+        @apply bg-primary-50 border border-primary-100/50 shadow-fair-sm;
+    }
+    .dash-card-dark {
+        @apply bg-secondary-950 text-white;
+    }
+
+    /* Sections */
+    .dash-section {
+        @apply rounded-5xl md:rounded-8xl p-8 sm:p-12 shadow-fair-2xl border border-white/5 relative overflow-hidden isolate;
+        transform: translateZ(0);
+        -webkit-mask-image: -webkit-radial-gradient(white, black);
+    }
+    .textured-bg {
+    	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 4 4'%3E%3Cpath fill='%239C92AC' fill-opacity='0.4' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+    }
+
+    /* Components */
+    .title-impact {
+        @apply font-black uppercase tracking-tight lg:tracking-tighter xl:tracking-tight;
+    }
+    .text-caption {
+        @apply text-sm font-black uppercase tracking-widest;
+    }
+</style>
 <div class="internal-page" x-data="{ showQrModal: false }">
   <div class="@container internal-page__content space-y-6 max-w-5xl">
 

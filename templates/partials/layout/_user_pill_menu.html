@@ -1,3 +1,12 @@
+<style type="text/tailwindcss">
+  .user-pill-item:not(:last-child) {
+    @apply mb-2;
+  }
+  .user-pill-item a,
+  .user-pill-item button {
+    @apply rounded-[calc(var(--radius-3xl)-calc(var(--spacing)*2))] w-full flex items-center gap-4 p-4 text-sm font-bold text-left transition-colors no-underline text-gray-200 bg-white/5 hover:bg-white/10 cursor-pointer;
+  }
+</style>
 <div>
   <div class="user-pill-item">
     <form method="post" action="{% url 'logout' %}" hx-boost="false">
