@@ -537,6 +537,7 @@ class MercadoPagoServiceTests(TestCase):
         )
 
         mock_sdk_class.return_value.preference.return_value.create.return_value = {
+            "status": 201,
             "response": {"init_point": "http://mercadopago.mock/init"},
         }
 
@@ -604,11 +605,11 @@ class MercadoPagoServiceTests(TestCase):
         self, mock_sdk_class
     ):
         # La preferencia incluye back_urls, external_reference y email del pagador.
-        from django.test import RequestFactory
         from apps.payments.services import MercadoPagoService
 
         pago, request = self._build_single_item_pago()
         mock_sdk_class.return_value.preference.return_value.create.return_value = {
+            "status": 201,
             "response": {"init_point": "http://mercadopago.mock/init"},
         }
 
@@ -619,11 +620,72 @@ class MercadoPagoServiceTests(TestCase):
 
         self.assertEqual(preference_data["external_reference"], str(pago.id))
         self.assertEqual(preference_data["payer"]["email"], pago.usuario.email)
+        self.assertEqual(preference_data["items"][0]["currency_id"], "ARS")
         self.assertIn("success", preference_data["back_urls"])
         self.assertIn("failure", preference_data["back_urls"])
         self.assertIn("pending", preference_data["back_urls"])
         self.assertIn(f"/payments/pago/{pago.id}/success/", preference_data["back_urls"]["success"])
         self.assertIn(f"/payments/pago/{pago.id}/failure/", preference_data["back_urls"]["failure"])
+        self.assertNotIn("auto_return", preference_data)
+
+    @patch("apps.payments.services.mercadopago.SDK")
+    def test_create_preference_uses_sandbox_init_point_when_debug(self, mock_sdk_class):
+        # Credenciales de prueba: redirigir al checkout sandbox, no al de producción.
+        from django.test import RequestFactory, override_settings
+        from apps.payments.services import MercadoPagoService
+
+        pago, request = self._build_single_item_pago()
+        mock_sdk_class.return_value.preference.return_value.create.return_value = {
+            "status": 201,
+            "response": {
+                "init_point": "https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=x",
+                "sandbox_init_point": "https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=x",
+            },
+        }
+
+        with override_settings(DEBUG=True):
+            init_point = MercadoPagoService().create_preference(pago, request)
+
+        self.assertEqual(
+            init_point,
+            "https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=x",
+        )
+
+    @patch("apps.payments.services.mercadopago.SDK")
+    def test_create_preference_omits_auto_return_on_localhost(self, mock_sdk_class):
+        # En desarrollo (http://localhost) MP rechaza auto_return; no lo enviamos.
+        from django.test import RequestFactory
+        from apps.payments.services import MercadoPagoService
+
+        pago, request = self._build_single_item_pago()
+        request.META["HTTP_HOST"] = "localhost:8000"
+        mock_sdk_class.return_value.preference.return_value.create.return_value = {
+            "status": 201,
+            "response": {"init_point": "http://mercadopago.mock/init"},
+        }
+
+        init_point = MercadoPagoService().create_preference(pago, request)
+
+        self.assertEqual(init_point, "http://mercadopago.mock/init")
+        preference_data = (
+            mock_sdk_class.return_value.preference.return_value.create.call_args[0][0]
+        )
+        self.assertNotIn("auto_return", preference_data)
+
+    @patch("apps.payments.services.mercadopago.SDK")
+    def test_create_preference_returns_none_on_api_error_response(self, mock_sdk_class):
+        # Respuesta 400 de MP sin excepción → None (vuelve a mis reservas).
+        from django.test import RequestFactory
+        from apps.payments.services import MercadoPagoService
+
+        pago, request = self._build_single_item_pago()
+        mock_sdk_class.return_value.preference.return_value.create.return_value = {
+            "status": 400,
+            "response": {"message": "invalid request"},
+        }
+
+        init_point = MercadoPagoService().create_preference(pago, request)
+        self.assertIsNone(init_point)
 
     def _build_single_item_pago(self):
         from django.test import RequestFactory

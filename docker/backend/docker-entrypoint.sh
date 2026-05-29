@@ -15,7 +15,8 @@ if [ "$RUN_MIGRATIONS" = "True" ]; then
         echo "Loading initial data for classes module..."
         uv run python manage.py load_initial_classes
 
-        # Agregá más comandos de carga acá cuando sea necesario
+        echo "Loading initial data for payments module..."
+        uv run python manage.py load_initial_payments
     else
         echo "Skipping initial data load."
     fi

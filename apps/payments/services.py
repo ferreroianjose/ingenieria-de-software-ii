@@ -1,7 +1,22 @@
+import logging
 import os
+from urllib.parse import urlparse
+
 import mercadopago
 from django.conf import settings
 from django.urls import reverse
+
+logger = logging.getLogger(__name__)
+
+
+def _supports_auto_return(success_url):
+    """MP exige HTTPS público para auto_return; localhost devuelve 400."""
+    parsed = urlparse(success_url)
+    if parsed.scheme != "https":
+        return False
+    host = (parsed.hostname or "").lower()
+    return host not in {"localhost", "127.0.0.1", "0.0.0.0"}
+
 
 class MercadoPagoService:
     def __init__(self):
@@ -32,16 +47,18 @@ class MercadoPagoService:
                     ),
                     "quantity": 1,
                     "unit_price": float(detalle.monto_aplicado),
+                    "currency_id": "ARS",
                 }
             )
 
+        success_url = request.build_absolute_uri(
+            reverse("payments:success", args=[pago.id])
+        )
         preference_data = {
             "items": items,
             "payer": {"email": pago.usuario.email},
             "back_urls": {
-                "success": request.build_absolute_uri(
-                    reverse("payments:success", args=[pago.id])
-                ),
+                "success": success_url,
                 "failure": request.build_absolute_uri(
                     reverse("payments:failure", args=[pago.id])
                 ),
@@ -49,16 +66,30 @@ class MercadoPagoService:
                     reverse("payments:failure", args=[pago.id])
                 ),
             },
-            "auto_return": "approved",
-            "external_reference": str(pago.id), # Links MP a nuestro sistema
+            "external_reference": str(pago.id),
         }
+
+        if _supports_auto_return(success_url):
+            preference_data["auto_return"] = "approved"
 
         try:
             preference = self.sdk.preference().create(preference_data)
         except Exception as e:
-            print(f"MercadoPago API Error: {e}")
+            logger.exception("MercadoPago API error: %s", e)
             return None
 
-        return preference.get("response", {}).get("init_point")
+        if preference.get("status") not in (200, 201):
+            message = preference.get("response", {}).get("message", preference)
+            logger.error("MercadoPago preference rejected: %s", message)
+            return None
+
+        response = preference.get("response", {})
+        # Con credenciales de prueba MP devuelve init_point (prod) y sandbox_init_point.
+        # Las tarjetas APRO del panel solo funcionan en sandbox.mercadopago.com.ar.
+        sandbox_init_point = response.get("sandbox_init_point")
+        if settings.DEBUG and sandbox_init_point:
+            return sandbox_init_point
+        return response.get("init_point")
+
 
 mercadopago_service = MercadoPagoService()

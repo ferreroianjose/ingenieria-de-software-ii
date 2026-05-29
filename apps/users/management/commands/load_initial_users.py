@@ -33,9 +33,16 @@ class Command(BaseCommand):
 
             existing = User.objects.filter(email=email).first()
             if existing:
-                existing.save()
+                if existing.rol == "CLIENTE" and not existing.telefono_emergencia:
+                    dni = existing.dni or "00000000"
+                    existing.telefono_emergencia = f"35155{str(dni)[-6:]}"
+                    existing.save(update_fields=["telefono_emergencia"])
                 skipped_count += 1
                 continue
+
+            if u.get("rol") == "CLIENTE" and not u.get("telefono_emergencia"):
+                dni = u.get("dni", "00000000")
+                u["telefono_emergencia"] = f"35155{str(dni)[-6:]}"
 
             raw_password = u.pop("raw_password", None)
 
