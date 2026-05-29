@@ -24,6 +24,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.root, name="root"),
     path("dashboard/", views.dashboard, name="dashboard"),
+    path("faq/", views.faq, name="faq"),
 
     # Módulo de usuarios
     path("users/", include("apps.users.urls")),

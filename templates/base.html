@@ -630,6 +630,217 @@
 		  /* Utility for hiding scrolls while keeping functionality */
 	      .hide-scroll::-webkit-scrollbar { display: none; }
 	      .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+	      /* Dashboard cliente: estilos globales para evitar quiebres en swaps HTMX */
+	      .dashboard-shell {
+	        @apply min-h-screen w-full mx-auto px-4 md:px-4 lg:px-8 py-8 relative z-10 bg-white;
+	        background:
+	          radial-gradient(circle at 8% 0%, rgba(223, 2, 255, 0.14), transparent 32%),
+	          radial-gradient(circle at 92% 10%, rgba(92, 225, 230, 0.14), transparent 28%),
+	          linear-gradient(180deg, #ffffff 0%, #f8f9ff 40%, #f5f7ff 100%);
+	      }
+	      .dashboard-content {
+	        @apply max-w-6xl mx-auto space-y-6;
+	      }
+	      .dash-panel {
+	        @apply rounded-5xl md:rounded-6xl border shadow-fair-lg p-6 sm:p-8 relative overflow-hidden;
+	        transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease, background-color 260ms ease;
+	      }
+	      .dash-panel:hover {
+	        transform: translateY(-2px);
+	      }
+	      .dash-panel-light {
+	        @apply bg-white border-secondary-200;
+	        background:
+	          radial-gradient(circle at top right, oklch(0.778 0.133 202.83 / 0.12), transparent 36%),
+	          linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(247,248,255,0.95) 100%);
+	        box-shadow:
+	          0 8px 24px rgba(17, 24, 39, 0.10),
+	          0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+	      }
+	      .dash-panel-dark {
+	        @apply border-white/10 text-white;
+	        background:
+	          radial-gradient(circle at 95% 5%, rgba(223, 2, 255, 0.36), transparent 32%),
+	          radial-gradient(circle at 0% 100%, rgba(92, 225, 230, 0.22), transparent 36%),
+	          linear-gradient(160deg, #161a28 0%, #0c1018 55%, #080b12 100%);
+	        box-shadow:
+	          0 14px 38px rgba(10, 14, 24, 0.55),
+	          0 0 28px rgba(223, 2, 255, 0.22);
+	      }
+	      .dash-title {
+	        @apply text-2xl sm:text-3xl font-black uppercase tracking-tight;
+	      }
+	      .dash-chip {
+	        @apply inline-flex items-center rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-wider;
+	      }
+	      .dashboard-shell .dash-cta,
+	      .dashboard-shell .dash-cta:visited {
+	        @apply inline-flex items-center justify-center shrink-0 no-underline rounded-full py-2 px-4 font-bold text-center transition-[filter,box-shadow];
+	        color: #ffffff !important;
+	        background: linear-gradient(90deg, #df02ff 0%, #5ce1e6 100%);
+	        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);
+	        box-shadow: 0 0 18px rgba(223, 2, 255, 0.35);
+	      }
+	      .dashboard-shell .dash-cta:hover {
+	        color: #ffffff !important;
+	        filter: brightness(1.05);
+	        box-shadow:
+	          0 0 24px rgba(223, 2, 255, 0.4),
+	          0 0 32px rgba(92, 225, 230, 0.2);
+	      }
+	      .dash-ghost-cta {
+	        @apply no-underline rounded-full border py-2 px-4 font-bold transition-colors;
+	      }
+	      .dash-ghost-cta--filled {
+	        background: rgba(12, 16, 24, 0.55);
+	        border-color: rgba(255, 255, 255, 0.22);
+	        backdrop-filter: blur(10px);
+	        -webkit-backdrop-filter: blur(10px);
+	      }
+	      .dash-ghost-cta--filled:hover {
+	        background: rgba(12, 16, 24, 0.72);
+	        border-color: rgba(92, 225, 230, 0.55);
+	      }
+	      .dash-agenda-class {
+	        @apply rounded-4xl border border-white/15 p-5 no-underline transition-all;
+	        background: rgba(255, 255, 255, 0.07);
+	        backdrop-filter: blur(14px);
+	        -webkit-backdrop-filter: blur(14px);
+	      }
+	      .dash-agenda-class:hover {
+	        background: rgba(255, 255, 255, 0.11);
+	        border-color: rgba(223, 2, 255, 0.45);
+	      }
+	      .dash-agenda-host {
+	        position: relative;
+	        min-height: 14rem;
+	      }
+	      .dash-agenda-host .dash-agenda-calendar-deco {
+	        position: absolute;
+	        z-index: 0;
+	        opacity: 0.42;
+	        pointer-events: none;
+	        right: 0.75rem;
+	        width: min(42vw, 10.5rem);
+	      }
+	      @media (max-width: 767px) {
+	        .dash-agenda-host .dash-agenda-calendar-deco {
+	          top: 0.5rem;
+	          bottom: auto;
+	          transform: rotate(8deg);
+	          transform-origin: top right;
+	        }
+	      }
+	      @media (min-width: 768px) {
+	        .dash-agenda-host .dash-agenda-calendar-deco {
+	          top: auto;
+	          bottom: 1.25rem;
+	          width: 12.5rem;
+	          transform: rotate(6deg);
+	          transform-origin: bottom right;
+	        }
+	      }
+	      @media (min-width: 1024px) {
+	        .dash-agenda-host .dash-agenda-calendar-deco {
+	          opacity: 0.5;
+	          width: min(36%, 15rem);
+	          bottom: 1.5rem;
+	          right: 1.5rem;
+	        }
+	      }
+	      @media (min-width: 1280px) {
+	        .dash-agenda-host .dash-agenda-calendar-deco {
+	          width: min(40%, 17rem);
+	        }
+	      }
+	      .dash-agenda-host .dash-agenda-calendar-deco > * {
+	        width: 100%;
+	      }
+	      .dash-cartelera {
+	        border-color: rgba(255, 255, 255, 0.35);
+	        background:
+	          radial-gradient(circle at 0% 0%, rgba(223, 2, 255, 0.12), transparent 40%),
+	          radial-gradient(circle at 100% 100%, rgba(92, 225, 230, 0.18), transparent 42%),
+	          linear-gradient(165deg, #c8d9e8 0%, #9eb3c9 48%, #8aa4bc 100%);
+	      }
+	      .dash-cartelera__texture {
+	        position: absolute;
+	        inset: 0;
+	        opacity: 0.45;
+	        pointer-events: none;
+	        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 4 4'%3E%3Cpath fill='%239C92AC' fill-opacity='0.4' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+	      }
+	      .dash-cartelera-card {
+	        position: relative;
+	        display: block;
+	        min-width: 17.5rem;
+	        width: 17.5rem;
+	        height: 15.5rem;
+	        flex-shrink: 0;
+	        overflow: hidden;
+	        border-radius: 2rem;
+	        border: 1px solid rgba(255, 255, 255, 0.14);
+	        background: #0c1018;
+	        box-shadow: 0 12px 32px rgba(10, 14, 24, 0.45);
+	        transition: transform 260ms ease, border-color 260ms ease, box-shadow 260ms ease;
+	        scroll-snap-align: start;
+	      }
+	      .dash-cartelera-card--featured {
+	        min-width: 19.5rem;
+	        width: 19.5rem;
+	        height: 16.5rem;
+	      }
+	      @media (min-width: 768px) {
+	        .dash-cartelera-card--featured {
+	          min-width: 22rem;
+	          width: 22rem;
+	          height: 17.5rem;
+	        }
+	      }
+	      .dash-cartelera-card:hover {
+	        transform: translateY(-4px) scale(1.01);
+	        border-color: rgba(223, 2, 255, 0.55);
+	        box-shadow:
+	          0 16px 40px rgba(10, 14, 24, 0.55),
+	          0 0 32px rgba(223, 2, 255, 0.22);
+	      }
+	      .dash-cartelera-card__index {
+	        position: absolute;
+	        top: 0.35rem;
+	        right: 0.75rem;
+	        font-size: 4.5rem;
+	        line-height: 1;
+	        font-weight: 900;
+	        color: rgba(255, 255, 255, 0.06);
+	        pointer-events: none;
+	        z-index: 1;
+	      }
+	      .dash-cartelera-card__glow {
+	        position: absolute;
+	        inset: 0;
+	        opacity: 0.9;
+	        transition: opacity 260ms ease;
+	      }
+	      .dash-cartelera-card--0 .dash-cartelera-card__glow {
+	        background:
+	          radial-gradient(circle at 100% 0%, rgba(223, 2, 255, 0.45), transparent 52%),
+	          linear-gradient(165deg, rgba(22, 26, 40, 0.35) 0%, rgba(8, 11, 18, 0.95) 100%);
+	      }
+	      .dash-cartelera-card--1 .dash-cartelera-card__glow {
+	        background:
+	          radial-gradient(circle at 0% 100%, rgba(92, 225, 230, 0.42), transparent 55%),
+	          linear-gradient(165deg, rgba(22, 26, 40, 0.35) 0%, rgba(8, 11, 18, 0.95) 100%);
+	      }
+	      .dash-cartelera-card--2 .dash-cartelera-card__glow {
+	        background:
+	          radial-gradient(circle at 100% 100%, rgba(223, 2, 255, 0.32), transparent 50%),
+	          radial-gradient(circle at 0% 0%, rgba(92, 225, 230, 0.28), transparent 48%),
+	          linear-gradient(165deg, rgba(22, 26, 40, 0.35) 0%, rgba(8, 11, 18, 0.95) 100%);
+	      }
+	      .dash-cartelera-card:hover .dash-cartelera-card__glow {
+	        opacity: 1;
+	      }
 	      }
 		</style>
 
