@@ -9,9 +9,12 @@ from django.urls import reverse
 from .forms import ClassForm, TeacherForm, SedeForm, SalaForm, DisciplinaForm
 from .models import Class, Teacher, Sede, Sala, Disciplina, Inscripcion
 from . import services
+from .exceptions import InscripcionDuplicada
 from .services import proxima_ocurrencia
 from .search import apply_text_search
 from .htmx import hx_ok
+
+from urllib.parse import urlencode
 
 
 def _hx_ok_or_redirect(
@@ -986,37 +989,67 @@ def browse_clases(request):
     return render(request, "classes/browse.html", {"clases_con_info": clases_con_info})
 
 
+def _tipo_inscripcion_desde_post(request):
+    tipo = request.POST.get("tipo", Inscripcion.Tipo.CLASE_SUELTA)
+    if tipo not in Inscripcion.Tipo.values:
+        return Inscripcion.Tipo.CLASE_SUELTA
+    return tipo
+
+
+def _url_pagar_inscripcion(inscripcion_id, request):
+    """URL de checkout; modalidad TOTAL/SENA solo para clase suelta (query opcional)."""
+    params = {}
+    modalidad = request.POST.get("modalidad", "").upper()
+    if modalidad in ("TOTAL", "SENA"):
+        params["modalidad"] = modalidad
+    base = reverse("payments:pagar", args=[inscripcion_id])
+    if not params:
+        return base
+    return f"{base}?{urlencode(params)}"
+
+
+def _manejar_inscripcion_duplicada(request, exc: InscripcionDuplicada):
+    if exc.pendiente_pago:
+        messages.info(request, "Ya tenés esta clase pendiente de pago.")
+        return redirect(_url_pagar_inscripcion(exc.inscripcion.id, request))
+    if exc.reservada:
+        messages.info(request, "Ya tenés esta clase reservada.")
+        return redirect("classes:mis_reservas")
+    if exc.en_lista_espera:
+        messages.warning(request, "Ya estás en la lista de espera de esta clase.")
+    else:
+        messages.warning(request, str(exc))
+    return redirect("classes:browse")
+
+
 @login_required
 def reservar_clase_view(request, clase_id):
     if request.method != "POST":
         return redirect("classes:browse")
 
     try:
-        inscripcion, resultado = services.reservar_clase(request.user, clase_id)
-        if resultado == "reservada":
-            # marcar como pendiente de pago y redirigir al checkout
-            inscripcion.estado = Inscripcion.Estado.PENDIENTE_PAGO
-            inscripcion.save()
-            messages.info(request, "Iniciando pago...")
-            return redirect(reverse("payments:pagar", args=[inscripcion.id]))
-        else:
-            messages.info(
-                request,
-                f"Has sido registrado a la lista de espera de la clase "
-                f"{inscripcion.clase.disciplina} por falta de cupo",
-            )
-    except services.TelefonoEmergenciaFaltante:
-        messages.error(
-            request, "Reserva fallida, actualizar el telefono de emergencia"
+        periodo = services.obtener_periodo_activo()
+        inscripcion, resultado = services.reservar_clase(
+            request.user,
+            clase_id,
+            periodo=periodo,
+            tipo=_tipo_inscripcion_desde_post(request),
         )
-    except services.InscripcionDuplicada:
-        messages.warning(request, "Ya tenés una inscripción activa en esta clase.")
-    except services.ClaseNoDisponible:
-        messages.error(request, "La clase no está disponible.")
-    except Class.DoesNotExist:
-        messages.error(request, "La clase no existe.")
+    except InscripcionDuplicada as exc:
+        return _manejar_inscripcion_duplicada(request, exc)
+    except services.ReservaError as exc:
+        messages.error(request, str(exc))
+        return redirect("classes:browse")
 
-    return redirect("classes:browse")
+    if resultado == "espera":
+        messages.info(
+            request,
+            f"Te anotamos en lista de espera para {inscripcion.clase.disciplina}.",
+        )
+        return redirect("classes:browse")
+
+    messages.success(request, "Reservaste tu lugar. Completá el pago para confirmar.")
+    return redirect(_url_pagar_inscripcion(inscripcion.id, request))
 
 
 @login_required

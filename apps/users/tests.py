@@ -152,13 +152,14 @@ class UserViewsTests(TestCase):
         self.assertRedirects(response, reverse("dashboard"))
 
     def test_two_factor_view_post_completes_login(self):
-        # Manually set session
+        code = "123456"
         self.client.login(username="staff@example.com", password="password123")
         session = self.client.session
         session["is_2fa_pending"] = True
+        session["2fa_code"] = code
         session.save()
 
-        response = self.client.post(reverse("two_factor"))
+        response = self.client.post(reverse("two_factor"), {"code": code})
         self.assertRedirects(response, reverse("dashboard"))
         self.assertNotIn("is_2fa_pending", self.client.session)
 

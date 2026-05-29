@@ -3,26 +3,19 @@ from datetime import datetime, timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from apps.payments.models import PeriodoCobro
+
+from .exceptions import (
+    ClaseNoDisponible,
+    ClaseNoEncontrada,
+    InscripcionDuplicada,
+    InscripcionNoEncontrada,
+    InscripcionYaCancelada,
+    PeriodoCobroInactivo,
+    ReservaError,
+    TelefonoEmergenciaFaltante,
+)
 from .models import Class, Inscripcion
-
-
-# ── Exceptions ────────────────────────────────────────────────────────────────
-
-class ReservaError(Exception):
-    pass
-
-
-class TelefonoEmergenciaFaltante(ReservaError):
-    pass
-
-
-class ClaseNoDisponible(ReservaError):
-    pass
-
-
-class InscripcionDuplicada(ReservaError):
-    pass
-
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -42,6 +35,18 @@ def proxima_ocurrencia(clase):
     return dt
 
 
+def obtener_periodo_activo():
+    """Período de cobro vigente según la fecha de hoy."""
+    hoy = timezone.now().date()
+    periodo = PeriodoCobro.objects.filter(
+        fecha_inicio_periodo__lte=hoy,
+        fecha_fin_periodo__gte=hoy,
+    ).first()
+    if not periodo:
+        raise PeriodoCobroInactivo()
+    return periodo
+
+
 def cupo_disponible(clase):
     """Spots left: cupo_maximo minus active (RESERVADA + PENDIENTE_PAGO) inscriptions."""
     activas = clase.inscripciones.filter(
@@ -49,12 +54,11 @@ def cupo_disponible(clase):
     ).count()
     return max(0, clase.cupo_maximo - activas)
 
-
 # ── Core operations ───────────────────────────────────────────────────────────
 
-def reservar_clase(usuario, clase_id):
+def reservar_clase(usuario, clase_id, periodo, tipo):
     """
-    Reserve a class spot for a user, or add them to the FIFO waitlist.
+    Entrypoint for the reservation process. Reserve a class spot for a user temporarily (PENDIENTE_PAGO), or add them to the FIFO waitlist.
 
     Business rules enforced:
     - User must have telefono_emergencia set.
@@ -63,38 +67,44 @@ def reservar_clase(usuario, clase_id):
     - Concurrent reservations are serialised via select_for_update on the Class row.
 
     Returns:
-        (Inscripcion, 'reservada') — spot was available
+        (Inscripcion, 'pendiente_pago') — spot was available and temporarily locked
         (Inscripcion, 'espera')   — added to waitlist
     """
     if not usuario.telefono_emergencia:
         raise TelefonoEmergenciaFaltante()
 
     with transaction.atomic():
-        # Lock the class row so concurrent requests are serialised
-        clase = Class.objects.select_for_update().get(id=clase_id)
+        try:
+            clase = Class.objects.select_for_update().get(id=clase_id)
+        except Class.DoesNotExist as err:
+            raise ClaseNoEncontrada() from err
 
         if clase.estado != 'disponible':
             raise ClaseNoDisponible()
 
         existing = (
-            Inscripcion.objects.filter(usuario=usuario, clase=clase)
+            Inscripcion.objects.filter(usuario=usuario, clase=clase, periodo=periodo)
             .exclude(estado=Inscripcion.Estado.CANCELADA)
             .first()
         )
         if existing:
-            raise InscripcionDuplicada(existing.estado)
+            raise InscripcionDuplicada(existing)
 
         if cupo_disponible(clase) > 0:
             inscripcion = Inscripcion.objects.create(
                 usuario=usuario,
                 clase=clase,
-                estado=Inscripcion.Estado.RESERVADA,
+                periodo=periodo,
+                tipo=tipo,
+                estado=Inscripcion.Estado.PENDIENTE_PAGO,
             )
-            return inscripcion, 'reservada'
+            return inscripcion, 'pendiente_pago'
         else:
             inscripcion = Inscripcion.objects.create(
                 usuario=usuario,
                 clase=clase,
+                periodo=periodo,
+                tipo=tipo,
                 estado=Inscripcion.Estado.ESPERA,
             )
             return inscripcion, 'espera'
@@ -115,11 +125,11 @@ def cancelar_reserva(inscripcion_id, usuario):
                 id=inscripcion_id,
                 usuario=usuario,
             )
-        except Inscripcion.DoesNotExist:
-            raise ReservaError("Inscripción no encontrada.")
+        except Inscripcion.DoesNotExist as err:
+            raise InscripcionNoEncontrada() from err
 
         if inscripcion.estado == Inscripcion.Estado.CANCELADA:
-            raise ReservaError("La inscripción ya está cancelada.")
+            raise InscripcionYaCancelada()
 
         era_reservada = inscripcion.estado in (
             Inscripcion.Estado.RESERVADA,
@@ -136,7 +146,7 @@ def cancelar_reserva(inscripcion_id, usuario):
                 .first()
             )
             if primera_espera:
-                primera_espera.estado = Inscripcion.Estado.RESERVADA
+                primera_espera.estado = Inscripcion.Estado.PENDIENTE_PAGO
                 primera_espera.save()
 
     return inscripcion
