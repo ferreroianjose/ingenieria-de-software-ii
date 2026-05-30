@@ -1,19 +1,244 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}FAQ{% endblock %}
+{% block title %}FAQ - Preguntas Frecuentes{% endblock %}
 
 {% block content %}
-<section class="internal-page">
-  <div class="internal-page__content">
-    <header class="mb-8">
-      <h1 class="!text-4xl md:!text-5xl">FAQ</h1>
-      <p class="text-secondary-700/80 mt-2">Preguntas frecuentes de clientes.</p>
-    </header>
+<section class="internal-page relative overflow-hidden">
+  <!-- Capa de Decoración (Background) -->
+  <div class="fixed inset-0 z-0 pointer-events-none select-none overflow-hidden" aria-hidden="true">
+    <!-- Signo de interrogación -->
+    <div class="absolute right-0 -top-8 md:top-0 opacity-[0.25] -rotate-12">
+      <span class="text-[16rem] font-black text-secondary-300 leading-none">?</span>
+    </div>
+    <div class="absolute left-18 -bottom-8 md:bottom-0 opacity-[0.25] -rotate-12">
+      <span class="text-[16rem] font-black text-secondary-300 leading-none">¿</span>
+    </div>
+  </div>
 
-    <div class="rounded-5xl md:rounded-6xl border border-secondary-200 bg-white shadow-fair-lg p-8 sm:p-10">
-      <p class="text-secondary-700 font-medium">
-        Esta vista está vacía por ahora. #TODO: Completar con contenido.
-      </p>
+  <div class="internal-page__content max-w-5xl mx-auto flex flex-col gap-8 relative z-10">
+
+    <style>
+    .faq-wrapper {
+          border-radius: 42px;
+          border: 1px solid rgba(255,255,255, 0.25);
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.10);
+          transition: all 300ms ease;
+      }
+      .faq-wrapper:hover {
+          box-shadow: 0 8px 12px 0px rgba(0, 0, 0, 0.15);
+          transform: translateY(-4px);
+      }
+      .faq-wrapper .dash-panel {
+          border-radius: inherit !important;
+          border: none !important;
+      }
+    </style>
+    
+    {% include 'partials/cliente/flow/_page_header.html' with title="Preguntas Frecuentes" subtitle="Todo lo que necesitás saber sobre el funcionamiento de Siempre GYM." %}
+
+    <div class="grid grid-cols-1 gap-8 mt-4">
+      
+      <!-- SECCIÓN 1: Inscripciones y Clases -->
+      <div class="faq-wrapper group relative">
+        <article class="dash-panel dash-panel-light h-full w-full">
+          <div class="dash-panel__ambient" aria-hidden="true">
+            <div class="absolute -top-12 -left-10 size-72 rounded-full bg-primary-400/20 blur-3xl transition-colors duration-500"></div>
+          </div>
+          <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Inscripciones y clases</h2>
+            </div>
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(255,0,255,0.3)] group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+              {% include 'partials/ui/_icon.html' with name="calendar-check" class="size-6" %}
+            </div>
+          </div>
+
+          <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Cómo funcionan las modalidades?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                Las clases duran 1 hora y podés elegir entre tener una <strong>mensualidad</strong> (pagando una cuota fija por mes) o tomar una <strong>clase individual</strong> (pagando solo por el día de asistencia). El precio base de la actividad es exactamente el mismo en ambas modalidades, la diferencia radica en la prioridad de inscripción.
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Cuándo abren las inscripciones?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                Los alumnos con <strong>mensualidad</strong> tienen prioridad y pueden reservar sus lugares <strong>10 días antes</strong> del inicio de cada mes. Para el <strong>resto de los alumnos</strong> (clases individuales o nuevos ingresos), la inscripción general se habilita recién el <strong>primer día</strong> de cada mes.
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Cómo reservo mi lugar?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                Ingresá a la sección <strong>Clases</strong> del sistema, seleccioná la disciplina y el día de la semana que desees, luego elegí si anotás para una clase individual o utilizando tu mensualidad, y finalizá tu inscripción completando el pago.
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Qué pasa si el cupo está lleno?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                Nuestras clases tienen un cupo fijo. Si no hay lugar, entrarás en una lista de espera. El sistema asigna automáticamente las vacantes que se liberen dando <strong>prioridad a los alumnos mensuales</strong> por sobre los de clase individual, respetando luego el orden de anotación.
+              </p>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- SECCIÓN 2: Pagos y Señas -->
+      <div class="faq-wrapper group relative">
+        <article class="dash-panel dash-panel-light h-full w-full transition-colors duration-300">
+          <div class="dash-panel__ambient" aria-hidden="true">
+            <div class="absolute -bottom-16 -right-10 size-72 rounded-full bg-secondary-400/15 blur-3xl group-hover:bg-secondary-400/30 transition-colors duration-500"></div>
+            <div class="absolute -top-12 -left-10 size-48 rounded-full bg-primary-400/5 blur-3xl group-hover:bg-primary-400/15 transition-colors duration-500"></div>
+          </div>
+          <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Pagos y señas</h2>
+            </div>
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-secondary-600 to-secondary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.3)] group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+              {% include 'partials/ui/_icon.html' with name="credit-card-2-back" class="size-6" %}
+            </div>
+          </div>
+
+          <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Qué medios de pago aceptan?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                El pago se realiza de forma online mediante <strong>Mercado Pago</strong> (tarjetas o dinero en cuenta). También aceptamos <strong>efectivo</strong>, pero este medio es exclusivo de transacciones realizadas presencialmente, en la recepción del local.
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Puedo pagar en partes? (Señas)
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                Si querés reservar una clase individual, podés hacerlo abonando por adelantado una <strong>seña obligatoria del 50%</strong> de la tarifa de forma online. El 50% restante se salda en recepción al momento de asistir u online. Las mensualidades, en cambio, deben cancelarse en su totalidad.
+              </p>
+            </div>
+
+            <div class="space-y-3 md:col-span-2">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                Si tengo mensualidad, ¿hasta cuándo tengo tiempo de pagar?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium max-w-3xl">
+                Los alumnos con mensualidad disfrutan de un período de gracia. Disponen de un plazo que inicia con la apertura anticipada de sus inscripciones (10 días antes del inicio del mes) y tienen tiempo de saldar el pago total de sus cuotas hasta el <strong>día 10 del mes en curso</strong>.
+              </p>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- SECCIÓN 3: Cambios y Cancelaciones -->
+      <div class="faq-wrapper group relative">
+        <article class="dash-panel dash-panel-light h-full w-full transition-colors duration-300">
+          <div class="dash-panel__ambient" aria-hidden="true">
+            <div class="absolute -top-20 -right-20 size-80 rounded-full bg-primary-500/10 blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
+            <div class="absolute -bottom-16 -left-10 size-64 rounded-full bg-secondary-400/10 blur-3xl group-hover:bg-secondary-400/20 transition-colors duration-500"></div>
+          </div>
+          <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Cambios y cancelaciones</h2>
+            </div>
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(223,2,255,0.2)] group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+              {% include 'partials/ui/_icon.html' with name="arrow-left-right" class="size-6" %}
+            </div>
+          </div>
+
+          <div class="relative z-10 grid grid-cols-1 gap-y-10">
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Cómo cambio el horario de mi clase?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium max-w-3xl">
+                El sistema no contempla un botón de "cambio directo". Para modificar un horario debés seguir dos pasos: primero <strong>cancelar</strong> tu reserva actual respetando las políticas de aviso previo, y luego, utilizar el crédito o reembolso generado para inscribirte en el nuevo horario que prefieras.
+              </p>
+            </div>
+
+            <div class="space-y-3 ">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                Políticas de cancelación
+              </h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+                <div class="p-6 rounded-3xl bg-secondary-50/10 border-secondary-300 border">
+                  <p class="text-sm font-black uppercase text-secondary-900 mb-3 tracking-wide">Alumnos mensuales</p>
+                  <p class="text-sm text-secondary-700 leading-relaxed">
+                    Si cancelás con al menos <strong>48 horas de anticipación</strong>, el sistema te otorga un <strong>crédito</strong> para que puedas anotarte y recuperar esa sesión en otro horario de la misma disciplina, siempre dentro del mismo mes. Pasadas las 48hs, se pierde la clase.
+                    <br><br>
+                    <strong class="text-secondary-900">Importante:</strong> El dinero de las cuotas mensuales <strong>no es devuelto bajo ninguna circunstancia</strong>. Los reintegros siempre se hacen en formato de créditos para clases.
+                  </p>
+                </div>
+                <div class="p-6 rounded-3xl bg-secondary-50/10 border-secondary-300 border">
+                  <p class="text-sm font-black uppercase text-secondary-900 mb-3 tracking-wide">Clase individual</p>
+                  <p class="text-sm text-secondary-700 leading-relaxed">
+                    Si cancelás con al menos <strong>24 horas de antelación</strong>, te reintegramos el dinero pagado por la seña. En caso de cancelar con menos tiempo de aviso, <strong>la seña es retenida</strong> por el establecimiento en concepto de reserva de cupo perdido y el dinero no es devuelto.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- SECCIÓN 4: Acceso, Seguridad y Menores -->
+      <div class="faq-wrapper group relative">
+        <article class="dash-panel dash-panel-light h-full w-full transition-colors duration-300">
+          <div class="dash-panel__ambient" aria-hidden="true">
+            <div class="absolute -top-10 right-20 size-56 rounded-full bg-secondary-400/15 blur-3xl group-hover:bg-secondary-400/25 transition-colors duration-500"></div>
+            <div class="absolute bottom-0 left-20 size-48 rounded-full bg-primary-400/5 blur-3xl group-hover:bg-primary-400/10 transition-colors duration-500"></div>
+          </div>
+          <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Ingreso, seguridad y menores</h2>
+            </div>
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-secondary-900 to-secondary-700 text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+              {% include 'partials/ui/_icon.html' with name="shield-lock-fill" class="size-6" %}
+            </div>
+          </div>
+
+          <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Cómo registro mi asistencia?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                Queremos que el proceso sea muy sencillo. Al llegar a la sede, abrí la app y escaneá o mostrá el <strong>código QR</strong> personal que aparece en tu pantalla de inicio. Si tenés problemas con la batería o internet, acercate a recepción y te pasarán el presente de forma manual.
+              </p>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                Requisitos de seguridad
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium">
+                Para nosotros la seguridad es prioritaria. Es obligatorio para <strong>todos los clientes por igual</strong> contar con un número de <strong>teléfono de emergencia</strong> válido cargado y actualizado en su perfil web. Podes hacerlo desde <a href="/users/settings">configuración</a>.
+              </p>
+            </div>
+
+            <div class="space-y-3 md:col-span-2">
+              <h3 class="text-lg font-black text-secondary-900 flex items-center gap-3">
+                ¿Pueden entrenar menores de edad?
+              </h3>
+              <p class="text-secondary-700 leading-relaxed font-medium max-w-3xl">
+                Sí, la edad mínima requerida para registrarse y entrenar es de <strong>14 años</strong>. Sin embargo, todos los usuarios que sean menores de 18 años necesitan, de forma obligatoria, una <strong>constancia firmada por sus padres o tutores legales</strong>. Esta verificación de edad y entrega de constancia se debe realizar de manera presencial la primera vez que el menor llegue a la sede para poder ser habilitado en el sistema.
+              </p>
+            </div>
+          </div>
+        </article>
+      </div>
+
     </div>
   </div>
 </section>
