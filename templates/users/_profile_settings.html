@@ -1,0 +1,16 @@
+<form method="post" action="{% url 'update_profile' %}" class="space-y-4 max-w-sm">
+  {% csrf_token %}
+  <div class="flex flex-col gap-1">
+    <label for="id_telefono_emergencia" class="text-sm font-medium text-gray-700">
+      Teléfono de emergencia
+    </label>
+    {{ profile_form.telefono_emergencia }}
+    {% if not request.user.telefono_emergencia %}
+    <p class="text-xs text-amber-600">Requerido para reservar clases.</p>
+    {% endif %}
+  </div>
+  <button type="submit"
+    class="rounded-full bg-primary-400 px-5 py-2 text-sm font-bold text-white hover:bg-primary-600 transition-colors">
+    Guardar
+  </button>
+</form>

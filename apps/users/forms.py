@@ -9,13 +9,14 @@ User = get_user_model()
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento")
+        fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento", "telefono_emergencia")
         labels = {
             "email": "Correo electrónico",
             "first_name": "Nombre",
             "last_name": "Apellido",
             "dni": "DNI",
             "fecha_nacimiento": "Fecha de nacimiento",
+            "telefono_emergencia": "Teléfono de emergencia",
         }
         widgets = {
             "fecha_nacimiento": forms.DateInput(attrs={"type": "date"}),
@@ -50,6 +51,13 @@ class CustomUserCreationForm(UserCreationForm):
                     code="under_age",
                 )
         return fecha
+
+
+class ProfileUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("telefono_emergencia",)
+        labels = {"telefono_emergencia": "Teléfono de emergencia"}
 
 
 class TwoFactorForm(forms.Form):

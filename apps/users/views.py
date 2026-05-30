@@ -1,6 +1,7 @@
 import random
 import string
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
@@ -12,7 +13,7 @@ from django.core.paginator import Paginator
 
 from apps.notifications.services import notification_service
 from GYMFlow.access import admin_required, staff_required
-from .forms import CustomUserCreationForm, TwoFactorForm
+from .forms import CustomUserCreationForm, ProfileUpdateForm, TwoFactorForm
 from .search import USER_PAGE_SIZE, filter_users_queryset
 
 User = get_user_model()
@@ -20,10 +21,24 @@ User = get_user_model()
 
 @login_required
 def settings_view(request):
-    context = {}
+    context = {
+        "profile_form": ProfileUpdateForm(instance=request.user),
+    }
     if request.user.rol == "ADMIN":
         context["adapters"] = notification_service.adapters
     return render(request, "users/settings.html", context)
+
+
+@login_required
+def update_profile(request):
+    if request.method == "POST":
+        form = ProfileUpdateForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Teléfono de emergencia actualizado.")
+        else:
+            messages.error(request, "Error al actualizar el teléfono de emergencia.")
+    return redirect("settings")
 
 
 # Custom LoginView that forces admins through a 2FA step
