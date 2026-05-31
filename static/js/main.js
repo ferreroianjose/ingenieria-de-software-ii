@@ -65,6 +65,31 @@ document.body.addEventListener("htmx:beforeSwap", () => {
 if (window.htmx) {
 	htmx.config.globalViewTransitions = false;
 	htmx.config.selfRequestsOnly = false;
+	htmx.config.refreshOnHistoryMiss = true;
+}
+
+let tailwindRescanTimer = null;
+
+/** Tras reemplazar #main-content, re-inicializar HTMX/Alpine y Tailwind Play CDN. */
+function settleBoostedMainContent(target) {
+	if (!target || target.id !== "main-content") return;
+
+	if (window.htmx) {
+		htmx.process(target);
+	}
+
+	if (window.Alpine?.initTree) {
+		Alpine.initTree(target);
+	}
+
+	clearTimeout(tailwindRescanTimer);
+	tailwindRescanTimer = window.setTimeout(() => {
+		const root = document.documentElement;
+		root.classList.add("htmx-tailwind-rescan");
+		window.requestAnimationFrame(() => {
+			root.classList.remove("htmx-tailwind-rescan");
+		});
+	}, 50);
 }
 
 /** POST en formularios marcados hx-boost="false" siempre navega con recarga completa. */
@@ -474,6 +499,8 @@ document.addEventListener("DOMContentLoaded", () => {
 	syncPageChrome(document);
 });
 document.body.addEventListener("htmx:afterSettle", (evt) => {
-	bindInscripcionClaseForm(evt.detail?.target || document);
-	syncPageChrome(evt.detail?.target || document);
+	const target = evt.detail?.target || document;
+	settleBoostedMainContent(target);
+	bindInscripcionClaseForm(target);
+	syncPageChrome(target);
 });

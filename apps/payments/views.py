@@ -47,7 +47,7 @@ def mis_pagos(request):
         .select_related("periodo")
         .prefetch_related(
             "detalles__inscripcion__clase__disciplina",
-            "detalles__inscripcion__clase__sala",
+            "detalles__inscripcion__clase__sala__sede",
         )
         .order_by("-fecha_pago")
     )
@@ -103,10 +103,16 @@ def mis_pagos(request):
                     ocurrencia = class_services.proxima_ocurrencia(inscripcion.clase)
                 ocurrencias = [ocurrencia] if ocurrencia else []
 
+            sala = inscripcion.clase.sala
+            if sala:
+                ubicacion = f"{sala.sede.nombre} - {sala.nombre}"
+            else:
+                ubicacion = ""
+
             detalles_ui.append(
                 {
                     "disciplina": inscripcion.clase.disciplina.nombre,
-                    "sala": inscripcion.clase.sala.nombre,
+                    "ubicacion": ubicacion,
                     "tipo_label": "Mensualidad" if es_mensual else "Clase individual",
                     "es_mensual": es_mensual,
                     "precio_unitario": unitario,
@@ -136,16 +142,16 @@ def mis_pagos(request):
             pagos_por_periodo[periodo_nombre] = {
                 "periodo": periodo_nombre,
                 "pagos": [],
+                "total_monto": Decimal("0"),
             }
         pagos_por_periodo[periodo_nombre]["pagos"].append(pago_item)
+        pagos_por_periodo[periodo_nombre]["total_monto"] += pago.monto
 
     return render(
         request,
         "payments/mis_pagos.html",
         {
             "pagos_por_periodo": list(pagos_por_periodo.values()),
-            "flow_back_url": reverse("dashboard"),
-            "flow_back_label": "Dashboard",
             "flow_title": "Mis pagos",
             "flow_subtitle": "Consultá el estado de tus pagos y tu historial de cobros.",
         },

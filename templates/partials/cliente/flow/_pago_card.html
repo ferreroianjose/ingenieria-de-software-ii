@@ -1,0 +1,41 @@
+{% comment %}pago — dict from mis_pagos view{% endcomment %}
+<article class="cf-pago">
+  <header class="cf-pago__head">
+    <div class="min-w-0">
+      <p class="cf-pago__amount">${{ pago.monto|floatformat:2 }}</p>
+      <p class="cf-pago__meta">{{ pago.fecha|date:"d/m/Y · H:i" }} hs · {{ pago.metodo }}</p>
+    </div>
+    {% include 'partials/ui/_status_badge.html' with level=pago.estado_level label=pago.estado_label %}
+  </header>
+
+  {% if pago.detalles %}
+  <div class="cf-pago__body">
+    {% for detalle in pago.detalles %}
+    <div class="cf-pago__line">
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="cf-pago__disciplina">{{ detalle.disciplina }}</h3>
+        <span class="cf-chip cf-chip--wait">{{ detalle.ubicacion }}</span>
+        <span class="cf-chip cf-chip--ok">{{ detalle.tipo_label }}</span>
+      </div>
+
+      {% if detalle.es_mensual and detalle.ocurrencias %}
+      <p class="cf-pago__hint mt-1.5">
+        {{ detalle.ocurrencias|length }} clase{{ detalle.ocurrencias|length|pluralize }} incluida{{ detalle.ocurrencias|length|pluralize }}
+        · ${{ detalle.precio_unitario|floatformat:2 }} c/u
+      </p>
+      {% endif %}
+
+      {% if detalle.ocurrencias %}
+      <ul class="cf-pago__dates">
+        {% for dt in detalle.ocurrencias %}
+        <li>{% include 'partials/cliente/flow/_fecha_hora.html' with dt=dt %}</li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="mt-1.5 cf-pago__hint">Sin clases para mostrar en este cobro.</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</article>
