@@ -272,15 +272,27 @@ def _cartelera_para_dashboard(limite=5):
     ]
 
 
-def _historial_pagos_para_dashboard(user, limite=4):
+def _disciplinas_de_pago(pago):
+    nombres = []
+    vistos = set()
+    for detalle in pago.detalles.all():
+        nombre = detalle.inscripcion.clase.disciplina.nombre
+        if nombre not in vistos:
+            vistos.add(nombre)
+            nombres.append(nombre)
+    return ", ".join(nombres)
+
+
+def _historial_pagos_para_dashboard(user, limite=2):
     pagos = (
         Pago.objects.filter(usuario=user, estado=Pago.Estado.COMPLETADO)
         .select_related("periodo")
+        .prefetch_related("detalles__inscripcion__clase__disciplina")
         .order_by("-fecha_pago")[:limite]
     )
     return [
         {
-            "month": pago.periodo.nombre if pago.periodo_id else _mes_ano_es(pago.fecha_pago.date()),
+            "disciplina": _disciplinas_de_pago(pago) or "Pago acreditado",
             "method": pago.get_metodo_display(),
             "amount": _monto_ars_legible(pago.monto),
         }
@@ -300,10 +312,18 @@ def dashboard(request):
     user = request.user
 
     if user.rol == "ADMIN":
-        return render(request, "dashboards/admin.html")
+        return render(
+            request,
+            "dashboards/admin.html",
+            {"page_section": "Panel de administración"},
+        )
 
     if user.rol == "EMPLEADO":
-        return render(request, "dashboards/empleado.html")
+        return render(
+            request,
+            "dashboards/empleado.html",
+            {"page_section": "Panel de empleado"},
+        )
 
     # Else es un usuario cliente.
     estado = _estado_cliente_para_dashboard(user)
@@ -333,4 +353,11 @@ def dashboard(request):
 
 @login_required
 def faq(request):
-    return render(request, "support/faq.html", merge_page_chrome(PAGE_CHROME_LIGHT))
+    return render(
+        request,
+        "support/faq.html",
+        merge_page_chrome(
+            PAGE_CHROME_LIGHT,
+            page_section="Preguntas frecuentes",
+        ),
+    )

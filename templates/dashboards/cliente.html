@@ -155,7 +155,7 @@
           </div>
           <div class="relative z-10 mt-5 space-y-3">
             {% for payment in payment_history %}
-              {% include 'partials/dashboards/_payment_row.html' with month=payment.month method=payment.method amount=payment.amount %}
+              {% include 'partials/dashboards/_payment_row.html' with disciplina=payment.disciplina method=payment.method amount=payment.amount %}
             {% empty %}
               <p class="text-sm font-semibold text-secondary-700/80 italic">Todavía no registramos pagos acreditados.</p>
             {% endfor %}

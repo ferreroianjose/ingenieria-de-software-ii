@@ -1,6 +1,6 @@
 {% comment %}
   Usage:
-    {% include 'partials/_payment_row.html' with month="..." method="..." amount="..." %}
+    {% include 'partials/dashboards/_payment_row.html' with disciplina="..." method="..." amount="..." %}
 {% endcomment %}
 <div class="dash-payment-row bg-stone-50 rounded-4xl p-4 flex justify-between items-center gap-3 shadow-fair-sm border border-white/25">
     <div class="dash-payment-row__meta flex items-center gap-4 min-w-0">
@@ -8,7 +8,7 @@
             {% include 'partials/ui/_icon.html' with name="check" class="size-7 stroke-[3]" %}
         </div>
         <div class="min-w-0">
-            <p class="font-black text-secondary-900">{{ month }}</p>
+            <p class="font-black text-secondary-900">{{ disciplina }}</p>
             <p class="text-sm font-bold text-gray-400 uppercase tracking-tight">{{ method }}</p>
         </div>
     </div>

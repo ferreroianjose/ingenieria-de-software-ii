@@ -1,8 +1,14 @@
 {% extends 'base.html' %}
 
 {% block header %}{% endblock %}
-{% block footer_class %}{% endblock %}
 {% block main_class %}{% endblock %}
+{% block footer %}
+{% firstof page_section flow_title page_title "" as footer_section %}
+{% firstof page_section_hint flow_subtitle page_subtitle "" as footer_section_hint %}
+<div>
+  {% include 'partials/layout/_footer.html' with footer_section=footer_section footer_section_hint=footer_section_hint %}
+</div>
+{% endblock %}
 
 {% block content %}
 <style>

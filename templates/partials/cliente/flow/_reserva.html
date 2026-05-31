@@ -34,18 +34,22 @@
         Gestionar clases
       </a>
       {% else %}
-      {% if inscripcion.estado == 'ESPERA' %}
-      <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" hx-boost="false"
-            onsubmit="return confirm('¿Salir de la lista de espera?')">
-      {% else %}
-      <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" hx-boost="false"
-            onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más se reintegra la seña.')">
-      {% endif %}
-        {% csrf_token %}
-        <button type="submit" class="w-full rounded-full border border-red-400/50 px-5 py-2 text-sm font-bold text-red-300 hover:bg-red-500/10 btn-auto">
-          {% if inscripcion.estado == 'ESPERA' %}Salir de lista{% else %}Cancelar{% endif %}
-        </button>
-      </form>
+      <div class="relative min-h-[3.25rem] w-full shrink-0 overflow-hidden rounded-xl border border-white/12 bg-black/20 sm:w-auto sm:min-w-[8.5rem]">
+        {% if inscripcion.estado == 'ESPERA' %}
+        <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false"
+              onsubmit="return confirm('¿Salir de la lista de espera?')">
+        {% else %}
+        <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false"
+              onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más se reintegra la seña.')">
+        {% endif %}
+          {% csrf_token %}
+          {% if inscripcion.estado == 'ESPERA' %}
+          {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Salir de lista' %}
+          {% else %}
+          {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' %}
+          {% endif %}
+        </form>
+      </div>
       {% endif %}
     </div>
   </div>

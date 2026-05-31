@@ -164,12 +164,14 @@
       Gestionar clases del mes →
     </a>
     {% elif info.puede_cancelar %}
-    <form action="{% url 'classes:cancelar_reserva' info.mi_inscripcion.id %}" method="post" hx-boost="false"
-          onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.');">
-      {% csrf_token %}
-      <input type="hidden" name="destino" value="detalle">
-      {% include 'partials/ui/buttons/_secondary_button.html' with label="Cancelar inscripción" type="submit" class="w-full rounded-full px-6 py-3" %}
-    </form>
+    <div class="relative min-h-[3.25rem] w-full overflow-hidden rounded-xl border border-white/12 bg-black/20">
+      <form action="{% url 'classes:cancelar_reserva' info.mi_inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false"
+            onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.');">
+        {% csrf_token %}
+        <input type="hidden" name="destino" value="detalle">
+        {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' %}
+      </form>
+    </div>
     {% endif %}
 
     {% else %}
