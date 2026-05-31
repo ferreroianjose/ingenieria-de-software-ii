@@ -64,12 +64,21 @@
     </div>
   </a>
 
-  <a href="#"
+  <a href="{% url 'payments:mis_pagos' %}"
      class="nav-item"
-     :class="currentPath === '/pagos/' ? 'nav-item-active' : ''">
+     :class="currentPath.startsWith('/payments/mis-pagos') ? 'nav-item-active' : ''">
     <div class="nav-item-inner">
       {% include 'partials/ui/_icon.html' with name="credit-card-fill" class="size-5 shrink-0" %}
       <span class="nav-text">Mis pagos</span>
+    </div>
+  </a>
+
+  <a href="{% url 'faq' %}"
+     class="nav-item"
+     :class="currentPath === '{% url 'faq' %}' ? 'nav-item-active' : ''">
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="question-circle-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Preguntas frecuentes</span>
     </div>
   </a>
   {% endif %}
@@ -134,15 +143,6 @@
     </div>
   </a>
   {% endif %}
-
-  <a href="{% url 'faq' %}"
-     class="nav-item"
-     :class="currentPath === '{% url 'faq' %}' ? 'nav-item-active' : ''">
-    <div class="nav-item-inner">
-      {% include 'partials/ui/_icon.html' with name="question-circle-fill" class="size-5 shrink-0" %}
-      <span class="nav-text">Preguntas frecuentes</span>
-    </div>
-  </a>
 
   <a href="{% url 'settings' %}"
      class="nav-item"

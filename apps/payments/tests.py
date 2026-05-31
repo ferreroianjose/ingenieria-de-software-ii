@@ -123,8 +123,11 @@ class PaymentLogicTests(TestCase):
         pago = Pago.objects.last()
         self.assertEqual(pago.monto, Decimal('2000.00'))
 
+    @patch("django.utils.timezone.localdate", return_value=date(2026, 5, 1))
     @patch('apps.payments.views.mercadopago_service.create_preference')
-    def test_pagar_inscripcion_mensual_cobra_por_ocurrencias(self, mock_create_preference):
+    def test_pagar_inscripcion_mensual_cobra_por_ocurrencias(
+        self, mock_create_preference, _localdate
+    ):
         # Abonado: precio por clase × clases restantes del horario en el período.
         mock_create_preference.return_value = "http://mercadopago.mock/init"
         
@@ -341,13 +344,15 @@ class PaymentLogicTests(TestCase):
 
     @patch('apps.payments.views.mercadopago_service.create_preference')
     def test_pagar_inscripcion_mp_failure(self, mock_create_preference):
-        # Si MP no devuelve init_point, avisa error y vuelve a mis reservas.
+        # Si MP no devuelve init_point, avisa error y vuelve a selección de pago.
         mock_create_preference.return_value = None
 
         response = self._post_pagar(self.inscripcion.id, "TOTAL")
 
         self.assertRedirects(
-            response, reverse('classes:mis_reservas'), fetch_redirect_response=False
+            response,
+            reverse('payments:seleccion_pago', args=[self.inscripcion.id]),
+            fetch_redirect_response=False,
         )
         pago = Pago.objects.get(usuario=self.user)
         self.assertEqual(pago.estado, Pago.Estado.PENDIENTE)
@@ -378,6 +383,28 @@ class PaymentLogicTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Pago total")
         self.assertContains(response, "Seña")
+
+    def test_seleccion_pago_sin_sena_cuando_hay_credito(self):
+        PrecioDisciplina.objects.create(
+            disciplina=self.disciplina,
+            periodo=self.periodo,
+            monto=Decimal("4000.00"),
+        )
+        from apps.payments.models import Credito
+
+        Credito.objects.create(
+            usuario=self.user,
+            periodo=self.periodo,
+            disciplina=self.disciplina,
+            estado=Credito.Estado.DISPONIBLE,
+        )
+        response = self.client.get(
+            reverse("payments:seleccion_pago", args=[self.inscripcion.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Pago total")
+        self.assertNotContains(response, "Seña")
+        self.assertContains(response, "se aplicará automáticamente")
 
     def test_pagar_inscripcion_requires_login(self):
         self.client.logout()

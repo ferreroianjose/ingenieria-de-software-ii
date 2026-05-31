@@ -1,4 +1,4 @@
-{% comment %}pagar_url, modalidad, titulo, descripcion, monto{% endcomment %}
+{% comment %}pagar_url, modalidad, titulo, descripcion, monto; opcional: monto_original, credito_aplicado{% endcomment %}
 <form action="{{ pagar_url }}" method="post" class="m-0" hx-boost="false">
   {% csrf_token %}
   <input type="hidden" name="modalidad" value="{{ modalidad }}">
@@ -7,8 +7,24 @@
       <span class="cf-pay__main">
         <span class="cf-kicker !mb-1">{{ titulo }}</span>
         <span class="text-sm text-white/70">{{ descripcion }}</span>
+        {% if credito_aplicado %}
+        <span class="mt-1 block text-xs font-semibold text-primary-200">
+          Incluye −${{ credito_aplicado|floatformat:2 }} por crédito automático
+        </span>
+        {% endif %}
       </span>
-      <span class="cf-pay__amount group-hover:bg-primary-500">${{ monto }}</span>
+      <span class="cf-pay__amount group-hover:bg-primary-500">
+        {% if monto == 0 %}
+        Gratis
+        {% elif monto_original %}
+        <span class="flex flex-col items-center leading-tight">
+          <span class="text-xs font-semibold text-white/60 line-through">${{ monto_original|floatformat:2 }}</span>
+          <span>${{ monto|floatformat:2 }}</span>
+        </span>
+        {% else %}
+        ${{ monto|floatformat:2 }}
+        {% endif %}
+      </span>
     </span>
   </button>
 </form>

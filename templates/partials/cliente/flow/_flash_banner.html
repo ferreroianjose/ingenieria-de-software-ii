@@ -1,0 +1,9 @@
+{% if messages %}
+<div class="flex flex-col gap-2">
+  {% for message in messages %}
+  {% include 'partials/cliente/flow/_flash_item.html' with text=message level=message.tags dismissible=True %}
+  {% endfor %}
+</div>
+{% elif status_message %}
+{% include 'partials/cliente/flow/_flash_item.html' with text=status_message level=status_level|default:'success' dismissible=True %}
+{% endif %}

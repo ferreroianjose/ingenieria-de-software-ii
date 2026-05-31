@@ -1,6 +1,7 @@
 """Helpers para el flujo cliente: actividades → clase → pago."""
 
 from apps.classes.models import Class, Disciplina, Inscripcion
+from apps.classes.ocurrencias import fechas_suelta_ocupadas, primera_ocurrencia_activa
 from apps.classes.services import cupo_disponible, ocurrencias_clase_en_ventana, proxima_ocurrencia
 
 
@@ -29,17 +30,6 @@ def mi_inscripcion_activa(clase, usuario):
         .order_by("-fecha_inscripcion")
         .first()
     )
-
-
-def fechas_suelta_ocupadas(clase, usuario):
-    from apps.classes.services import _normalizar_fecha_clase
-
-    qs = clase.inscripciones.filter(
-        usuario=usuario,
-        tipo=Inscripcion.Tipo.CLASE_SUELTA,
-        fecha_clase__isnull=False,
-    ).exclude(estado=Inscripcion.Estado.CANCELADA)
-    return {_normalizar_fecha_clase(i.fecha_clase) for i in qs}
 
 
 def hay_ocurrencia_suelta_libre(clase, usuario):
@@ -128,7 +118,9 @@ def info_clase_para_usuario(clase, usuario, request=None):
     else:
         ui_estado = "sin_inscripcion"
 
-    inicio = mi.fecha_clase if mi and mi.fecha_clase else proxima_ocurrencia(clase)
+    inicio = (
+        primera_ocurrencia_activa(mi) if mi else None
+    ) or proxima_ocurrencia(clase)
     subtitulo = (
         f"{clase.get_dia_semana_display()} · horario a confirmar"
         if not inicio
@@ -175,6 +167,11 @@ def info_clase_para_usuario(clase, usuario, request=None):
         "periodos_inscripcion": periodos_inscripcion,
         "puede_inscribirse": puede_inscribirse,
         "puede_anotarse_espera": ui_estado == "sin_inscripcion" and cupo == 0,
-        "puede_cancelar": ui_estado in ("inscripto", "pendiente_pago"),
+        "puede_cancelar": ui_estado in ("inscripto", "pendiente_pago")
+        and not (
+            mi
+            and mi.tipo == Inscripcion.Tipo.MENSUAL
+            and mi.estado == Inscripcion.Estado.RESERVADA
+        ),
         "puede_abandonar_espera": ui_estado == "en_espera",
     }

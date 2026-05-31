@@ -86,6 +86,14 @@ def aplicar_pago_aprobado(pago):
             inscripcion.estado = Inscripcion.Estado.RESERVADA
         inscripcion.save(update_fields=["estado"])
 
+        if (
+            inscripcion.estado == Inscripcion.Estado.RESERVADA
+            and inscripcion.tipo == Inscripcion.Tipo.MENSUAL
+        ):
+            from apps.classes.ocurrencias import generar_ocurrencias_mensual
+
+            generar_ocurrencias_mensual(inscripcion)
+
 
 def precio_disciplina_periodo(disciplina, periodo):
     """Precio por clase en el período (una ocurrencia del horario semanal)."""
@@ -168,27 +176,144 @@ def resumen_abono_para_inscripcion(inscripcion):
     )
 
 
-def opciones_pago_para_clase(clase, periodo, tipo):
+def _monto_neto_con_credito(monto_bruto, valor_credito):
+    if valor_credito <= 0 or monto_bruto <= 0:
+        return monto_bruto, Decimal("0")
+    aplicado = min(valor_credito, monto_bruto).quantize(Decimal("0.01"))
+    neto = (monto_bruto - aplicado).quantize(Decimal("0.01"))
+    return neto, aplicado
+
+
+def resumen_credito_automatico(inscripcion, usuario):
+    """Vista previa del crédito que se aplicará al confirmar el pago."""
+    if usuario is None or inscripcion.tipo != Inscripcion.Tipo.CLASE_SUELTA:
+        return {"aplica": False}
+
+    from apps.payments.creditos import valor_credito_disponible
+
+    valor = valor_credito_disponible(
+        usuario, inscripcion.periodo, inscripcion.clase.disciplina
+    )
+    if valor <= 0:
+        return {"aplica": False}
+
+    base = precio_base_inscripcion(inscripcion)
+    pagado = total_pagado_completado(inscripcion)
+    pendiente = base - pagado
+    if pendiente <= 0:
+        return {"aplica": False}
+
+    monto = min(valor, pendiente).quantize(Decimal("0.01"))
+    return {
+        "aplica": True,
+        "monto": monto,
+        "disciplina": inscripcion.clase.disciplina.nombre,
+        "cubre_total": monto >= pendiente,
+        "pendiente": pendiente,
+    }
+
+
+def resumen_credito_para_clase(clase, periodo, usuario):
+    """Vista previa antes de crear la inscripción (clase suelta sin pagos previos)."""
+    if usuario is None:
+        return {"aplica": False}
+
+    from apps.payments.creditos import valor_credito_disponible
+
+    valor = valor_credito_disponible(usuario, periodo, clase.disciplina)
+    if valor <= 0:
+        return {"aplica": False}
+
+    base = precio_base_para_clase(clase, periodo, Inscripcion.Tipo.CLASE_SUELTA)
+    monto = min(valor, base).quantize(Decimal("0.01"))
+    return {
+        "aplica": True,
+        "monto": monto,
+        "disciplina": clase.disciplina.nombre,
+        "cubre_total": monto >= base,
+        "pendiente": base,
+    }
+
+
+def _opcion_pago(modalidad, monto_bruto, titulo, descripcion, valor_credito):
+    monto, credito_aplicado = _monto_neto_con_credito(monto_bruto, valor_credito)
+    opcion = {
+        "modalidad": modalidad,
+        "monto": monto,
+        "titulo": titulo,
+        "descripcion": descripcion,
+    }
+    if credito_aplicado > 0:
+        opcion["monto_original"] = monto_bruto
+        opcion["credito_aplicado"] = credito_aplicado
+    return opcion
+
+
+def _opciones_total_y_sena(valor_credito, base, titulo_total, desc_total, titulo_sena, desc_sena):
+    """Clase suelta sin pagos previos: seña solo si no hay crédito a aplicar."""
+    opciones = [
+        _opcion_pago(
+            "TOTAL",
+            base,
+            titulo_total,
+            desc_total,
+            valor_credito,
+        ),
+    ]
+    if valor_credito <= 0:
+        opciones.append(
+            _opcion_pago(
+                "SENA",
+                monto_sena(base),
+                titulo_sena,
+                desc_sena,
+                valor_credito,
+            )
+        )
+    return opciones
+
+
+def validar_modalidad_pago(inscripcion, usuario, modalidad):
+    """Impide seña cuando hay crédito disponible para clase suelta."""
+    modalidad = modalidad.upper()
+    if modalidad != "SENA":
+        return
+    if inscripcion.tipo != Inscripcion.Tipo.CLASE_SUELTA:
+        return
+    if total_pagado_completado(inscripcion) > 0:
+        return
+
+    from apps.payments.creditos import valor_credito_disponible
+
+    if valor_credito_disponible(
+        usuario, inscripcion.periodo, inscripcion.clase.disciplina
+    ) > 0:
+        raise ValueError(
+            "Con un crédito disponible no podés pagar solo la seña. "
+            "Confirmá con pago total."
+        )
+
+
+def opciones_pago_para_clase(clase, periodo, tipo, usuario=None):
     """Opciones en pantalla de pago antes de crear la inscripción."""
     if tipo == Inscripcion.Tipo.MENSUAL:
         return []
 
+    from apps.payments.creditos import valor_credito_disponible
+
+    valor_credito = Decimal("0")
+    if usuario is not None:
+        valor_credito = valor_credito_disponible(usuario, periodo, clase.disciplina)
+
     base = precio_base_para_clase(clase, periodo, tipo)
-    sena = monto_sena(base)
-    return [
-        {
-            "modalidad": "TOTAL",
-            "monto": base,
-            "titulo": "Pagar el total",
-            "descripcion": "Un solo pago y tu clase queda reservada.",
-        },
-        {
-            "modalidad": "SENA",
-            "monto": sena,
-            "titulo": "Pagar seña (50%)",
-            "descripcion": "Reservás con la mitad ahora; el resto antes de la clase.",
-        },
-    ]
+    return _opciones_total_y_sena(
+        valor_credito,
+        base,
+        "Pagar el total",
+        "Un solo pago y tu clase queda reservada.",
+        "Pagar seña (50%)",
+        "Reservás con la mitad ahora; el resto antes de la clase.",
+    )
 
 
 def monto_sena(base_amount):
@@ -287,7 +412,7 @@ def preparar_pago_mercadopago(inscripcion, usuario, monto):
     return pago
 
 
-def opciones_pago_inscripcion(inscripcion):
+def opciones_pago_inscripcion(inscripcion, usuario=None):
     """Opciones para clase suelta (seña/total). Abono mensual usa pantalla dedicada."""
     if inscripcion.estado != Inscripcion.Estado.PENDIENTE_PAGO:
         return []
@@ -295,51 +420,61 @@ def opciones_pago_inscripcion(inscripcion):
     if inscripcion.tipo == Inscripcion.Tipo.MENSUAL:
         return []
 
+    from apps.payments.creditos import valor_credito_disponible
+
+    valor_credito = Decimal("0")
+    if usuario is not None:
+        valor_credito = valor_credito_disponible(
+            usuario, inscripcion.periodo, inscripcion.clase.disciplina
+        )
+
     resumen = resumen_pago_inscripcion(inscripcion)
     pagado = resumen["pagado"]
+    opciones = []
 
     if resumen["mostrar_pagar_saldo"]:
         monto = monto_a_cobrar(inscripcion, "SALDO")
-        return [
-            {
-                "modalidad": "SALDO",
-                "monto": monto,
-                "titulo": "Pagar saldo",
-                "descripcion": f"Completá los ${monto} restantes (ya pagaste ${pagado}).",
-            }
-        ]
+        opciones.append(
+            _opcion_pago(
+                "SALDO",
+                monto,
+                "Pagar saldo",
+                f"Completá el saldo pendiente (ya pagaste ${pagado}).",
+                valor_credito,
+            )
+        )
+        return opciones
 
     if pagado == 0:
-        return [
-            {
-                "modalidad": "TOTAL",
-                "monto": monto_a_cobrar(inscripcion, "TOTAL"),
-                "titulo": "Pago total",
-                "descripcion": "Un solo pago para confirmar la clase.",
-            },
-            {
-                "modalidad": "SENA",
-                "monto": monto_a_cobrar(inscripcion, "SENA"),
-                "titulo": "Seña (50%)",
-                "descripcion": "Reservás con la mitad; el saldo después.",
-            },
-        ]
+        return _opciones_total_y_sena(
+            valor_credito,
+            monto_a_cobrar(inscripcion, "TOTAL"),
+            "Pago total",
+            "Un solo pago para confirmar la clase.",
+            "Seña (50%)",
+            "Reservás con la mitad; el saldo después.",
+        )
 
-    return [
-        {
-            "modalidad": "TOTAL",
-            "monto": monto_a_cobrar(inscripcion, "TOTAL"),
-            "titulo": "Pago completo",
-            "descripcion": "Confirmá tu inscripción.",
-        }
-    ]
+    opciones.append(
+        _opcion_pago(
+            "TOTAL",
+            monto_a_cobrar(inscripcion, "TOTAL"),
+            "Pago completo",
+            "Confirmá tu inscripción.",
+            valor_credito,
+        )
+    )
+    return opciones
 
 
 def monto_a_cobrar(inscripcion, modalidad):
     """modalidad: TOTAL, SENA o SALDO."""
+    modalidad = modalidad.upper()
+    if modalidad == "CREDITO":
+        raise ValueError("Los créditos se aplican automáticamente al pagar.")
+
     base = precio_base_inscripcion(inscripcion)
     pagado = total_pagado_completado(inscripcion)
-    modalidad = modalidad.upper()
 
     if inscripcion.tipo == Inscripcion.Tipo.MENSUAL:
         if modalidad != "TOTAL":

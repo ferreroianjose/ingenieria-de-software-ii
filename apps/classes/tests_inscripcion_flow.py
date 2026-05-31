@@ -47,7 +47,8 @@ class InscripcionMensualFlowTests(TestCase):
         )
         self.client.force_login(self.user)
 
-    def test_post_mensual_guarda_intencion_y_redirige_a_pago(self):
+    @patch("django.utils.timezone.localdate", return_value=date(2026, 5, 10))
+    def test_post_mensual_guarda_intencion_y_redirige_a_pago(self, _localdate):
         url = reverse("classes:inscribir", args=[self.clase.id])
         response = self.client.post(
             url,
@@ -63,7 +64,8 @@ class InscripcionMensualFlowTests(TestCase):
         self.assertEqual(data["tipo"], Inscripcion.Tipo.MENSUAL)
         self.assertEqual(data["periodo_id"], self.periodo.id)
 
-    def test_seleccion_pago_mensual_muestra_resumen(self):
+    @patch("django.utils.timezone.localdate", return_value=date(2026, 5, 10))
+    def test_seleccion_pago_mensual_muestra_resumen(self, _localdate):
         self.client.post(
             reverse("classes:inscribir", args=[self.clase.id]),
             {"tipo": Inscripcion.Tipo.MENSUAL, "periodo_id": self.periodo.id},

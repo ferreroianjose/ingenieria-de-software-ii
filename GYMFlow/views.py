@@ -10,7 +10,6 @@ from GYMFlow.page_chrome import (
     merge_page_chrome,
 )
 from apps.classes.models import Disciplina, Inscripcion
-from apps.classes.services import proxima_ocurrencia
 from apps.payments.models import Pago, PeriodoCobro
 from apps.payments.periodos import periodo_vigente
 
@@ -51,31 +50,21 @@ def _monto_ars_legible(monto):
 
 
 def _proximas_clases_para_dashboard(user, limite=4):
+    from apps.classes.ocurrencias import proximas_ocurrencias_dashboard
+
     ahora = timezone.now()
     proximas = []
-    vistos = set()
-    inscripciones_qs = (
-        Inscripcion.objects.filter(usuario=user)
-        .exclude(estado=Inscripcion.Estado.CANCELADA)
-        .select_related("clase", "clase__disciplina", "clase__sala", "clase__sala__sede")
-        .order_by("fecha_clase", "fecha_inscripcion")
-    )
 
-    for inscripcion in inscripciones_qs:
+    for ocurrencia in proximas_ocurrencias_dashboard(user, limite=limite):
+        inscripcion = ocurrencia.inscripcion
         clase = inscripcion.clase
         disciplina = getattr(clase, "disciplina", None)
         if not disciplina:
             continue
 
-        proxima = inscripcion.fecha_clase or proxima_ocurrencia(clase)
-        if not proxima or proxima < ahora:
+        proxima_local = timezone.localtime(ocurrencia.fecha_clase)
+        if ocurrencia.fecha_clase < ahora:
             continue
-
-        proxima_local = timezone.localtime(proxima)
-        clave = (clase.id, proxima_local.isoformat())
-        if clave in vistos:
-            continue
-        vistos.add(clave)
 
         lugar = "Sala a confirmar"
         if clase.sala_id:
@@ -255,7 +244,7 @@ def _estado_cliente_para_dashboard(user):
     }
 
 
-def _cartelera_para_dashboard(limite=3):
+def _cartelera_para_dashboard(limite=5):
     disciplinas = (
         Disciplina.objects.filter(class__estado="disponible")
         .annotate(
@@ -334,6 +323,10 @@ def dashboard(request):
             "activities_url": reverse("classes:actividades"),
             "my_reservations_url": reverse("classes:mis_reservas"),
             "faq_url": reverse("faq"),
+            "missing_emergency_phone": not bool(
+                user.telefono_emergencia and user.telefono_emergencia.strip()
+            ),
+            "settings_url": reverse("settings"),
         },
     )
 

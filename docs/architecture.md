@@ -23,8 +23,8 @@
 Los módulos (Django Apps) se encuentran en el directorio `apps/`:
 
 - `users/`: Módulo de autenticación y gestión de usuarios. Registros, asignación de roles y desarrollo del MFA para administradores.
-- `classes/`: Módulo de gestión de clases e inscripciones. Configuración de las disciplinas, con sus horarios, profesores y lista de espera. Control de apertura/cierre de inscripciones según el calendario.
-- `payments/`: Módulo de gestion de cobros. Integración con MercadoPago para cobros. Gestión de los créditos por cancelaciones anticipadas y registro de pagos en efectivo en recepción.
+- `classes/`: Módulo de gestión de clases e inscripciones. Configuración de las disciplinas, con sus horarios, profesores y lista de espera. Control de apertura/cierre de inscripciones según el calendario. Sesiones concretas en `InscripcionOcurrencia`.
+- `payments/`: Módulo de gestion de cobros. Integración con MercadoPago para cobros. Gestión de los créditos por cancelaciones anticipadas, reembolsos de seña (clase suelta) y registro de pagos en efectivo en recepción.
 - `attendance/`: Módulo de asistencia. Generación/lectura de códigos QR y carga de constancias de tutores para menores de edad.
 - `reports/`: Módulo de panel de administrador para visualizar los ingresos, cancelaciones, la concurrencia y más.
 - `notifications/` Módulo de notificaciones. Envío de correos para la confirmación de cupos y recordatorios de clases.
@@ -106,9 +106,18 @@ erDiagram
         int usuario_id FK
         int clase_id FK
         int periodo_id FK
-        datetime fecha_registro
+        datetime fecha_inscripcion
         string estado "ESPERA, RESERVADA, PENDIENTE_PAGO, CANCELADA"
         string tipo "MENSUAL, CLASE_SUELTA"
+    }
+    INSCRIPCION_OCURRENCIA {
+        int id PK
+        int inscripcion_id FK
+        datetime fecha_clase
+        string estado "ACTIVA, CANCELADA"
+        int credito_id FK "nullable; si canceló con ≥48 h"
+        bool otorga_credito
+        datetime created_at
     }
     ASISTENCIA {
         int id PK
@@ -157,5 +166,8 @@ erDiagram
     DISCIPLINA ||--o{ PRECIO_DISCIPLINA : "tiene costo"
     DISCIPLINA ||--o{ CLASE : "se dicta"
     CLASE ||--o{ INSCRIPCION : "recibe"
+    INSCRIPCION ||--o{ INSCRIPCION_OCURRENCIA : "tiene sesiones"
     INSCRIPCION ||--o| ASISTENCIA : "genera"
+    INSCRIPCION_OCURRENCIA }o--o| CREDITO : "puede otorgar al cancelar"
+    DISCIPLINA ||--o{ CREDITO : "acota uso"
 ```

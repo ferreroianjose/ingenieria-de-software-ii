@@ -1,0 +1,26 @@
+{% comment %}
+  text — mensaje
+  level — success | error | warning | info (message.tags de Django)
+  dismissible — muestra botón cerrar
+{% endcomment %}
+{% with tag=level|default:"info" %}
+<div
+  class="cf-flash-item cf-flash-item--{% if 'error' in tag %}error{% elif 'warning' in tag %}warning{% elif 'success' in tag %}success{% else %}info{% endif %}"
+  role="status"
+>
+  <p class="cf-flash-item__text">{{ text }}</p>
+  {% if dismissible %}
+  <button
+    type="button"
+    class="cf-flash-item__dismiss"
+    aria-label="Cerrar notificación"
+    data-flash-dismiss
+    onclick="dismissFlashItem(this); return false;"
+  >
+    <svg class="size-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+  {% endif %}
+</div>
+{% endwith %}

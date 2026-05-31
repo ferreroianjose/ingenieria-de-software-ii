@@ -19,6 +19,22 @@
 
     <div class="cf-divider"></div>
 
+    {% if credito_auto.aplica %}
+    <div class="mb-5 rounded-2xl border border-primary-400/35 bg-primary-400/10 px-4 py-4 text-sm text-white/90">
+      <p class="font-bold text-white">
+        Tenés un crédito de {{ credito_auto.disciplina }} y se aplicará automáticamente
+        (−${{ credito_auto.monto|floatformat:2 }}).
+      </p>
+      <p class="mt-2 text-white/70">
+        {% if credito_auto.cubre_total %}
+        Con este crédito la reserva queda confirmada sin cargo en Mercado Pago.
+        {% else %}
+        El monto en Mercado Pago ya incluye el descuento de tu crédito.
+        {% endif %}
+      </p>
+    </div>
+    {% endif %}
+
     {% if abono_resumen %}
     <p class="cf-kicker">Resumen del mes</p>
     <div class="rounded-2xl border border-primary-400/30 bg-primary-400/10 px-4 py-4 text-sm text-white/85 mb-6">
@@ -38,10 +54,14 @@
     </form>
     {% else %}
     <p class="cf-kicker">Forma de pago</p>
+    {% if credito_auto.aplica %}
+    <p class="text-sm text-white/60 mb-3">Confirmá con pago total; tu crédito se aplica automáticamente.</p>
+    {% else %}
     <p class="text-sm text-white/60 mb-3">Podés pagar el total o una seña del 50% y el saldo más adelante.</p>
+    {% endif %}
     <div class="mt-4 flex flex-col gap-3">
       {% for opcion in opciones %}
-      {% include 'partials/cliente/flow/_pay_row.html' with pagar_url=pagar_url modalidad=opcion.modalidad titulo=opcion.titulo descripcion=opcion.descripcion monto=opcion.monto %}
+      {% include 'partials/cliente/flow/_pay_row.html' with pagar_url=pagar_url modalidad=opcion.modalidad titulo=opcion.titulo descripcion=opcion.descripcion monto=opcion.monto monto_original=opcion.monto_original credito_aplicado=opcion.credito_aplicado %}
       {% empty %}
       <p class="cf-empty !py-8">No hay opciones de pago disponibles.</p>
       {% endfor %}

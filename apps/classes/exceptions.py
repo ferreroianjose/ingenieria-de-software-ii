@@ -32,6 +32,20 @@ class InscripcionYaCancelada(ReservaError):
     default_message = "La inscripción ya está cancelada."
 
 
+class OcurrenciaYaCancelada(ReservaError):
+    default_message = "Esa clase ya fue cancelada."
+
+
+class OcurrenciaNoValida(ReservaError):
+    default_message = "La fecha no corresponde a esta inscripción."
+
+
+class CancelacionMensualNoPermitida(ReservaError):
+    default_message = (
+        "Para abonados mensuales, cancelá cada clase desde la lista de fechas."
+    )
+
+
 class InscripcionDuplicada(ReservaError):
     default_message = "Ya tenés una inscripción activa en esta clase."
 

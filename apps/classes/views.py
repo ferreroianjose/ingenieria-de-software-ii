@@ -15,8 +15,37 @@ from .services import proxima_ocurrencia
 from .search import apply_text_search
 from .htmx import hx_ok
 from . import cliente
+from .flow import build_flow_stepper_context
 
 from urllib.parse import urlencode
+
+
+def _flow_session_urls(request, *, disciplina_id=None):
+    saved_disciplina_id = request.session.get("flow_disciplina_id")
+    saved_clase_id = request.session.get("flow_clase_id")
+    saved_clase_disciplina_id = request.session.get("flow_clase_disciplina_id")
+    saved_pago_url = request.session.get("flow_pago_url")
+
+    urls = {}
+    if saved_disciplina_id:
+        urls["horarios_url"] = reverse("classes:cronograma", args=[saved_disciplina_id])
+
+    class_matches_disciplina = bool(
+        saved_clase_id
+        and saved_clase_disciplina_id
+        and str(saved_clase_disciplina_id) == str(saved_disciplina_id)
+    )
+
+    if class_matches_disciplina:
+        urls["clase_url"] = reverse("classes:detalle", args=[saved_clase_id])
+        urls["pago_url"] = saved_pago_url
+
+    if disciplina_id is not None and str(saved_disciplina_id) != str(disciplina_id):
+        urls.pop("clase_url", None)
+        urls.pop("pago_url", None)
+        urls["horarios_url"] = reverse("classes:cronograma", args=[disciplina_id])
+
+    return urls
 
 
 def _hx_ok_or_redirect(
@@ -963,6 +992,8 @@ def browse_clases(request):
 
 @login_required
 def actividades(request):
+    actividades_url = reverse("classes:actividades")
+    session_urls = _flow_session_urls(request)
     disciplinas = list(cliente.disciplinas_con_clases())
     for disciplina in disciplinas:
         disciplina.cronograma_url = reverse(
@@ -980,6 +1011,13 @@ def actividades(request):
             "flow_step": "actividades",
             "flow_title": "Actividades",
             "flow_subtitle": "Disciplina, horario, fecha y pago: cuatro pasos para reservar tu lugar.",
+            **build_flow_stepper_context(
+                "actividades",
+                actividades_url=actividades_url,
+                horarios_url=session_urls.get("horarios_url"),
+                clase_url=session_urls.get("clase_url"),
+                pago_url=session_urls.get("pago_url"),
+            ),
         },
     )
 
@@ -988,6 +1026,10 @@ def actividades(request):
 def cronograma_disciplina(request, disciplina_id):
     disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
     clases = cliente.clases_disponibles_qs().filter(disciplina=disciplina)
+    actividades_url = reverse("classes:actividades")
+    horarios_url = reverse("classes:cronograma", args=[disciplina.pk])
+    request.session["flow_disciplina_id"] = disciplina.pk
+    session_urls = _flow_session_urls(request, disciplina_id=disciplina.pk)
 
     if clases.count() == 1:
         return redirect("classes:detalle", clase_id=clases.first().pk)
@@ -1016,11 +1058,18 @@ def cronograma_disciplina(request, disciplina_id):
             "disciplina": disciplina,
             "clases_info": clases_info,
             "flow_step": "horarios",
-            "flow_back_url": reverse("classes:actividades"),
+            "flow_back_url": actividades_url,
             "flow_back_label": "Actividades",
             "flow_title": disciplina.nombre,
             "flow_subtitle": "Cada tarjeta es un día y horario fijo. Elegí el que mejor te quede.",
-            "actividades_back_url": reverse("classes:actividades"),
+            "actividades_back_url": actividades_url,
+            **build_flow_stepper_context(
+                "horarios",
+                actividades_url=actividades_url,
+                horarios_url=horarios_url,
+                clase_url=session_urls.get("clase_url"),
+                pago_url=session_urls.get("pago_url"),
+            ),
         },
     )
 
@@ -1034,6 +1083,27 @@ def detalle_clase(request, clase_id):
     from django.template.loader import render_to_string
 
     info = cliente.info_clase_para_usuario(clase, request.user, request)
+    actividades_url = reverse("classes:actividades")
+    horarios_url = reverse("classes:cronograma", args=[clase.disciplina_id])
+    clase_url = reverse("classes:detalle", args=[clase.id])
+    request.session["flow_disciplina_id"] = clase.disciplina_id
+    request.session["flow_clase_disciplina_id"] = clase.disciplina_id
+    request.session["flow_clase_id"] = clase.id
+    session_urls = _flow_session_urls(request, disciplina_id=clase.disciplina_id)
+    pago_url = None
+    if info["ui_estado"] == "en_pago":
+        pago_url = reverse("payments:seleccion_pago_clase", args=[clase.id])
+    elif info["ui_estado"] == "pendiente_pago" and info["mi_inscripcion"]:
+        pago_url = reverse(
+            "payments:seleccion_pago",
+            args=[info["mi_inscripcion"].id],
+        )
+    else:
+        pago_url = session_urls.get("pago_url")
+
+    if pago_url:
+        request.session["flow_pago_url"] = pago_url
+
     if info["tiene_proximo_inicio"]:
         flow_subtitle = render_to_string(
             "partials/cliente/flow/_fecha_hora.html",
@@ -1048,12 +1118,17 @@ def detalle_clase(request, clase_id):
             "info": info,
             "periodos_inscripcion_data": info["periodos_inscripcion"],
             "flow_step": "clase",
-            "flow_back_url": reverse(
-                "classes:cronograma", args=[clase.disciplina_id]
-            ),
+            "flow_back_url": horarios_url,
             "flow_back_label": clase.disciplina.nombre,
             "flow_title": clase.disciplina.nombre,
             "flow_subtitle": flow_subtitle or "Revisá los datos y elegí cómo inscribirte.",
+            **build_flow_stepper_context(
+                "clase",
+                actividades_url=actividades_url,
+                horarios_url=horarios_url,
+                clase_url=clase_url,
+                pago_url=pago_url,
+            ),
         },
     )
 
@@ -1241,6 +1316,7 @@ def abandonar_espera_view(request, inscripcion_id):
 def mis_reservas(request):
     from apps.payments.inscripcion_pago import (
         filtro_inscripciones_en_reservas,
+        precio_disciplina_periodo,
         resumen_pago_inscripcion,
     )
 
@@ -1248,23 +1324,37 @@ def mis_reservas(request):
         Inscripcion.objects.filter(usuario=request.user)
         .filter(filtro_inscripciones_en_reservas())
         .select_related("clase", "clase__profesor", "clase__disciplina", "clase__sala")
+        .prefetch_related("ocurrencias")
         .order_by("-fecha_inscripcion")
     )
 
-    inscripciones_con_info = [
-        {
-            "inscripcion": i,
-            "proximo_inicio": i.fecha_clase or proxima_ocurrencia(i.clase),
-            "pago": resumen_pago_inscripcion(i),
-        }
-        for i in inscripciones
-    ]
+    from apps.classes.ocurrencias import ocurrencias_reserva_ui
+
+    reservas_ui = []
+    for i in inscripciones:
+        ocurrencias = ocurrencias_reserva_ui(i, desde_fecha=timezone.localdate())
+
+        unitario = precio_disciplina_periodo(i.clase.disciplina, i.periodo)
+        reservas_ui.append(
+            {
+                "inscripcion": i,
+                "pago": resumen_pago_inscripcion(i),
+                "tipo_label": (
+                    "Mensualidad"
+                    if i.tipo == Inscripcion.Tipo.MENSUAL
+                    else "Clase individual"
+                ),
+                "es_mensual": i.tipo == Inscripcion.Tipo.MENSUAL,
+                "precio_unitario": unitario,
+                "ocurrencias": ocurrencias,
+            }
+        )
 
     return render(
         request,
         "classes/mis_reservas.html",
         {
-            "inscripciones_con_info": inscripciones_con_info,
+            "reservas_ui": reservas_ui,
             "flow_title": "Mis reservas",
             "flow_subtitle": "Reservas confirmadas, pagos pendientes y lista de espera.",
             "page_actions_template": "partials/classes/cliente/_mis_reservas_actions.html",
@@ -1285,13 +1375,41 @@ def cancelar_reserva_view(request, inscripcion_id):
     clase_id = inscripcion.clase_id
 
     try:
-        services.cancelar_reserva(inscripcion_id, request.user)
-        # TODO: política de cancelación — reintegrar crédito o retener pago.
-        # TODO: notificar por email al primero en lista de espera si se liberó cupo.
-        messages.success(request, "Inscripción cancelada con éxito.")
+        resultado = services.cancelar_reserva(inscripcion_id, request.user)
+        messages.success(request, resultado.mensaje)
     except services.ReservaError as e:
         messages.error(request, str(e))
 
     if request.POST.get("destino") == "detalle":
         return redirect("classes:detalle", clase_id=clase_id)
+    return redirect("classes:mis_reservas")
+
+
+@login_required
+def cancelar_ocurrencia_view(request, inscripcion_id):
+    if request.method != "POST":
+        return redirect("classes:mis_reservas")
+
+    from django.utils.dateparse import parse_datetime
+
+    raw = request.POST.get("fecha_clase")
+    if not raw:
+        messages.error(request, "Falta la fecha de la clase a cancelar.")
+        return redirect("classes:mis_reservas")
+
+    dt = parse_datetime(raw)
+    if dt is None:
+        messages.error(request, "La fecha de la clase no es válida.")
+        return redirect("classes:mis_reservas")
+    if timezone.is_naive(dt):
+        dt = timezone.make_aware(dt, timezone.get_current_timezone())
+
+    try:
+        resultado = services.cancelar_ocurrencia_mensual(
+            inscripcion_id, request.user, dt
+        )
+        messages.success(request, resultado.mensaje)
+    except services.ReservaError as e:
+        messages.error(request, str(e))
+
     return redirect("classes:mis_reservas")

@@ -29,13 +29,24 @@
         {% if pago.mostrar_pagar_saldo %}Pagar saldo{% else %}Ir a pagar{% endif %}
       </a>
       {% endif %}
-      <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post"
-            x-data @submit.prevent="if(confirm('¿Confirmás la cancelación?')) $el.submit()">
+      {% if inscripcion.tipo == 'MENSUAL' and inscripcion.estado == 'RESERVADA' %}
+      <a href="{% url 'classes:mis_reservas' %}" class="w-full rounded-full border border-white/20 px-5 py-2 text-sm font-bold text-white/80 hover:bg-white/5 btn-auto text-center">
+        Gestionar clases
+      </a>
+      {% else %}
+      {% if inscripcion.estado == 'ESPERA' %}
+      <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" hx-boost="false"
+            onsubmit="return confirm('¿Salir de la lista de espera?')">
+      {% else %}
+      <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" hx-boost="false"
+            onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más se reintegra la seña.')">
+      {% endif %}
         {% csrf_token %}
         <button type="submit" class="w-full rounded-full border border-red-400/50 px-5 py-2 text-sm font-bold text-red-300 hover:bg-red-500/10 btn-auto">
           {% if inscripcion.estado == 'ESPERA' %}Salir de lista{% else %}Cancelar{% endif %}
         </button>
       </form>
+      {% endif %}
     </div>
   </div>
 </article>

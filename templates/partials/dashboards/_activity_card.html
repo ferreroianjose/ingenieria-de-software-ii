@@ -9,13 +9,8 @@
   <span class="dash-cartelera-card__index" aria-hidden="true">{{ index|default:"01" }}</span>
   <div class="dash-cartelera-card__glow" aria-hidden="true"></div>
 
-  <div class="dash-cartelera-card__body relative z-10 flex h-full flex-col justify-between p-6">
-    <div class="flex items-start justify-between gap-3">
-      <span class="dash-chip bg-primary-400/90 text-white border border-white/20">{{ badge }}</span>
-      <span class="text-white/40 text-xs font-black uppercase tracking-widest group-hover:text-primary-300 transition-colors">→</span>
-    </div>
-
-    <div class="mt-auto pt-6">
+  <div class="dash-cartelera-card__body relative z-10 flex h-full flex-col justify-end p-6">
+    <div class="pt-6">
       <h3 class="dash-cartelera-card__title text-white font-black text-2xl uppercase tracking-tighter leading-tight group-hover:text-primary-200 transition-colors">
         {{ title }}
       </h3>

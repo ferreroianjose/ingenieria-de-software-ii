@@ -127,11 +127,6 @@ class Inscripcion(models.Model):
         default=Tipo.CLASE_SUELTA,
     )
     fecha_inscripcion = models.DateTimeField(auto_now_add=True)
-    fecha_clase = models.DateTimeField(
-        null=True,
-        blank=True,
-        help_text="Fecha/hora concreta reservada (clase suelta).",
-    )
     estado = models.CharField(
         max_length=20,
         choices=Estado.choices,
@@ -143,3 +138,47 @@ class Inscripcion(models.Model):
 
     def __str__(self):
         return f"{self.usuario} — {self.clase} ({self.get_estado_display()})"
+
+
+class InscripcionOcurrencia(models.Model):
+    """Sesión concreta (fecha/hora) de una inscripción."""
+
+    class Estado(models.TextChoices):
+        ACTIVA = "ACTIVA", "Activa"
+        CANCELADA = "CANCELADA", "Cancelada"
+
+    inscripcion = models.ForeignKey(
+        Inscripcion,
+        on_delete=models.CASCADE,
+        related_name="ocurrencias",
+    )
+    fecha_clase = models.DateTimeField()
+    estado = models.CharField(
+        max_length=20,
+        choices=Estado.choices,
+        default=Estado.ACTIVA,
+    )
+    credito = models.ForeignKey(
+        "payments.Credito",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ocurrencias_canceladas",
+    )
+    otorga_credito = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["fecha_clase"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["inscripcion", "fecha_clase"],
+                name="uniq_inscripcion_ocurrencia_fecha",
+            ),
+        ]
+
+    def __str__(self):
+        return (
+            f"Ocurrencia {self.inscripcion_id} — "
+            f"{self.fecha_clase:%Y-%m-%d %H:%M} ({self.get_estado_display()})"
+        )

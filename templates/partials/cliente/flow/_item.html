@@ -1,7 +1,7 @@
 {% comment %}href, title; opcional: eyebrow, lines, badge, badge_tone (ok|wait), large (bool){% endcomment %}
 <a href="{{ href }}" class="cf-item group">
   {% if eyebrow %}<p class="cf-kicker">{{ eyebrow }}</p>{% endif %}
-  <p class="cf-item__title {% if large %}cf-item__title--lg{% endif %}">{{ title }}{% if proximo_inicio %} · {{ proximo_inicio|date:"j/n" }}{% endif %}</p>
+  <p class="cf-item__title {% if large %}cf-item__title--lg{% endif %}">{{ title }}</p>
   {% if proximo_inicio %}
   <p class="cf-item__meta">{{ proximo_inicio|date:"H:i" }} hs{% if duracion_minutos %} · {{ duracion_minutos }} min{% endif %}</p>
   {% endif %}

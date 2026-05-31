@@ -5,6 +5,25 @@
 {% block content %}
 <section class="dashboard-shell" x-data="{ showQrModal: false }">
   <div class="dashboard-content @container/dashboard">
+    {% if missing_emergency_phone %}
+    <article class="dash-panel dash-panel-neon-alert">
+      <div class="dash-panel__ambient" aria-hidden="true">
+        <div class="absolute -top-10 -right-10 size-48 rounded-full bg-yellow-300/35 blur-3xl"></div>
+        <div class="absolute -bottom-12 -left-12 size-56 rounded-full bg-primary-400/25 blur-3xl"></div>
+      </div>
+      <div class="relative z-10 flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-xs font-black uppercase tracking-widest text-yellow-200/90">Importante</p>
+          <h2 class="dash-title !text-white mt-1">Completá tu teléfono de emergencia</h2>
+          <p class="text-sm font-semibold text-white/80 mt-2 max-w-2xl">
+            Para reservar clases, necesitás tener un teléfono de emergencia cargado en tu perfil.
+          </p>
+        </div>
+        <a href="{{ settings_url }}" class="dash-cta whitespace-nowrap shrink-0">Ir a configuración</a>
+      </div>
+    </article>
+    {% endif %}
+
     <header class="dash-layout-head">
       <article
         data-qr-target
@@ -39,7 +58,7 @@
       </article>
 
       {% if show_membership_status %}
-        <article class="dash-panel dash-panel-premium">
+        <article class="dash-panel dash-panel-membership-energy">
           <div class="dash-panel__ambient" aria-hidden="true">
             <div class="absolute -top-12 -right-8 size-40 rounded-full bg-primary-400/30 blur-3xl"></div>
             <div class="absolute -bottom-16 -left-10 size-44 rounded-full bg-secondary-300/20 blur-3xl"></div>
@@ -53,7 +72,7 @@
                 <h2 class="dash-title !text-white mt-2">{{ membership_status_label }}</h2>
                 <p class="dash-membership-hint mt-2">{{ membership_status_hint }}</p>
               </div>
-              <div class="dash-membership-mark shrink-0" aria-hidden="true">
+              <div class="dash-membership-mark shrink-0 self-start" aria-hidden="true">
                 {% include 'partials/ui/_icon.html' with name="patch-check-fill" class="size-6" %}
               </div>
             </div>
@@ -103,7 +122,7 @@
         </div>
 
         <div class="relative z-10">
-          <div class="flex flex-wrap items-end justify-between gap-4">
+          <div class="dash-cartelera__head flex flex-wrap items-end justify-between gap-4">
             <div>
               <p class="text-xs font-black uppercase tracking-widest text-secondary-900/70">Descubrí</p>
               <h2 class="dash-title text-secondary-950 mt-1 leading-tight">Cartelera de<br class="dash-cartelera-title-break"> actividades</h2>
@@ -114,10 +133,10 @@
             <a href="{{ activities_url }}" class="dash-cta whitespace-nowrap shrink-0">Ir a actividades</a>
           </div>
 
-          <div class="dash-cartelera-scroll mt-8 hide-scroll snap-x snap-mandatory">
+          <div class="dash-cartelera-scroll mt-3 hide-scroll snap-x snap-mandatory">
             <div class="dash-cartelera-track">
             {% for discipline in featured_disciplines %}
-              {% include 'partials/dashboards/_activity_card.html' with badge=discipline.badge title=discipline.title subtitle=discipline.subtitle url=discipline.url accent=forloop.counter0 index=forloop.counter featured=forloop.first %}
+              {% include 'partials/dashboards/_activity_card.html' with badge=discipline.badge title=discipline.title subtitle=discipline.subtitle url=discipline.url accent=forloop.counter0 index=forloop.counter %}
             {% empty %}
               <div class="w-full rounded-4xl border border-secondary-700/15 bg-white/35 backdrop-blur-sm p-8 text-center">
                 <p class="text-sm font-semibold text-secondary-800/80 italic">No hay disciplinas disponibles para mostrar.</p>
@@ -129,12 +148,12 @@
       </article>
 
       <div class="grid grid-cols-1 gap-6">
-        <article class="dash-panel dash-panel-light">
-          <div class="flex items-center justify-between gap-3">
+        <article class="dash-panel dash-panel-side-pair">
+          <div class="relative z-10 flex items-center justify-between gap-3">
             <h2 class="dash-title text-secondary-950">Historial de pagos</h2>
-            <a href="{{ my_reservations_url }}" class="no-underline text-sm font-bold text-primary-600 hover:text-primary-500">Ver todo</a>
+            <a href="{{ my_reservations_url }}" class="dash-side-pair-cta shrink-0">Ver todo</a>
           </div>
-          <div class="mt-5 space-y-3">
+          <div class="relative z-10 mt-5 space-y-3">
             {% for payment in payment_history %}
               {% include 'partials/dashboards/_payment_row.html' with month=payment.month method=payment.method amount=payment.amount %}
             {% empty %}
@@ -143,18 +162,18 @@
           </div>
         </article>
 
-        <article class="dash-panel dash-panel-dark">
+        <article class="dash-panel dash-panel-side-pair">
           <div class="dash-panel__ambient" aria-hidden="true">
-            <div class="absolute -top-8 -right-5 text-[7rem] font-black text-secondary-300/25 leading-none">?</div>
+            <div class="absolute top-0 right-2 text-[8rem] font-black text-secondary-300/45 leading-none">?</div>
             <div class="absolute -bottom-10 -left-10 size-44 rounded-full bg-primary-400/20 blur-3xl"></div>
           </div>
           <div class="relative z-10">
-            <p class="text-xs font-black uppercase tracking-widest text-secondary-300">Soporte</p>
-            <h2 class="dash-title !text-white mt-1">FAQ</h2>
-            <p class="text-sm font-semibold text-white/75 mt-3">
+            <p class="text-xs font-black uppercase tracking-widest text-primary-700/85">Soporte</p>
+            <h2 class="dash-title text-secondary-950 mt-1">FAQ</h2>
+            <p class="text-sm font-semibold text-secondary-800/75 mt-3">
               Entrá a preguntas frecuentes.
             </p>
-            <a href="{{ faq_url }}" class="mt-6 inline-flex dash-ghost-cta border-white/25 hover:border-secondary-300 text-white">
+            <a href="{{ faq_url }}" class="mt-6 inline-flex w-full sm:w-auto justify-center dash-side-pair-cta">
               Ir a FAQ
             </a>
           </div>

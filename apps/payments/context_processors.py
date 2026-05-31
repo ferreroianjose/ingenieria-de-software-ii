@@ -1,4 +1,4 @@
-from apps.payments.creditos import creditos_disponibles_count
+from apps.payments.creditos import creditos_disponibles_count, creditos_resumen_disciplina
 
 
 def cliente_creditos(request):
@@ -17,4 +17,5 @@ def cliente_creditos(request):
         return {}
     return {
         "creditos_disponibles": creditos_disponibles_count(request.user),
+        "creditos_por_disciplina": creditos_resumen_disciplina(request.user),
     }

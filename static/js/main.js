@@ -62,8 +62,25 @@ document.body.addEventListener("htmx:beforeSwap", () => {
 	}
 });
 
-htmx.config.globalViewTransitions = false;
-htmx.config.selfRequestsOnly = false;
+if (window.htmx) {
+	htmx.config.globalViewTransitions = false;
+	htmx.config.selfRequestsOnly = false;
+}
+
+/** POST en formularios marcados hx-boost="false" siempre navega con recarga completa. */
+document.body.addEventListener(
+	"submit",
+	(event) => {
+		const form = event.target;
+		if (
+			form instanceof HTMLFormElement &&
+			form.getAttribute("hx-boost") === "false"
+		) {
+			event.stopPropagation();
+		}
+	},
+	true,
+);
 
 const MODAL_FORM_CONTAINERS = {
 	sedeModalOpen: "sede-modal-container",
@@ -451,10 +468,6 @@ function bindInscripcionClaseForm(root) {
 	});
 	toggleInscripcionModalidad(form);
 }
-
-window.dismissFlashItem = function (btn) {
-	btn.closest(".flash-item")?.remove();
-};
 
 document.addEventListener("DOMContentLoaded", () => {
 	bindInscripcionClaseForm();

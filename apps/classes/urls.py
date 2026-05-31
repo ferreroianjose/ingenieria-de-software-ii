@@ -87,4 +87,9 @@ urlpatterns = [
         views.cancelar_reserva_view,
         name="cancelar_reserva",
     ),
+    path(
+        "inscripciones/<int:inscripcion_id>/cancelar-ocurrencia/",
+        views.cancelar_ocurrencia_view,
+        name="cancelar_ocurrencia",
+    ),
 ]

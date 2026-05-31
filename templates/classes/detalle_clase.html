@@ -130,7 +130,7 @@
     {% endwith %}
 
     {% elif info.puede_anotarse_espera %}
-    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='No hay cupos libres ahora. Si se libera uno, te avisamos: anotate en lista de espera.' level='warning' %}</div>
+    <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='No hay cupos libres ahora. Si se libera uno, te avisamos: anotate en lista de espera.' level='warning' %}</div>
     <form action="{% url 'classes:anotar_espera' info.clase.id %}" method="post" hx-boost="false">
       {% csrf_token %}
       <input type="hidden" name="tipo" value="CLASE_SUELTA">
@@ -138,7 +138,7 @@
     </form>
 
     {% elif info.ui_estado == 'en_espera' %}
-    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Estás en lista de espera para este horario. Si se libera un cupo, podrás completar el pago.' level='warning' %}</div>
+    <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Estás en lista de espera para este horario. Si se libera un cupo, podrás completar el pago.' level='warning' %}</div>
     <form action="{% url 'classes:abandonar_espera' info.mi_inscripcion.id %}" method="post" hx-boost="false"
           onsubmit="return confirm('¿Abandonás la lista de espera?');">
       {% csrf_token %}
@@ -146,25 +146,31 @@
     </form>
 
     {% elif info.ui_estado == 'en_pago' %}
-    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Tenés una reserva iniciada. Completá el pago para confirmar el cupo.' level='warning' %}</div>
+    <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Tenés una reserva iniciada. Completá el pago para confirmar el cupo.' level='warning' %}</div>
     <a href="{% url 'payments:seleccion_pago_clase' info.clase.id %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
       Continuar al pago →
     </a>
 
     {% elif info.ui_estado == 'pendiente_pago' %}
-    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Estamos esperando la acreditación del pago. Te avisamos cuando quede confirmado.' level='warning' %}</div>
+    <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Estamos esperando la acreditación del pago. Te avisamos cuando quede confirmado.' level='warning' %}</div>
     <a href="{% url 'payments:seleccion_pago' info.mi_inscripcion.id %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
       Continuar al pago →
     </a>
 
     {% elif info.ui_estado == 'inscripto' %}
-    <div class="mb-4">{% include 'partials/ui/_flash_item.html' with text='Ya tenés este horario reservado.' level='success' %}</div>
+    <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Ya tenés este horario reservado.' level='success' %}</div>
+    {% if info.mi_inscripcion.tipo == 'MENSUAL' %}
+    <a href="{% url 'classes:mis_reservas' %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
+      Gestionar clases del mes →
+    </a>
+    {% elif info.puede_cancelar %}
     <form action="{% url 'classes:cancelar_reserva' info.mi_inscripcion.id %}" method="post" hx-boost="false"
-          onsubmit="return confirm('¿Cancelás tu inscripción? Podrían aplicar políticas de reembolso.');">
+          onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.');">
       {% csrf_token %}
       <input type="hidden" name="destino" value="detalle">
       {% include 'partials/ui/buttons/_secondary_button.html' with label="Cancelar inscripción" type="submit" class="w-full rounded-full px-6 py-3" %}
     </form>
+    {% endif %}
 
     {% else %}
     <p class="text-sm text-white/60">No hay acciones disponibles en este momento.</p>

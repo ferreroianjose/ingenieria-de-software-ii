@@ -5,13 +5,88 @@
 {% block flow_stepper %}{% endblock %}
 
 {% block flow_main %}
-{% if not inscripciones_con_info %}
+{% if not reservas_ui %}
 {% url 'classes:actividades' as actividades_url %}
 {% include 'partials/cliente/flow/_empty.html' with message="No tenés reservas activas." action_url=actividades_url action_label="Explorar actividades" %}
 {% else %}
 <div class="flex flex-col gap-4">
-  {% for item in inscripciones_con_info %}
-  {% include 'partials/cliente/flow/_reserva.html' with inscripcion=item.inscripcion clase=item.inscripcion.clase proximo_inicio=item.proximo_inicio pago=item.pago %}
+  {% for item in reservas_ui %}
+  <article class="cf-surface !p-5 sm:!p-6">
+    <div class="cf-surface__body">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h2 class="cf-item__title !text-2xl">{{ item.inscripcion.clase.disciplina.nombre }}</h2>
+            <span class="cf-chip cf-chip--wait">{{ item.inscripcion.clase.sala.nombre }}</span>
+            <span class="cf-chip cf-chip--ok">{{ item.tipo_label }}</span>
+            {% if item.inscripcion.estado == 'RESERVADA' %}
+            {% include 'partials/ui/_status_badge.html' with level='success' label='Confirmada' %}
+            {% elif item.inscripcion.estado == 'PENDIENTE_PAGO' %}
+            {% if item.pago.mostrar_pagar_saldo %}
+            {% include 'partials/ui/_status_badge.html' with level='info' label='Seña pagada' %}
+            {% else %}
+            {% include 'partials/ui/_status_badge.html' with level='warning' label='Pendiente de pago' %}
+            {% endif %}
+            {% elif item.inscripcion.estado == 'ESPERA' %}
+            {% include 'partials/ui/_status_badge.html' with level='warning' label='En espera' %}
+            {% endif %}
+          </div>
+          <p class="cf-item__meta !mt-1">
+            Prof. {{ item.inscripcion.clase.profesor.nombre }} {{ item.inscripcion.clase.profesor.apellido }}
+            · ${{ item.precio_unitario|floatformat:2 }} por clase
+          </p>
+        </div>
+        <div class="flex flex-col gap-2 shrink-0">
+          {% if item.pago.mostrar_pagar_saldo or item.pago.mostrar_pagar %}
+          <a href="{% url 'payments:seleccion_pago' item.inscripcion.id %}" class="cf-cta btn-auto text-center">
+            {% if item.pago.mostrar_pagar_saldo %}Pagar saldo{% else %}Ir a pagar{% endif %}
+          </a>
+          {% endif %}
+          {% if not item.es_mensual or item.inscripcion.estado == 'ESPERA' %}
+          {% if item.inscripcion.estado == 'ESPERA' %}
+          <form action="{% url 'classes:cancelar_reserva' item.inscripcion.id %}" method="post" hx-boost="false"
+                onsubmit="return confirm('¿Salir de la lista de espera?')">
+          {% else %}
+          <form action="{% url 'classes:cancelar_reserva' item.inscripcion.id %}" method="post" hx-boost="false"
+                onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.')">
+          {% endif %}
+            {% csrf_token %}
+            <button type="submit" class="w-full rounded-full border border-red-400/50 px-5 py-2 text-sm font-bold text-red-300 hover:bg-red-500/10 btn-auto">
+              {% if item.inscripcion.estado == 'ESPERA' %}Salir de lista{% else %}Cancelar reserva{% endif %}
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mt-4 space-y-2">
+        {% for oc in item.ocurrencias %}
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/12 bg-black/20 px-3 py-2 {% if oc.cancelada %}opacity-60{% endif %}">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-white/90 {% if oc.cancelada %}line-through{% endif %}">
+              {% include 'partials/cliente/flow/_fecha_hora.html' with dt=oc.fecha %}
+            </p>
+            <p class="text-xs font-bold text-white/55 mt-0.5">{{ oc.mensaje_estado }}</p>
+          </div>
+          {% if oc.puede_cancelar %}
+          {% if item.es_mensual %}
+          <form action="{% url 'classes:cancelar_ocurrencia' item.inscripcion.id %}" method="post" class="shrink-0" hx-boost="false"
+                onsubmit="return confirm('{{ oc.confirm_cancelacion|escapejs }}')">
+            {% csrf_token %}
+            <input type="hidden" name="fecha_clase" value="{{ oc.fecha|date:'c' }}">
+            <button type="submit" class="rounded-full border border-red-400/40 px-3 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/10 btn-auto">
+              Cancelar
+            </button>
+          </form>
+          {% endif %}
+          {% endif %}
+        </div>
+        {% empty %}
+        <p class="text-sm text-white/60">No hay clases disponibles para mostrar en esta reserva.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </article>
   {% endfor %}
 </div>
 {% endif %}

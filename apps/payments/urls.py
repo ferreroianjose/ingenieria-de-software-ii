@@ -5,6 +5,7 @@ app_name = "payments"
 
 urlpatterns = [
     path("manage/", views.staff_pagos, name="manage"),
+    path("mis-pagos/", views.mis_pagos, name="mis_pagos"),
     path(
         "clase/<int:clase_id>/pago/",
         views.seleccion_pago_clase,

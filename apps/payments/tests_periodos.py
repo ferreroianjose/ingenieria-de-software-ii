@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
@@ -66,8 +67,8 @@ class OcurrenciasClaseSueltaTests(TestCase):
             apertura_general=date(2026, 5, 1),
         )
         disciplina = Disciplina.objects.create(nombre="Yoga Test")
-        sede = Sede.objects.create(nombre="Sede Test")
-        sala = Sala.objects.create(nombre="Sala 1", sede=sede)
+        sede = Sede.objects.create(nombre="Sede Test", direccion="Calle Test")
+        sala = Sala.objects.create(nombre="Sala 1", capacidad=20, sede=sede)
         profesor = Teacher.objects.create(nombre="Profe", apellido="Uno")
         self.clase = Class.objects.create(
             disciplina=disciplina,
@@ -75,13 +76,17 @@ class OcurrenciasClaseSueltaTests(TestCase):
             profesor=profesor,
             dia_semana=1,
             hora_inicio=time(10, 0),
-            duracion_minutos=60,
+            duracion=timedelta(hours=1),
             cupo_maximo=10,
             estado="disponible",
         )
 
-    def test_lista_ocurrencias_en_ventana(self):
-        hoy = date(2026, 5, 25)
+    @patch("django.utils.timezone.now")
+    def test_lista_ocurrencias_en_ventana(self, mock_now):
+        hoy = date(2026, 5, 11)
+        mock_now.return_value = timezone.make_aware(
+            datetime(2026, 5, 11, 9, 0), timezone.get_current_timezone()
+        )
         ocurrencias = ocurrencias_clase_en_ventana(
             self.clase, dias=21, desde_fecha=hoy
         )

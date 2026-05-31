@@ -6,16 +6,19 @@ from django.utils import timezone
 from apps.payments.models import PeriodoCobro
 
 from .exceptions import (
+    CancelacionMensualNoPermitida,
     ClaseNoDisponible,
     ClaseNoEncontrada,
     InscripcionDuplicada,
     InscripcionNoEncontrada,
     InscripcionYaCancelada,
+    OcurrenciaNoValida,
+    OcurrenciaYaCancelada,
     PeriodoCobroInactivo,
     ReservaError,
     TelefonoEmergenciaFaltante,
 )
-from .models import Class, Inscripcion
+from .models import Class, Inscripcion, InscripcionOcurrencia
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,6 +127,27 @@ def ocurrencias_clase_en_periodo(clase, periodo, desde_fecha=None):
     return total
 
 
+def ocurrencias_detalle_en_periodo(clase, periodo, desde_fecha=None):
+    """Listado de fechas/horas de ocurrencias del horario dentro del período."""
+    if clase.hora_inicio is None:
+        return []
+    hoy = desde_fecha or timezone.localdate()
+    inicio = max(periodo.fecha_inicio_periodo, hoy)
+    fin = periodo.fecha_fin_periodo
+    if inicio > fin:
+        return []
+
+    tz = timezone.get_current_timezone()
+    cursor = inicio + timedelta(days=(clase.dia_semana - inicio.weekday()) % 7)
+    ocurrencias = []
+    while cursor <= fin:
+        ocurrencias.append(
+            timezone.make_aware(datetime.combine(cursor, clase.hora_inicio), tz)
+        )
+        cursor += timedelta(days=7)
+    return ocurrencias
+
+
 def desde_fecha_cobro_mensual(periodo, fecha=None):
     """Desde qué día se cuentan las clases de un abono mensual."""
     hoy = fecha or timezone.localdate()
@@ -216,24 +240,35 @@ def validar_intencion_inscripcion(usuario, clase_id, periodo, tipo, fecha_clase=
         periodo_fecha = periodo_conteniendo_fecha(timezone.localdate(fecha_clase))
         if not periodo_fecha or periodo_fecha.id != periodo.id:
             raise ReservaError("El período de cobro no coincide con la fecha elegida.")
-        dup_qs = Inscripcion.objects.filter(
-            usuario=usuario,
-            clase=clase,
-            fecha_clase=_normalizar_fecha_clase(fecha_clase),
-            tipo=Inscripcion.Tipo.CLASE_SUELTA,
-        )
+        from apps.classes.ocurrencias import fecha_suelta_reservada
+
+        if fecha_suelta_reservada(usuario, clase, fecha_clase):
+            dup = (
+                Inscripcion.objects.filter(
+                    usuario=usuario,
+                    clase=clase,
+                    tipo=Inscripcion.Tipo.CLASE_SUELTA,
+                )
+                .exclude(estado=Inscripcion.Estado.CANCELADA)
+                .first()
+            )
+            if dup:
+                raise InscripcionDuplicada(dup)
+            raise ReservaError("Ya tenés esa fecha reservada.")
     else:
         if clases_mensuales_cobrables(clase, periodo) <= 0:
             raise ReservaError(
                 "No quedan clases de este horario en el mes elegido."
             )
-        dup_qs = Inscripcion.objects.filter(
-            usuario=usuario, clase=clase, periodo=periodo, tipo=tipo
+        existing = (
+            Inscripcion.objects.filter(
+                usuario=usuario, clase=clase, periodo=periodo, tipo=tipo
+            )
+            .exclude(estado=Inscripcion.Estado.CANCELADA)
+            .first()
         )
-
-    existing = dup_qs.exclude(estado=Inscripcion.Estado.CANCELADA).first()
-    if existing:
-        raise InscripcionDuplicada(existing)
+        if existing:
+            raise InscripcionDuplicada(existing)
 
     if cupo_disponible(clase) <= 0:
         raise ClaseNoDisponible("No hay cupos disponibles.")
@@ -275,22 +310,29 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
             validar_intencion_inscripcion(
                 usuario, clase_id, periodo, tipo, fecha_clase=fecha_clase
             )
-            dup_filter = dict(
-                usuario=usuario,
-                clase=clase,
-                fecha_clase=fecha_clase,
-                tipo=tipo,
-            )
+            from apps.classes.ocurrencias import fecha_suelta_reservada
+
+            if fecha_suelta_reservada(usuario, clase, fecha_clase):
+                existing = (
+                    Inscripcion.objects.filter(
+                        usuario=usuario,
+                        clase=clase,
+                        tipo=tipo,
+                    )
+                    .exclude(estado=Inscripcion.Estado.CANCELADA)
+                    .first()
+                )
+                if existing:
+                    raise InscripcionDuplicada(existing)
         else:
             dup_filter = dict(usuario=usuario, clase=clase, periodo=periodo, tipo=tipo)
-
-        existing = (
-            Inscripcion.objects.filter(**dup_filter)
-            .exclude(estado=Inscripcion.Estado.CANCELADA)
-            .first()
-        )
-        if existing:
-            raise InscripcionDuplicada(existing)
+            existing = (
+                Inscripcion.objects.filter(**dup_filter)
+                .exclude(estado=Inscripcion.Estado.CANCELADA)
+                .first()
+            )
+            if existing:
+                raise InscripcionDuplicada(existing)
 
         create_kwargs = dict(
             usuario=usuario,
@@ -298,32 +340,144 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
             periodo=periodo,
             tipo=tipo,
         )
-        if tipo == Inscripcion.Tipo.CLASE_SUELTA:
-            create_kwargs["fecha_clase"] = fecha_clase
 
         if cupo_disponible(clase) > 0:
             inscripcion = Inscripcion.objects.create(
                 **create_kwargs,
                 estado=Inscripcion.Estado.PENDIENTE_PAGO,
             )
+            if tipo == Inscripcion.Tipo.CLASE_SUELTA:
+                from apps.classes.ocurrencias import crear_ocurrencia_suelta
+
+                crear_ocurrencia_suelta(inscripcion, fecha_clase)
             return inscripcion, 'pendiente_pago'
         else:
             inscripcion = Inscripcion.objects.create(
                 **create_kwargs,
                 estado=Inscripcion.Estado.ESPERA,
             )
+            if tipo == Inscripcion.Tipo.CLASE_SUELTA:
+                from apps.classes.ocurrencias import crear_ocurrencia_suelta
+
+                crear_ocurrencia_suelta(inscripcion, fecha_clase)
             return inscripcion, 'espera'
+
+
+def _promover_lista_espera(clase):
+    primera_espera = (
+        Inscripcion.objects.select_for_update()
+        .filter(clase=clase, estado=Inscripcion.Estado.ESPERA)
+        .order_by("fecha_inscripcion")
+        .first()
+    )
+    if primera_espera:
+        primera_espera.estado = Inscripcion.Estado.PENDIENTE_PAGO
+        primera_espera.save(update_fields=["estado"])
+
+
+def _fecha_clase_inscripcion(inscripcion):
+    from apps.classes.ocurrencias import primera_ocurrencia_activa
+
+    return primera_ocurrencia_activa(inscripcion)
+
+
+def cancelar_ocurrencia_mensual(inscripcion_id, usuario, fecha_clase):
+    """
+    Cancela una sesión concreta de una inscripción mensual.
+
+    Con 48 h o más de anticipación otorga un crédito; si no, la clase se pierde.
+    La inscripción mensual permanece activa.
+    """
+    from apps.payments.cancelaciones import (
+        ResultadoCancelacion,
+        anticipacion_suficiente_mensual,
+        crear_credito_cancelacion,
+    )
+
+    fecha_clase = _normalizar_fecha_clase(fecha_clase)
+
+    with transaction.atomic():
+        try:
+            inscripcion = Inscripcion.objects.select_for_update().get(
+                id=inscripcion_id,
+                usuario=usuario,
+            )
+        except Inscripcion.DoesNotExist as err:
+            raise InscripcionNoEncontrada() from err
+
+        if inscripcion.estado != Inscripcion.Estado.RESERVADA:
+            raise ReservaError(
+                "Solo podés cancelar clases de inscripciones confirmadas."
+            )
+
+        if inscripcion.tipo != Inscripcion.Tipo.MENSUAL:
+            raise OcurrenciaNoValida()
+
+        normalizada = _normalizar_fecha_clase(fecha_clase)
+        if normalizada <= timezone.localtime(timezone.now()):
+            raise ReservaError("No podés cancelar una clase que ya pasó.")
+
+        try:
+            ocurrencia = (
+                InscripcionOcurrencia.objects.select_for_update()
+                .get(
+                    inscripcion=inscripcion,
+                    fecha_clase=normalizada,
+                )
+            )
+        except InscripcionOcurrencia.DoesNotExist as err:
+            raise OcurrenciaNoValida() from err
+
+        if ocurrencia.estado == InscripcionOcurrencia.Estado.CANCELADA:
+            raise OcurrenciaYaCancelada()
+
+        otorga_credito = anticipacion_suficiente_mensual(normalizada)
+        credito = None
+        if otorga_credito:
+            credito = crear_credito_cancelacion(
+                usuario,
+                inscripcion.periodo,
+                inscripcion.clase.disciplina,
+            )
+
+        ocurrencia.estado = InscripcionOcurrencia.Estado.CANCELADA
+        ocurrencia.credito = credito
+        ocurrencia.otorga_credito = otorga_credito
+        ocurrencia.save(
+            update_fields=["estado", "credito", "otorga_credito"]
+        )
+
+    if otorga_credito:
+        mensaje = (
+            "Clase cancelada. Te acreditamos un crédito para recuperarla "
+            "en otro horario de la misma disciplina este mes."
+        )
+    else:
+        mensaje = (
+            "Clase cancelada. Pasadas las 48 h de anticipación, "
+            "esa sesión se pierde sin reintegro."
+        )
+
+    return ResultadoCancelacion(
+        inscripcion=inscripcion,
+        otorga_credito=otorga_credito,
+        mensaje=mensaje,
+    )
 
 
 def cancelar_reserva(inscripcion_id, usuario):
     """
-    Cancel a reservation or leave the waitlist.
+    Cancela una reserva de clase suelta, abandona lista de espera,
+    o anula una inscripción pendiente de pago.
 
-    If the cancelled inscription was RESERVADA/PENDIENTE_PAGO, the first
-    ESPERA entry (FIFO by fecha_inscripcion) is automatically promoted.
-
-    Returns the cancelled Inscripcion.
+    Para mensualidades confirmadas usá cancelar_ocurrencia_mensual().
     """
+    from apps.payments.cancelaciones import (
+        ResultadoCancelacion,
+        anticipacion_suficiente_clase_suelta,
+        reintegrar_pagos_inscripcion,
+    )
+
     with transaction.atomic():
         try:
             inscripcion = Inscripcion.objects.select_for_update().get(
@@ -336,22 +490,49 @@ def cancelar_reserva(inscripcion_id, usuario):
         if inscripcion.estado == Inscripcion.Estado.CANCELADA:
             raise InscripcionYaCancelada()
 
+        if (
+            inscripcion.tipo == Inscripcion.Tipo.MENSUAL
+            and inscripcion.estado == Inscripcion.Estado.RESERVADA
+        ):
+            raise CancelacionMensualNoPermitida()
+
         era_reservada = inscripcion.estado in (
             Inscripcion.Estado.RESERVADA,
             Inscripcion.Estado.PENDIENTE_PAGO,
         )
+
+        reembolsado = False
+        mensaje = "Inscripción cancelada con éxito."
+
+        if inscripcion.tipo == Inscripcion.Tipo.CLASE_SUELTA and era_reservada:
+            fecha = _fecha_clase_inscripcion(inscripcion)
+            if fecha and anticipacion_suficiente_clase_suelta(fecha):
+                reembolsado = reintegrar_pagos_inscripcion(inscripcion)
+                if reembolsado:
+                    mensaje = (
+                        "Reserva cancelada. Reintegraremos el pago de la seña "
+                        "según el medio utilizado."
+                    )
+                else:
+                    mensaje = "Reserva cancelada."
+            elif fecha:
+                mensaje = (
+                    "Reserva cancelada. Con menos de 24 h de anticipación "
+                    "la seña queda retenida."
+                )
+
         inscripcion.estado = Inscripcion.Estado.CANCELADA
-        inscripcion.save()
+        inscripcion.save(update_fields=["estado"])
+
+        from apps.classes.ocurrencias import marcar_ocurrencias_inscripcion_canceladas
+
+        marcar_ocurrencias_inscripcion_canceladas(inscripcion)
 
         if era_reservada:
-            primera_espera = (
-                Inscripcion.objects.select_for_update()
-                .filter(clase=inscripcion.clase, estado=Inscripcion.Estado.ESPERA)
-                .order_by('fecha_inscripcion')
-                .first()
-            )
-            if primera_espera:
-                primera_espera.estado = Inscripcion.Estado.PENDIENTE_PAGO
-                primera_espera.save()
+            _promover_lista_espera(inscripcion.clase)
 
-    return inscripcion
+    return ResultadoCancelacion(
+        inscripcion=inscripcion,
+        reembolsado=reembolsado,
+        mensaje=mensaje,
+    )
