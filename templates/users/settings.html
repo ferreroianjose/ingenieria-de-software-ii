@@ -12,6 +12,8 @@
     {% endif %}
 
     <div class="space-y-4">
+      {% include 'partials/ui/_collapsible_section.html' with icon='person-fill' title='Perfil' description='Actualizá tus datos personales.' content_template='users/_profile_settings.html' %}
+
       {% if user.rol == 'ADMIN' %}
         {% include 'partials/ui/_collapsible_section.html' with icon='bell-fill' title='Notificaciones manuales' description='Enviá notificaciones de prueba o avisos individuales.' content_template='notifications/_test_send.html' %}
       {% endif %}
