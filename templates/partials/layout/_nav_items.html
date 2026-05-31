@@ -135,6 +135,15 @@
   </a>
   {% endif %}
 
+  <a href="{% url 'faq' %}"
+     class="nav-item"
+     :class="currentPath === '{% url 'faq' %}' ? 'nav-item-active' : ''">
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="question-circle-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">Preguntas frecuentes</span>
+    </div>
+  </a>
+
   <a href="{% url 'settings' %}"
      class="nav-item"
      x-show="currentPath === '{% url 'settings' %}'"
