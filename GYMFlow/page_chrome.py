@@ -11,10 +11,17 @@ PAGE_CHROME_DARK = {
     "page_background": "",
 }
 
+_CF_GRADIENT = (
+    "background:"
+    " radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14), transparent 32%),"
+    " radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09), transparent 28%),"
+    " #000000;"
+)
+
 PAGE_CHROME_CLIENTE_FLOW = {
     "footer_variant": "dark",
     "color_scheme": "dark",
-    "page_background": "",
+    "page_background": _CF_GRADIENT,
 }
 
 PAGE_CHROME_LIGHT = {

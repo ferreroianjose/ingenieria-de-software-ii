@@ -418,13 +418,12 @@ window.adminSelection = function (opts = {}) {
 	};
 };
 
-function syncPageChrome(root) {
-	const main = document.getElementById("main-content");
-	const scope =
-		(root?.id === "main-content" && root) ||
-		root?.closest?.("#main-content") ||
-		main;
-	const canvas = scope?.querySelector?.("[data-page-chrome]") || scope;
+function syncPageChrome() {
+	// Siempre leer el #page-canvas vivo del DOM: con hx-swap="outerHTML" en
+	// #main-content, el `target` del evento afterSettle puede ser el elemento
+	// viejo (ya removido), lo que haría leer el footer-variant de la página
+	// anterior y sobreescribir el valor correcto que ya viene del servidor.
+	const canvas = document.getElementById("page-canvas");
 	if (!canvas?.dataset) return;
 
 	const { footerVariant, colorScheme, pageBackground, bodyBackground } = canvas.dataset;
@@ -509,12 +508,12 @@ function bindInscripcionClaseForm(root) {
 
 document.addEventListener("DOMContentLoaded", () => {
 	bindInscripcionClaseForm();
-	syncPageChrome(document);
+	syncPageChrome();
 });
 document.body.addEventListener("htmx:afterSettle", (evt) => {
 	const target = evt.detail?.target || document;
 	settleBoostedMainContent(target);
 	bindInscripcionClaseForm(target);
-	syncPageChrome(target);
+	syncPageChrome();
 });
 })();

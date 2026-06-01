@@ -11,14 +11,20 @@
 		color-scheme: dark;
 		background: #000000;
 	}
+	#page-canvas {
+		background:
+			radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14) 0%, transparent 32%),
+			radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09) 0%, transparent 28%),
+			#000000;
+	}
 </style>
 {% endblock %}
 
 {% block footer_variant %}dark{% endblock %}
 {% block color_scheme %}dark{% endblock %}
 {% block body_background %}#000000{% endblock %}
-{% block page_canvas_background %}background: black;{% endblock %}
-{% block page_canvas_style %}background: black;{% endblock %}
+{% block page_canvas_background %}background: radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14) 0%, transparent 32%), radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09) 0%, transparent 28%), #000000;{% endblock %}
+{% block page_canvas_style %}background: radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14) 0%, transparent 32%), radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09) 0%, transparent 28%), #000000;{% endblock %}
 
 {% block content %}
 <div

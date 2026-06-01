@@ -143,7 +143,10 @@
 
 	      /* Flujo cliente (cf-*): una superficie oscura + ítems glass por pantalla */
 	      	      .internal-page.cliente-flow {
-	      	        @apply text-on-dark-bg-500 bg-black;
+	      	        /* bg-transparent override del bg-white que define .internal-page base:
+	      	           el gradiente del #page-canvas (full-viewport) se ve a través tanto
+	      	           en el contenido como en los gaps y esquinas del sidebar-float. */
+	      	        @apply text-on-dark-bg-500 bg-transparent;
 	      	        --cf-rim-strong: rgba(255, 255, 255, 0.24);
 	      	        --cf-rim-soft: rgba(255, 255, 255, 0.1);
 	      	        --cf-glow-magenta: rgba(255, 0, 255, 0.14);
@@ -156,10 +159,6 @@
 	      	          rgba(92, 225, 230, 0.5) 78%,
 	      	          transparent 100%
 	      	        );
-	      	      }
-	      	      .internal-page.cliente-flow::before {
-	      	        content: '';
-	      	        @apply pointer-events-none absolute inset-x-0 top-0 -z-10 h-48 bg-gradient-to-b from-primary-400/20 to-transparent;
 	      	      }
 	      	      #main-content:has(.internal-page.cliente-flow)::before {
 	      	        @apply hidden;
