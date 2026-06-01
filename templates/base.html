@@ -1541,12 +1541,173 @@
 	      }
 	      }
 
-	    /* Fuera de @layer: gana sobre utilidades Tailwind por reglas de cascada.
-	       Hace el body negro en las páginas de flujo cliente para que los gaps
-	       del sidebar-float (0.5rem de margen) no muestren el bg-primary-900. */
 	    body:has(.internal-page.cliente-flow) {
 	      background-color: #000000;
 	    }
+	</style>
+
+	<!-- Glass-effect CSS for persistent shell elements (sidebar, topbar, user pill).
+	     Kept in a plain <style> block so Tailwind CDN never re-parses it on navigation. -->
+	<style>
+	  /* ── Sidebar ──────────────────────────────────────────────────────────── */
+	  #sidebar {
+	    background:
+	      linear-gradient(-135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 25%),
+	      #1a1a1a;
+	    box-shadow:
+	      inset -1px -1px 0 0 rgba(255, 255, 255, 0.18),
+	      inset  1px  1px 0 0 rgba(255, 255, 255, 0.07),
+	      inset  0    0  80px rgba(255, 255, 255, 0.025),
+	      0 0 18px rgba(255, 0, 255, 0.11),
+	      0 0 56px rgba(255, 0, 255, 0.07),
+	      0 4px 12px rgba(0, 0, 0, 0.25);
+	    border: none;
+	  }
+	  #sidebar::after {
+	    content: '';
+	    position: absolute;
+	    top: 0;
+	    left: 8%;
+	    right: 8%;
+	    height: 1px;
+	    background: linear-gradient(
+	      90deg,
+	      transparent 0%,
+	      rgba(223, 2, 255, 0.50) 22%,
+	      rgba(92, 225, 230, 0.44) 78%,
+	      transparent 100%
+	    );
+	    pointer-events: none;
+	    z-index: 10;
+	  }
+
+	  /* ── Mobile topbar ────────────────────────────────────────────────────── */
+	  .topbar-mobile-transition {
+	    transition: max-height 0.5s ease-out, border-radius 150ms ease-out 100ms;
+	  }
+	  #topbar-mobile {
+	    background:
+	      linear-gradient(-135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 25%),
+	      #1a1a1a;
+	    box-shadow:
+	      inset -1px -1px 0 0 rgba(255, 255, 255, 0.14),
+	      inset  1px  1px 0 0 rgba(255, 255, 255, 0.06),
+	      0 0 16px rgba(255, 0, 255, 0.10),
+	      0 0 48px rgba(255, 0, 255, 0.06),
+	      0 4px 24px rgba(0, 0, 0, 0.55);
+	  }
+	  #topbar-mobile::after {
+	    content: '';
+	    position: absolute;
+	    bottom: 0;
+	    left: 6%;
+	    right: 6%;
+	    height: 1px;
+	    background: linear-gradient(
+	      90deg,
+	      transparent 0%,
+	      rgba(223, 2, 255, 0.45) 22%,
+	      rgba(92, 225, 230, 0.40) 78%,
+	      transparent 100%
+	    );
+	    pointer-events: none;
+	    z-index: 1;
+	  }
+
+	  /* ── User pill menu items ───────────────────────────────────────────── */
+	  .user-pill-item:not(:last-child) {
+	    margin-bottom: 0.5rem;
+	  }
+	  .user-pill-item a,
+	  .user-pill-item button {
+	    width: 100%;
+	    display: flex;
+	    align-items: center;
+	    gap: 1rem;
+	    padding: 1rem;
+	    border-radius: calc(var(--radius-3xl) - 0.5rem);
+	    font-size: 0.875rem;
+	    font-weight: 700;
+	    text-align: left;
+	    text-decoration: none;
+	    color: rgb(229 231 235);
+	    background: rgb(255 255 255 / 0.05);
+	    transition: background-color 0.15s;
+	    cursor: pointer;
+	  }
+	  .user-pill-item a:hover,
+	  .user-pill-item button:hover {
+	    background: rgb(255 255 255 / 0.1);
+	  }
+
+	  /* ── User pill (sidebar desktop) ─────────────────────────────────────── */
+	  .user-pill-sidebar {
+	    background:
+	      linear-gradient(-135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 30%),
+	      rgba(255, 255, 255, 0.06);
+	    box-shadow:
+	      inset -1px -1px 0 0 rgba(255, 255, 255, 0.15),
+	      inset  1px  1px 0 0 rgba(255, 255, 255, 0.05);
+	  }
+	  .user-pill-sidebar.pill-open {
+	    background:
+	      linear-gradient(-135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 25%),
+	      #1a1a1a;
+	    box-shadow:
+	      inset -1px -1px 0 0 rgba(255, 255, 255, 0.18),
+	      inset  1px  1px 0 0 rgba(255, 255, 255, 0.07),
+	      inset  0    0  60px rgba(255, 255, 255, 0.025),
+	      0 0 14px rgba(255, 0, 255, 0.10),
+	      0 0 40px rgba(255, 0, 255, 0.06),
+	      0 6px 28px rgba(0, 0, 0, 0.55);
+	  }
+
+	  /* ── Sidebar colapsado ────────────────────────────────────────────────── */
+	  @media (min-width: 768px) {
+	    /* Pill: quitar superficie, sólo el avatar queda visible dentro del sidebar */
+	    body.is-collapsed .user-pill-sidebar {
+	      width: 100% !important;
+	      max-width: 100%;
+	      overflow: visible !important;
+	      background: transparent !important;
+	      border: none !important;
+	      box-shadow: none !important;
+	    }
+	    body.is-collapsed .user-pill-sidebar .user-pill-trigger {
+	      width: 100%;
+	      justify-content: center;
+	      gap: 0;
+	      padding-left: 0;
+	      padding-right: 0;
+	    }
+	    body.is-collapsed .user-pill-sidebar .user-pill-meta,
+	    body.is-collapsed .user-pill-sidebar .user-pill-chevron {
+	      display: none;
+	    }
+	    body.is-collapsed .user-pill-sidebar .user-pill-avatar {
+	      margin-left: auto;
+	      margin-right: auto;
+	      background: rgba(255, 255, 255, 0.08) !important;
+	      border: 1px solid rgba(255, 255, 255, 0.11) !important;
+	      border-radius: 999px !important;
+	      padding: 0.375rem;
+	      box-shadow: 0 0 12px rgba(255, 0, 255, 0.12), 0 4px 16px rgba(0, 0, 0, 0.40);
+	    }
+
+	    /* Flyout: flota separado del sidebar con un gap visible */
+	    body:not(.is-collapsed) .user-pill-menu-flyout {
+	      display: none !important;
+	    }
+	    body.is-collapsed .user-pill-menu-flyout {
+	      position: fixed !important;
+	      left: calc(var(--sidebar-margin) + var(--sidebar-collapsed-width) + 0.75rem) !important;
+	      bottom: 0.75rem !important;
+	      top: auto !important;
+	    }
+	    body.is-collapsed .user-pill-menu-inline {
+	      display: none !important;
+	    }
+	  }
 	</style>
 
 	<!-- Alpine Plugins -->

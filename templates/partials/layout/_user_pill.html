@@ -1,45 +1,10 @@
 {% load static %}
-{% if direction != 'down' %}
-<style>
-  @media (min-width: 768px) {
-    body.is-collapsed .user-pill-sidebar {
-      width: 100% !important;
-      max-width: 100%;
-      overflow: visible !important;
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-    body.is-collapsed .user-pill-sidebar .user-pill-trigger {
-      width: 100%;
-      justify-content: center;
-      gap: 0;
-      padding-left: 0;
-      padding-right: 0;
-    }
-    body.is-collapsed .user-pill-sidebar .user-pill-meta,
-    body.is-collapsed .user-pill-sidebar .user-pill-chevron {
-      display: none;
-    }
-    body.is-collapsed .user-pill-sidebar .user-pill-avatar {
-      margin-left: auto;
-      margin-right: auto;
-    }
-    body:not(.is-collapsed) .user-pill-menu-flyout {
-      display: none !important;
-    }
-    body.is-collapsed .user-pill-menu-inline {
-      display: none !important;
-    }
-  }
-</style>
-{% endif %}
 <div x-data="{ open: false }" @click.outside="open = false"
   class="transition-all duration-350 ease-in-out z-50
-    {% if direction == 'down' %}relative shrink-0 self-center{% else %}user-pill-sidebar relative w-full shadow-black/30{% endif %}"
+    {% if direction == 'down' %}relative shrink-0 self-center{% else %}user-pill-sidebar relative w-full{% endif %}"
   :class="[
-    '{{ direction }}' !== 'down' && (open ? 'rounded-3xl w-64 bg-gray-800 shadow-fair-2xl border border-white/10' : 'rounded-9xl overflow-hidden'),
-    '{{ direction }}' !== 'down' && !open ? 'w-full bg-white/5 border border-white/10' : ''
+    '{{ direction }}' !== 'down' && open ? 'rounded-3xl w-64 pill-open' : '',
+    '{{ direction }}' !== 'down' && !open ? 'rounded-9xl overflow-hidden w-full' : ''
   ]">
 
   {% if direction == 'down' %}
@@ -63,7 +28,8 @@
     x-transition:leave="transition ease-in duration-350"
     x-transition:leave-start="opacity-100 translate-y-0"
     x-transition:leave-end="opacity-0"
-    class="absolute right-0 top-[calc(100%+1.15rem)] z-[60] w-64 rounded-3xl bg-gray-900 shadow-fair-2xl border border-white/10 overflow-hidden p-2"
+    class="absolute right-0 top-[calc(100%+1.15rem)] z-[60] w-64 rounded-3xl overflow-hidden p-2"
+    style="background: linear-gradient(-135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 25%), oklch(0.145 0 0); box-shadow: inset -1px -1px 0 0 rgba(255,255,255,0.18), inset 1px 1px 0 0 rgba(255,255,255,0.07), 0 0 14px rgba(255,0,255,0.10), 0 6px 28px rgba(0,0,0,0.55);"
     x-cloak
   >
     <div class="flex items-center gap-3 p-2 pb-2 mb-2 border-b border-white/10">
@@ -88,7 +54,8 @@
     x-transition:leave="transition ease-in duration-150"
     x-transition:leave-start="opacity-100 translate-x-0"
     x-transition:leave-end="opacity-0 translate-x-1"
-    class="user-pill-menu-flyout absolute left-[calc(100%+0.5rem)] bottom-0 z-[70] w-64 rounded-3xl bg-gray-800 shadow-fair-2xl border border-white/10 overflow-hidden p-2"
+    class="user-pill-menu-flyout absolute left-[calc(100%+0.5rem)] bottom-0 z-[70] w-64 rounded-3xl overflow-hidden p-2"
+    style="background: linear-gradient(-135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 25%), oklch(0.145 0 0); box-shadow: inset -1px -1px 0 0 rgba(255,255,255,0.18), inset 1px 1px 0 0 rgba(255,255,255,0.07), 0 0 14px rgba(255,0,255,0.10), 0 6px 28px rgba(0,0,0,0.55);"
     x-cloak
   >
     <div class="flex items-center gap-3 p-2 pb-2 mb-2 border-b border-white/10">

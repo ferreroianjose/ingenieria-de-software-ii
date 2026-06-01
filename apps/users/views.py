@@ -13,6 +13,7 @@ from django.core.paginator import Paginator
 
 from apps.notifications.services import notification_service
 from GYMFlow.access import admin_required, staff_required
+from GYMFlow.page_chrome import PAGE_CHROME_LIGHT, merge_page_chrome
 from .forms import CustomUserCreationForm, ProfileUpdateForm, TwoFactorForm
 from .search import USER_PAGE_SIZE, filter_users_queryset
 
@@ -22,6 +23,7 @@ User = get_user_model()
 @login_required
 def settings_view(request):
     context = {
+        **merge_page_chrome(PAGE_CHROME_LIGHT),
         "profile_form": ProfileUpdateForm(instance=request.user),
     }
     if request.user.rol == "ADMIN":

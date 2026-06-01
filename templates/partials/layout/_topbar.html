@@ -7,22 +7,18 @@
   x-cloak
 ></div>
 
-<style>
-  .topbar-mobile-transition {
-    transition: max-height 0.5s ease-out, background-color 0.5s ease-out, border-radius 150ms ease-out 100ms;
-  }
-</style>
 <!-- Expanding Mobile Topbar -->
 <header
+  id="topbar-mobile"
   hx-boost="true"
   hx-target="#main-content"
   hx-select="#main-content"
   hx-swap="outerHTML"
-  class="md:hidden fixed top-0 left-0 right-0 z-50 shadow-fair-lg flex flex-col overflow-visible topbar-mobile-transition"
-  :class="mobileOpen ? 'max-h-[90vh] bg-gray-900 rounded-b-8xl' : 'max-h-[var(--topbar-height)] bg-gray-900 rounded-b-0xl'"
+  class="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col overflow-visible topbar-mobile-transition"
+  :class="mobileOpen ? 'max-h-[90vh] rounded-b-8xl' : 'max-h-[var(--topbar-height)] rounded-b-0xl'"
 >
   <!-- Always visible header row -->
-  <div class="flex flex-row items-center justify-between gap-3 px-3 shrink-0 min-h-[var(--topbar-height)] h-[var(--topbar-height)] bg-gray-900 z-10 overflow-visible">
+  <div class="flex flex-row items-center justify-between gap-3 px-3 shrink-0 min-h-[var(--topbar-height)] h-[var(--topbar-height)] z-10 overflow-visible">
     {% include 'partials/layout/_brand.html' with class="w-auto h-12 shrink-0" text_class="hidden" %}
 
     <div class="flex flex-row items-center gap-2 shrink-0 ml-auto">
