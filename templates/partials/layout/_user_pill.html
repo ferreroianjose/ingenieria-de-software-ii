@@ -1,6 +1,6 @@
 {% load static %}
 {% if direction != 'down' %}
-<style type="text/tailwindcss">
+<style>
   @media (min-width: 768px) {
     body.is-collapsed .user-pill-sidebar {
       width: 100% !important;
@@ -11,20 +11,23 @@
       box-shadow: none !important;
     }
     body.is-collapsed .user-pill-sidebar .user-pill-trigger {
-      @apply w-full justify-center gap-0 px-0;
+      width: 100%;
+      justify-content: center;
+      gap: 0;
+      padding-left: 0;
+      padding-right: 0;
     }
     body.is-collapsed .user-pill-sidebar .user-pill-meta,
     body.is-collapsed .user-pill-sidebar .user-pill-chevron {
-      @apply hidden;
+      display: none;
     }
     body.is-collapsed .user-pill-sidebar .user-pill-avatar {
-      @apply mx-auto;
+      margin-left: auto;
+      margin-right: auto;
     }
-    /* Expanded rail: accordion above trigger */
     body:not(.is-collapsed) .user-pill-menu-flyout {
       display: none !important;
     }
-    /* Collapsed rail: popover to the right of the sidebar */
     body.is-collapsed .user-pill-menu-inline {
       display: none !important;
     }

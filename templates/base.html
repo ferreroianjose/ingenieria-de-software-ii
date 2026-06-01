@@ -94,12 +94,19 @@
 	        --topbar-height: 5rem;
 	        --shell-action-size: 3.25rem;
 	        --shell-inset-y: clamp(calc(var(--spacing) * 2), 3lvh, calc(var(--spacing) * 18));
-	        --sidebar-py: var(--shell-inset-y);
+	        --sidebar-margin: 0.5rem;
+	        --sidebar-content-gap: 1rem;
 	        --toggle-y: calc(var(--shell-inset-y) + 1.75rem);
 	      }
 
 	      .sidebar-w {
 	        width: var(--sidebar-width);
+	      }
+	      .sidebar-float {
+	        left: var(--sidebar-margin);
+	        top: var(--sidebar-margin);
+	        bottom: var(--sidebar-margin);
+	        border-radius: var(--radius-2xl);
 	      }
 	      .sidebar-pl {
 	        padding-left: 0;
@@ -109,7 +116,7 @@
 	      }
 	      @media (min-width: 768px) {
 	        .sidebar-pl {
-	          padding-left: var(--sidebar-width);
+	          padding-left: calc(var(--sidebar-margin) + var(--sidebar-width) + var(--sidebar-content-gap));
 	        }
 	        .topbar-pt {
 	          padding-top: 0;
@@ -118,7 +125,7 @@
 	          width: var(--sidebar-collapsed-width);
 	        }
 	        body.is-collapsed .sidebar-pl {
-	          padding-left: var(--sidebar-collapsed-width);
+	          padding-left: calc(var(--sidebar-margin) + var(--sidebar-collapsed-width) + var(--sidebar-content-gap));
 	        }
 	      }
 
@@ -972,7 +979,8 @@
 	          0 0 0 1px rgba(255, 255, 255, 0.6) inset;
 	      }
 	      .dash-panel-dark {
-	        @apply border-white/10 text-white;
+	        border-color: rgb(255 255 255 / 0.1);
+	        color: #fff;
 	        background:
 	          radial-gradient(circle at 95% 5%, rgba(223, 2, 255, 0.36), transparent 32%),
 	          radial-gradient(circle at 0% 100%, rgba(92, 225, 230, 0.22), transparent 36%),
@@ -982,7 +990,8 @@
 	          inset 0 0 28px rgba(223, 2, 255, 0.14);
 	      }
 	      .dash-panel-light {
-	        @apply border-white/10 text-white;
+	        border-color: rgb(255 255 255 / 0.1);
+	        color: #fff;
 	        box-shadow:
 	          0 14px 38px rgba(0,0,0, 0.95),
 	          inset 0 0 28px rgba(223, 2, 255, 0.14);
@@ -1281,7 +1290,11 @@
 	        border-color: rgba(92, 225, 230, 0.55);
 	      }
 	      .dash-agenda-class {
-	        @apply rounded-4xl border border-white/15 p-5 no-underline transition-all;
+	        border-radius: var(--radius-4xl);
+	        border: 1px solid rgb(255 255 255 / 0.15);
+	        padding: 1.25rem;
+	        text-decoration: none;
+	        transition: all 0.15s;
 	        background: rgba(255, 255, 255, 0.07);
 	        backdrop-filter: blur(14px);
 	        -webkit-backdrop-filter: blur(14px);
@@ -1528,7 +1541,14 @@
 	        --site-footer-fg: rgba(26, 26, 26, 0.62);
 	      }
 	      }
-		</style>
+
+	    /* Fuera de @layer: gana sobre utilidades Tailwind por reglas de cascada.
+	       Hace el body negro en las páginas de flujo cliente para que los gaps
+	       del sidebar-float (0.5rem de margen) no muestren el bg-primary-900. */
+	    body:has(.internal-page.cliente-flow) {
+	      background-color: #000000;
+	    }
+	</style>
 
 	<!-- Alpine Plugins -->
 	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
@@ -1596,6 +1616,7 @@
 				data-footer-variant="{% block footer_variant %}{% firstof footer_variant 'dark' %}{% endblock %}"
 				data-color-scheme="{% block color_scheme %}{% firstof color_scheme 'dark' %}{% endblock %}"
 				data-page-background="{% block page_canvas_background %}{% firstof page_background '' %}{% endblock %}"
+				data-body-background="{% block body_background %}{% firstof body_background '' %}{% endblock %}"
 				style="{% block page_canvas_style %}{% firstof page_background '' %}{% endblock %}"
 			>
 				<div
@@ -1621,7 +1642,7 @@
 	{% block other_footer_classes %}{% endblock %}
 
 	<!-- Scripts globales -->
-	<script src="{% static 'js/main.js' %}"></script>
+	<script id="gymflow-main-js" src="{% static 'js/main.js' %}"></script>
 	{% block extra_js %}{% endblock %}
 </body>
 

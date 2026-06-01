@@ -8,10 +8,16 @@ from django.utils import timezone
 from apps.classes.models import Inscripcion
 from apps.payments.models import PeriodoCobro
 
-# Días antes del inicio del período en que un abonado puede inscribirse al mes siguiente.
-DIAS_PREINSCRIPCION_ABONADOS = getattr(
-    settings, "DIAS_PREINSCRIPCION_ABONADOS", 10
-)
+def dias_preinscripcion_abonados():
+    return getattr(settings, "DIAS_PREINSCRIPCION_ABONADOS", 10)
+
+
+def habilitar_precola_no_abonados():
+    return getattr(settings, "HABILITAR_PRECOLA_NO_ABONADOS", True)
+
+
+def dia_limite_pago_mensual():
+    return getattr(settings, "DIA_LIMITE_PAGO_MENSUAL", 10)
 
 
 def periodo_conteniendo_fecha(fecha):
@@ -55,8 +61,38 @@ def en_ventana_preinscripcion_abonados(periodo, fecha=None):
     hoy = fecha or timezone.localdate()
     if hoy >= periodo.fecha_inicio_periodo:
         return False
-    limite = periodo.fecha_inicio_periodo - timedelta(days=DIAS_PREINSCRIPCION_ABONADOS)
+    limite = periodo.fecha_inicio_periodo - timedelta(days=dias_preinscripcion_abonados())
     return hoy >= max(periodo.apertura_abonados, limite)
+
+
+def vencimiento_mensual_alcanzado(periodo, fecha=None):
+    """True cuando venció el plazo de pago mensual del período (después del día límite)."""
+    hoy = fecha or timezone.localdate()
+    if not (
+        periodo.fecha_inicio_periodo <= hoy <= periodo.fecha_fin_periodo
+    ):
+        return False
+    return hoy.day > dia_limite_pago_mensual()
+
+
+def periodo_habilitado_clase_suelta(periodo, fecha=None):
+    """
+    Un período de clase suelta se considera habilitado si:
+    - abrió inscripción general, o
+    - aún no abrió general pero está habilitada la pre-cola y hay ventana de abonados.
+    """
+    hoy = fecha or timezone.localdate()
+    if hoy >= periodo.apertura_general:
+        return True
+    if not habilitar_precola_no_abonados():
+        return False
+    return en_ventana_preinscripcion_abonados(periodo, hoy)
+
+
+def requiere_precola_suelta(periodo, fecha=None):
+    """True si no abonado puede anotarse, pero solo en espera (antes de apertura general)."""
+    hoy = fecha or timezone.localdate()
+    return periodo_habilitado_clase_suelta(periodo, hoy) and hoy < periodo.apertura_general
 
 
 def periodos_elegibles_mensual(fecha=None):
@@ -95,12 +131,11 @@ def periodos_elegibles_clase_suelta(fecha=None):
     hoy = fecha or timezone.localdate()
     dias = getattr(settings, "VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", 21)
     hasta = hoy + timedelta(days=dias)
-    return list(
-        PeriodoCobro.objects.filter(
+    periodos = PeriodoCobro.objects.filter(
             fecha_inicio_periodo__lte=hasta,
             fecha_fin_periodo__gte=hoy,
         ).order_by("fecha_inicio_periodo")
-    )
+    return [p for p in periodos if periodo_habilitado_clase_suelta(p, hoy)]
 
 
 def periodos_elegibles_para(tipo, fecha=None):

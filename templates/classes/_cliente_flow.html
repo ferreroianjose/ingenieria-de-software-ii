@@ -9,8 +9,6 @@
 	html,
 	body {
 		color-scheme: dark;
-	}
-	#page-canvas {
 		background: #000000;
 	}
 </style>
@@ -18,8 +16,9 @@
 
 {% block footer_variant %}dark{% endblock %}
 {% block color_scheme %}dark{% endblock %}
-{% block page_canvas_background %}background:#000000;{% endblock %}
-{% block page_canvas_style %}background:#000000;{% endblock %}
+{% block body_background %}#000000{% endblock %}
+{% block page_canvas_background %}background: black;{% endblock %}
+{% block page_canvas_style %}background: black;{% endblock %}
 
 {% block content %}
 <div

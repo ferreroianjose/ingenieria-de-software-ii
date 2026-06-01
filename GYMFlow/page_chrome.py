@@ -14,7 +14,7 @@ PAGE_CHROME_DARK = {
 PAGE_CHROME_CLIENTE_FLOW = {
     "footer_variant": "dark",
     "color_scheme": "dark",
-    "page_background": "background:#000000;",
+    "page_background": "",
 }
 
 PAGE_CHROME_LIGHT = {

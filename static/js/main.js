@@ -1,6 +1,11 @@
 /**
  * @fileOverview Custom client-side JavaScript
  */
+(() => {
+	if (window.__gymflowMainLoaded) {
+		return;
+	}
+	window.__gymflowMainLoaded = true;
 
 // hacer visible la página luego de que tailwind cargue
 window.onload = function() {
@@ -66,6 +71,7 @@ if (window.htmx) {
 	htmx.config.globalViewTransitions = false;
 	htmx.config.selfRequestsOnly = false;
 	htmx.config.refreshOnHistoryMiss = true;
+	htmx.config.allowScriptTags = false;
 }
 
 let tailwindRescanTimer = null;
@@ -104,7 +110,7 @@ document.body.addEventListener(
 			event.stopPropagation();
 		}
 	},
-	true,
+	false,
 );
 
 const MODAL_FORM_CONTAINERS = {
@@ -421,7 +427,7 @@ function syncPageChrome(root) {
 	const canvas = scope?.querySelector?.("[data-page-chrome]") || scope;
 	if (!canvas?.dataset) return;
 
-	const { footerVariant, colorScheme, pageBackground } = canvas.dataset;
+	const { footerVariant, colorScheme, pageBackground, bodyBackground } = canvas.dataset;
 	const footer = document.querySelector(".site-footer");
 	if (footer && footerVariant) {
 		footer.classList.remove("site-footer--dark", "site-footer--light");
@@ -443,12 +449,19 @@ function syncPageChrome(root) {
 		canvas.removeAttribute("style");
 	}
 
+	if (bodyBackground) {
+		document.body.style.background = bodyBackground;
+	} else {
+		document.body.style.removeProperty("background");
+	}
+
 	const boot = document.getElementById("page-chrome-boot");
 	if (boot) {
 		boot.textContent = `
 html,
 body {
   color-scheme: ${colorScheme || "dark"};
+  ${bodyBackground ? `background: ${bodyBackground};` : ""}
 }
 #page-canvas {
   ${pageBackground || ""}
@@ -504,3 +517,4 @@ document.body.addEventListener("htmx:afterSettle", (evt) => {
 	bindInscripcionClaseForm(target);
 	syncPageChrome(target);
 });
+})();

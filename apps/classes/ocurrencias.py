@@ -137,11 +137,20 @@ def _filas_desde_queryset(ocurrencias_qs):
         dt = oc.fecha_clase
         cancelada = oc.estado == InscripcionOcurrencia.Estado.CANCELADA
         horas_restantes = horas_hasta_clase(dt) if dt > ahora else None
-        puede_cancelar = (
-            not cancelada
-            and dt > ahora
-            and oc.inscripcion.tipo == Inscripcion.Tipo.MENSUAL
-            and oc.inscripcion.estado == Inscripcion.Estado.RESERVADA
+        inscripcion = oc.inscripcion
+        puede_cancelar = not cancelada and dt > ahora and (
+            (
+                inscripcion.tipo == Inscripcion.Tipo.MENSUAL
+                and inscripcion.estado == Inscripcion.Estado.RESERVADA
+            )
+            or (
+                inscripcion.tipo == Inscripcion.Tipo.CLASE_SUELTA
+                and inscripcion.estado
+                in (
+                    Inscripcion.Estado.RESERVADA,
+                    Inscripcion.Estado.PENDIENTE_PAGO,
+                )
+            )
         )
         filas.append(
             {

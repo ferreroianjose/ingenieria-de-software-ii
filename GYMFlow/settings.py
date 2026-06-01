@@ -202,14 +202,50 @@ GYM_RESTRICTED_SCHEDULE = True
 
 # Precio por defecto para una clase (usado cuando no hay una tarifa por disciplina)
 CLASE_DEFAULT_PRICE = float(os.environ.get("CLASE_DEFAULT_PRICE", "2500.0"))
+
+# Horizonte de días que se muestra para fechas de clase suelta.
+# Impacta qué ocurrencias futuras pueden seleccionarse en el flujo cliente.
 VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS = int(
     os.environ.get("VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", "21")
 )
 
-# Políticas de cancelación (FAQ)
+# Cantidad de días previos al inicio del período en que se habilita
+# la preinscripción de abonados para el mes siguiente.
+DIAS_PREINSCRIPCION_ABONADOS = int(
+    os.environ.get("DIAS_PREINSCRIPCION_ABONADOS", "10")
+)
+
+# Si está en True, no abonados pueden anotarse en pre-cola para clases
+# del período siguiente antes de apertura_general (quedan en ESPERA).
+# Si está en False, no abonados recién pueden inscribirse desde apertura_general.
+# Es buena idea posibilitarlo. La lógica de prioridad para abonados se mantiene.
+HABILITAR_PRECOLA_NO_ABONADOS = (
+    os.environ.get("HABILITAR_PRECOLA_NO_ABONADOS", "true").lower() == "true"
+)
+
+# Día del mes (inclusive) hasta el que un abonado puede pagar su mensualidad
+# sin perder la reserva. La conciliación empieza a considerar vencido desde el día siguiente.
+DIA_LIMITE_PAGO_MENSUAL = int(
+    os.environ.get("DIA_LIMITE_PAGO_MENSUAL", "10")
+)
+
+# Activa la el proceso (Django Q) de la reconciliación de impagos mensuales.
+# Esto es, cancela las inscripciones mensuales impagas vencidas del período vigente
+# y promueve la lista de espera.
+AUTO_RECONCILIACION_MENSUAL_ACTIVA = (
+    os.environ.get("AUTO_RECONCILIACION_MENSUAL_ACTIVA", "true").lower() == "true"
+)
+
+# Hora diaria (HH:MM, 24h) en la que se ejecuta la conciliación automática.
+AUTO_RECONCILIACION_MENSUAL_HORA = os.environ.get(
+    "AUTO_RECONCILIACION_MENSUAL_HORA", "03:00"
+)
+
+# Horas mínimas de anticipación para cancelar una clase que forme parte de una inscripción mensual
 CANCELACION_MENSUAL_HORAS_MIN = int(
     os.environ.get("CANCELACION_MENSUAL_HORAS_MIN", "48")
 )
+# Horas mínimas de anticipación para cancelar una clase suelta
 CANCELACION_CLASE_SUELTA_HORAS_MIN = int(
     os.environ.get("CANCELACION_CLASE_SUELTA_HORAS_MIN", "24")
 )

@@ -1,9 +1,11 @@
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.classes.cliente import periodos_inscripcion_para_clase
 from apps.classes.models import Class, Disciplina, Inscripcion, Sala, Sede, Teacher
@@ -149,3 +151,104 @@ class InscripcionMensualSinClasesTests(TestCase):
             reverse("classes:detalle", args=[self.clase.id]),
         )
         self.assertNotIn(PAGO_PENDIENTE_SESSION, self.client.session)
+
+
+class InscripcionSueltaPrioridadFlowTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="sueltaflow@test.com",
+            email="sueltaflow@test.com",
+            password="testpassword123",
+            dni="11223344",
+            telefono_emergencia="3515552222",
+        )
+        self.mayo = PeriodoCobro.objects.create(
+            nombre="Mayo 2026",
+            fecha_inicio_periodo=date(2026, 5, 1),
+            fecha_fin_periodo=date(2026, 5, 31),
+            apertura_abonados=date(2026, 4, 15),
+            apertura_general=date(2026, 5, 1),
+        )
+        self.junio = PeriodoCobro.objects.create(
+            nombre="Junio 2026",
+            fecha_inicio_periodo=date(2026, 6, 1),
+            fecha_fin_periodo=date(2026, 6, 30),
+            apertura_abonados=date(2026, 5, 20),
+            apertura_general=date(2026, 6, 1),
+        )
+        disciplina = Disciplina.objects.create(nombre="Spinning")
+        sede = Sede.objects.create(nombre="Sede Spinning", direccion="Calle 3")
+        sala = Sala.objects.create(nombre="Sala Spin", capacidad=20, sede=sede)
+        profesor = Teacher.objects.create(nombre="Pepe", apellido="Spin")
+        self.clase = Class.objects.create(
+            disciplina=disciplina,
+            sala=sala,
+            profesor=profesor,
+            dia_semana=0,  # Lunes
+            hora_inicio=time(10, 0),
+            duracion=timedelta(hours=1),
+            cupo_maximo=5,
+            estado="disponible",
+        )
+        self.client.force_login(self.user)
+
+    def _fecha_iso_junio(self, ahora):
+        from apps.classes.services import ocurrencias_clase_en_ventana
+
+        ocurrencias = ocurrencias_clase_en_ventana(self.clase, desde_fecha=ahora.date())
+        for dt, periodo in ocurrencias:
+            if periodo.id == self.junio.id:
+                return dt.isoformat()
+        self.fail("No se encontró ocurrencia en junio para la clase.")
+
+    @override_settings(HABILITAR_PRECOLA_NO_ABONADOS=True)
+    @patch("django.utils.timezone.localdate")
+    @patch("django.utils.timezone.now")
+    def test_precola_suelta_desde_inscribir_crea_espera(self, mock_now, mock_localdate):
+        ahora = timezone.make_aware(
+            datetime(2026, 5, 25, 9, 0), timezone.get_current_timezone()
+        )
+        mock_now.return_value = ahora
+        def _localdate_side_effect(value=None, timezone=None):
+            if value is None:
+                return date(2026, 5, 25)
+            return value.date()
+
+        mock_localdate.side_effect = _localdate_side_effect
+        response = self.client.post(
+            reverse("classes:inscribir", args=[self.clase.id]),
+            {
+                "tipo": Inscripcion.Tipo.CLASE_SUELTA,
+                "fecha_clase": self._fecha_iso_junio(ahora),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("classes:detalle", args=[self.clase.id]))
+        inscripcion = Inscripcion.objects.get(usuario=self.user, clase=self.clase)
+        self.assertEqual(inscripcion.tipo, Inscripcion.Tipo.CLASE_SUELTA)
+        self.assertEqual(inscripcion.estado, Inscripcion.Estado.ESPERA)
+
+    @patch("django.utils.timezone.localdate")
+    @patch("django.utils.timezone.now")
+    def test_suelta_desde_dia_uno_redirige_a_pago_si_hay_cupo(self, mock_now, mock_localdate):
+        ahora = timezone.make_aware(
+            datetime(2026, 6, 1, 9, 0), timezone.get_current_timezone()
+        )
+        mock_now.return_value = ahora
+        def _localdate_side_effect(value=None, timezone=None):
+            if value is None:
+                return date(2026, 6, 1)
+            return value.date()
+
+        mock_localdate.side_effect = _localdate_side_effect
+        response = self.client.post(
+            reverse("classes:inscribir", args=[self.clase.id]),
+            {
+                "tipo": Inscripcion.Tipo.CLASE_SUELTA,
+                "fecha_clase": self._fecha_iso_junio(ahora),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.url, reverse("payments:seleccion_pago_clase", args=[self.clase.id])
+        )

@@ -46,11 +46,17 @@ def periodos_inscripcion_para_clase(clase):
     """Opciones para el formulario de detalle (fechas sueltas + períodos mensuales)."""
     from apps.payments.periodos import (
         hint_periodo_mensual,
+        periodos_elegibles_clase_suelta,
         periodos_elegibles_mensual,
     )
 
+    periodos_suelta_elegibles = {
+        p.id for p in periodos_elegibles_clase_suelta()
+    }
     suelta = []
     for dt, periodo in ocurrencias_clase_en_ventana(clase):
+        if periodo.id not in periodos_suelta_elegibles:
+            continue
         suelta.append(
             {
                 "fecha_clase": dt.isoformat(),

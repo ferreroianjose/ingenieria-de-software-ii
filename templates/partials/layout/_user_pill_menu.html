@@ -1,10 +1,27 @@
-<style type="text/tailwindcss">
+<style>
   .user-pill-item:not(:last-child) {
-    @apply mb-2;
+    margin-bottom: 0.5rem;
   }
   .user-pill-item a,
   .user-pill-item button {
-    @apply rounded-[calc(var(--radius-3xl)-calc(var(--spacing)*2))] w-full flex items-center gap-4 p-4 text-sm font-bold text-left transition-colors no-underline text-gray-200 bg-white/5 hover:bg-white/10 cursor-pointer;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: calc(var(--radius-3xl) - 0.5rem);
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: left;
+    text-decoration: none;
+    color: rgb(229 231 235);
+    background: rgb(255 255 255 / 0.05);
+    transition: background-color 0.15s;
+    cursor: pointer;
+  }
+  .user-pill-item a:hover,
+  .user-pill-item button:hover {
+    background: rgb(255 255 255 / 0.1);
   }
 </style>
 <div>

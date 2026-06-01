@@ -125,7 +125,7 @@
       {% endif %}
 
       {% include 'partials/ui/buttons/_primary_button.html' with label="Continuar al pago" type="submit" class="w-full !py-3.5" %}
-      <p class="text-xs text-white/45 text-center">Todavía no se reserva el cupo: primero elegís cómo pagar.</p>
+      <p class="text-xs text-white/45 text-center">Tené en cuenta que el cupo en la clase no se reserva hasta saldar el pago.</p>
     </form>
     {% endwith %}
 
@@ -165,11 +165,10 @@
     </a>
     {% elif info.puede_cancelar %}
     <div class="relative min-h-[3.25rem] w-full overflow-hidden rounded-xl border border-white/12 bg-black/20">
-      <form action="{% url 'classes:cancelar_reserva' info.mi_inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false"
-            onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.');">
+      <form action="{% url 'classes:cancelar_reserva' info.mi_inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false">
         {% csrf_token %}
         <input type="hidden" name="destino" value="detalle">
-        {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' %}
+        {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_message='¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.' %}
       </form>
     </div>
     {% endif %}

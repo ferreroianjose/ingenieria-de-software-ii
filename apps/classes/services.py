@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from django.db import transaction
+from django.db.models import Case, IntegerField, Value, When
 from django.utils import timezone
 
 from apps.payments.models import PeriodoCobro
@@ -214,7 +215,9 @@ def cupo_disponible(clase):
     return max(0, clase.cupo_maximo - activas)
 
 
-def validar_intencion_inscripcion(usuario, clase_id, periodo, tipo, fecha_clase=None):
+def validar_intencion_inscripcion(
+    usuario, clase_id, periodo, tipo, fecha_clase=None, permitir_sin_cupo=False
+):
     """Comprueba que el usuario puede inscribirse; no escribe en la BD."""
     if not usuario.telefono_emergencia:
         raise TelefonoEmergenciaFaltante()
@@ -240,6 +243,20 @@ def validar_intencion_inscripcion(usuario, clase_id, periodo, tipo, fecha_clase=
         periodo_fecha = periodo_conteniendo_fecha(timezone.localdate(fecha_clase))
         if not periodo_fecha or periodo_fecha.id != periodo.id:
             raise ReservaError("El período de cobro no coincide con la fecha elegida.")
+        from apps.payments.periodos import (
+            periodo_habilitado_clase_suelta,
+            requiere_precola_suelta,
+        )
+
+        if not periodo_habilitado_clase_suelta(periodo):
+            raise ReservaError(
+                "La inscripción para esa fecha todavía no está habilitada."
+            )
+        if requiere_precola_suelta(periodo) and not permitir_sin_cupo:
+            raise ReservaError(
+                "La reserva para no abonados abre el primer día del período. "
+                "Por ahora podés anotarte en lista de espera."
+            )
         from apps.classes.ocurrencias import fecha_suelta_reservada
 
         if fecha_suelta_reservada(usuario, clase, fecha_clase):
@@ -270,7 +287,7 @@ def validar_intencion_inscripcion(usuario, clase_id, periodo, tipo, fecha_clase=
         if existing:
             raise InscripcionDuplicada(existing)
 
-    if cupo_disponible(clase) <= 0:
+    if not permitir_sin_cupo and cupo_disponible(clase) <= 0:
         raise ClaseNoDisponible("No hay cupos disponibles.")
 
     return clase, tipo
@@ -308,7 +325,12 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
                 raise ReservaError("Falta la fecha de la clase.")
             fecha_clase = timezone.localtime(fecha_clase)
             validar_intencion_inscripcion(
-                usuario, clase_id, periodo, tipo, fecha_clase=fecha_clase
+                usuario,
+                clase_id,
+                periodo,
+                tipo,
+                fecha_clase=fecha_clase,
+                permitir_sin_cupo=True,
             )
             from apps.classes.ocurrencias import fecha_suelta_reservada
 
@@ -341,7 +363,12 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
             tipo=tipo,
         )
 
-        if cupo_disponible(clase) > 0:
+        from apps.payments.periodos import requiere_precola_suelta
+
+        forzar_espera = (
+            tipo == Inscripcion.Tipo.CLASE_SUELTA and requiere_precola_suelta(periodo)
+        )
+        if cupo_disponible(clase) > 0 and not forzar_espera:
             inscripcion = Inscripcion.objects.create(
                 **create_kwargs,
                 estado=Inscripcion.Estado.PENDIENTE_PAGO,
@@ -364,15 +391,72 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
 
 
 def _promover_lista_espera(clase):
-    primera_espera = (
+    esperas = (
         Inscripcion.objects.select_for_update()
         .filter(clase=clase, estado=Inscripcion.Estado.ESPERA)
-        .order_by("fecha_inscripcion")
-        .first()
+        .annotate(
+            prioridad_tipo=Case(
+                When(tipo=Inscripcion.Tipo.MENSUAL, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by("prioridad_tipo", "fecha_inscripcion")
     )
-    if primera_espera:
-        primera_espera.estado = Inscripcion.Estado.PENDIENTE_PAGO
-        primera_espera.save(update_fields=["estado"])
+    from apps.payments.periodos import requiere_precola_suelta
+
+    for candidata in esperas:
+        if (
+            candidata.tipo == Inscripcion.Tipo.CLASE_SUELTA
+            and requiere_precola_suelta(candidata.periodo)
+        ):
+            continue
+        candidata.estado = Inscripcion.Estado.PENDIENTE_PAGO
+        candidata.save(update_fields=["estado"])
+        return candidata
+    return None
+
+
+def reconciliar_vencimientos_mensuales(fecha=None):
+    """
+    Cancela mensuales impagas vencidas del período vigente y libera cupos.
+    Devuelve cantidad de inscripciones canceladas.
+    """
+    from apps.classes.ocurrencias import marcar_ocurrencias_inscripcion_canceladas
+    from apps.payments.periodos import periodo_vigente, vencimiento_mensual_alcanzado
+
+    hoy = fecha or timezone.localdate()
+    vigente = periodo_vigente(hoy)
+    if not vigente or not vencimiento_mensual_alcanzado(vigente, hoy):
+        return 0
+
+    with transaction.atomic():
+        vencidas = list(
+            Inscripcion.objects.select_for_update()
+            .filter(
+                periodo=vigente,
+                tipo=Inscripcion.Tipo.MENSUAL,
+                estado=Inscripcion.Estado.PENDIENTE_PAGO,
+            )
+            .select_related("clase")
+            .order_by("fecha_inscripcion")
+        )
+        if not vencidas:
+            return 0
+
+        por_clase = {}
+        for inscripcion in vencidas:
+            por_clase[inscripcion.clase_id] = por_clase.get(inscripcion.clase_id, 0) + 1
+            inscripcion.estado = Inscripcion.Estado.CANCELADA
+            inscripcion.save(update_fields=["estado"])
+            marcar_ocurrencias_inscripcion_canceladas(inscripcion)
+
+        for clase_id, cantidad in por_clase.items():
+            clase = Class.objects.select_for_update().get(pk=clase_id)
+            for _ in range(cantidad):
+                _promover_lista_espera(clase)
+
+    return len(vencidas)
 
 
 def _fecha_clase_inscripcion(inscripcion):

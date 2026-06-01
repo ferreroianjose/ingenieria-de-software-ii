@@ -1248,17 +1248,32 @@ def _ir_a_pantalla_pago(request, clase_id):
 
 
 def _reservar_desde_detalle(request, clase_id):
+    from apps.payments.periodos import requiere_precola_suelta
+
     clase = get_object_or_404(Class, pk=clase_id, estado="disponible")
-    if services.cupo_disponible(clase) > 0:
+    tipo = _tipo_inscripcion_desde_post(request)
+    fecha_clase = None
+    try:
+        if tipo == Inscripcion.Tipo.CLASE_SUELTA:
+            fecha_clase, periodo = _fecha_clase_desde_post(request, clase_id)
+        else:
+            periodo = _periodo_desde_post(request, tipo)
+    except services.ReservaError as exc:
+        messages.error(request, str(exc))
+        return redirect("classes:detalle", clase_id=clase_id)
+
+    if services.cupo_disponible(clase) > 0 and not (
+        tipo == Inscripcion.Tipo.CLASE_SUELTA and requiere_precola_suelta(periodo)
+    ):
         return _ir_a_pantalla_pago(request, clase_id)
 
     try:
-        periodo = services.obtener_periodo_activo()
         _, resultado = services.reservar_clase(
             request.user,
             clase_id,
             periodo=periodo,
-            tipo=_tipo_inscripcion_desde_post(request),
+            tipo=tipo,
+            fecha_clase=fecha_clase,
         )
     except InscripcionDuplicada as exc:
         redirect_resp = _manejar_inscripcion_duplicada(request, exc, clase_id)

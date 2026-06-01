@@ -36,17 +36,15 @@
       {% else %}
       <div class="relative min-h-[3.25rem] w-full shrink-0 overflow-hidden rounded-xl border border-white/12 bg-black/20 sm:w-auto sm:min-w-[8.5rem]">
         {% if inscripcion.estado == 'ESPERA' %}
-        <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false"
-              onsubmit="return confirm('¿Salir de la lista de espera?')">
+        <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false">
         {% else %}
-        <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false"
-              onsubmit="return confirm('¿Cancelar la reserva? Con 24 h o más se reintegra la seña.')">
+        <form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false">
         {% endif %}
           {% csrf_token %}
           {% if inscripcion.estado == 'ESPERA' %}
-          {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Salir de lista' %}
+          {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Salir de lista' confirm_message='¿Salir de la lista de espera?' %}
           {% else %}
-          {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' %}
+          {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_message='¿Cancelar la reserva? Con 24 h o más se reintegra la seña.' %}
           {% endif %}
         </form>
       </div>

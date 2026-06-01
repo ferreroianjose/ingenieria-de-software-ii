@@ -82,6 +82,24 @@ class CancelacionesTestCase(TestCase):
         crear_ocurrencia_suelta(inscripcion, self.fecha_suelta)
         return inscripcion
 
+    def test_ocurrencias_reserva_ui_suelta_muestra_cancelar(self):
+        from apps.classes.ocurrencias import ocurrencias_reserva_ui
+
+        inscripcion = self._inscripcion_suelta()
+        filas = ocurrencias_reserva_ui(inscripcion)
+
+        self.assertEqual(len(filas), 1)
+        self.assertTrue(filas[0]["puede_cancelar"])
+
+    def test_ocurrencias_reserva_ui_mensual_muestra_cancelar_por_clase(self):
+        from apps.classes.ocurrencias import ocurrencias_reserva_ui
+
+        inscripcion = self._inscripcion_mensual()
+        filas = ocurrencias_reserva_ui(inscripcion)
+
+        self.assertGreater(len(filas), 0)
+        self.assertTrue(any(fila["puede_cancelar"] for fila in filas))
+
     @patch("django.utils.timezone.now")
     def test_cancelar_ocurrencia_mensual_otorga_credito_con_48h(self, mock_now):
         mock_now.return_value = timezone.make_aware(

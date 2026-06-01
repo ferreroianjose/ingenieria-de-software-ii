@@ -2,6 +2,7 @@ from datetime import date, datetime, time, timedelta
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.utils import timezone
 
 from apps.classes.models import Class, Inscripcion
@@ -10,8 +11,11 @@ from apps.payments.models import PeriodoCobro
 from apps.payments.periodos import (
     en_ventana_preinscripcion_abonados,
     periodo_conteniendo_fecha,
+    periodo_habilitado_clase_suelta,
     periodos_elegibles_clase_suelta,
     periodos_elegibles_mensual,
+    requiere_precola_suelta,
+    vencimiento_mensual_alcanzado,
 )
 
 
@@ -53,6 +57,35 @@ class PeriodosInscripcionTests(TestCase):
         self.assertEqual(
             periodo_conteniendo_fecha(date(2026, 6, 3)).nombre, "Junio 2026"
         )
+
+    def test_clase_suelta_no_habilitada_antes_de_apertura_abonados(self):
+        hoy = date(2026, 5, 10)
+        self.assertFalse(periodo_habilitado_clase_suelta(self.junio, hoy))
+
+    def test_clase_suelta_habilitada_como_precola_en_preinscripcion(self):
+        hoy = date(2026, 5, 25)
+        self.assertTrue(periodo_habilitado_clase_suelta(self.junio, hoy))
+        self.assertTrue(requiere_precola_suelta(self.junio, hoy))
+
+    def test_clase_suelta_no_requiere_precola_desde_apertura_general(self):
+        hoy = date(2026, 6, 1)
+        self.assertTrue(periodo_habilitado_clase_suelta(self.junio, hoy))
+        self.assertFalse(requiere_precola_suelta(self.junio, hoy))
+
+    def test_vencimiento_mensual_alcanzado_despues_del_dia_10(self):
+        self.assertFalse(vencimiento_mensual_alcanzado(self.junio, date(2026, 6, 10)))
+        self.assertTrue(vencimiento_mensual_alcanzado(self.junio, date(2026, 6, 11)))
+
+    @override_settings(HABILITAR_PRECOLA_NO_ABONADOS=False)
+    def test_precola_deshabilitada_exige_apertura_general(self):
+        self.assertFalse(periodo_habilitado_clase_suelta(self.junio, date(2026, 5, 25)))
+        self.assertFalse(requiere_precola_suelta(self.junio, date(2026, 5, 25)))
+        self.assertTrue(periodo_habilitado_clase_suelta(self.junio, date(2026, 6, 1)))
+
+    @override_settings(DIA_LIMITE_PAGO_MENSUAL=7)
+    def test_vencimiento_mensual_configurable_por_setting(self):
+        self.assertFalse(vencimiento_mensual_alcanzado(self.junio, date(2026, 6, 7)))
+        self.assertTrue(vencimiento_mensual_alcanzado(self.junio, date(2026, 6, 8)))
 
 
 class OcurrenciasClaseSueltaTests(TestCase):
