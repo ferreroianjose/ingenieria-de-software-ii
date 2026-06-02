@@ -30,7 +30,7 @@ class NumberValidator:
 
 class SpecialCharacterValidator:
     def validate(self, password, user=None):
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\];:\']', password):
             raise ValidationError(
                 _("La contraseña debe contener al menos un carácter especial."),
                 code="password_no_special",
@@ -38,3 +38,15 @@ class SpecialCharacterValidator:
 
     def get_help_text(self):
         return _("Su contraseña debe contener al menos un carácter especial.")
+
+
+class NameValidator:
+    def validate(self, value, user=None):
+        if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s\-']+$", value):
+            raise ValidationError(
+                _("El nombre y apellido solo pueden contener letras, espacios, guiones y apóstrofes."),
+                code="invalid_name",
+            )
+
+    def get_help_text(self):
+        return _("Solo se permiten letras, espacios, guiones y apóstrofes.")

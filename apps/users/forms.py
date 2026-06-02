@@ -3,7 +3,10 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 
+from .validators import NameValidator
+
 User = get_user_model()
+name_validator = NameValidator()
 
 
 class CustomUserCreationForm(UserCreationForm):
@@ -29,6 +32,18 @@ class CustomUserCreationForm(UserCreationForm):
                 "Este correo ya está en uso.", code="email_exists"
             )
         return email
+
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get("first_name")
+        if first_name:
+            name_validator.validate(first_name)
+        return first_name
+
+    def clean_last_name(self):
+        last_name = self.cleaned_data.get("last_name")
+        if last_name:
+            name_validator.validate(last_name)
+        return last_name
 
     def clean_dni(self):
         dni = self.cleaned_data.get("dni")
