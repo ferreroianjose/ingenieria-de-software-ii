@@ -17,7 +17,72 @@ Air Datepicker v3 widget:
 {% load static %}
 
 {# Visible input — Air Datepicker attaches here, carries required validation #}
-<div class='flex flex-col'>
+<div class="flex flex-col"
+     x-data="{
+         init() {
+             var displayEl = document.getElementById('dp_{{ field_name }}');
+             var hiddenEl  = document.getElementById('dp_hidden_{{ field_name }}');
+             if (!displayEl || displayEl._adp) return;
+
+             var locale = {
+                 days:        ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],
+                 daysShort:   ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],
+                 daysMin:     ['Do','Lu','Ma','Mi','Ju','Vi','Sá'],
+                 months:      ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
+                 monthsShort: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
+                 today: 'Hoy', clear: 'Limpiar',
+                 dateFormat: 'dd/MM/yyyy', timeFormat: 'hh:mm aa', firstDay: 1,
+             };
+
+             var maxDate = new Date();
+             maxDate.setFullYear(maxDate.getFullYear() - {{ min_age|default:0 }});
+
+             var picker = new AirDatepicker(displayEl, {
+                 view: 'years',
+                 locale: locale,
+                 isMobile: window.innerWidth < 768,
+                 autoClose: true,
+                 dateFormat: 'dd/MM/yyyy',
+                 position: '{{ position|default:"bottom left" }}',
+                 minDate: new Date({{ min_year|default:1920 }}, 0, 1),
+                 maxDate: maxDate,
+                 onSelect: function ({ date }) {
+                     if (!date) { hiddenEl.value = ''; return; }
+                     var d = Array.isArray(date) ? date[0] : date;
+                     hiddenEl.value = d.getFullYear() + '-'
+                         + String(d.getMonth() + 1).padStart(2, '0') + '-'
+                         + String(d.getDate()).padStart(2, '0');
+                 },
+             });
+
+             displayEl._adp = picker;
+
+             if (hiddenEl.value) {
+                 var p = hiddenEl.value.split('-');
+                 picker.selectDate(new Date(+p[0], +p[1] - 1, +p[2]));
+             }
+
+             if (!document.getElementById('adp-theme')) {
+                 var style = document.createElement('style');
+                 style.id = 'adp-theme';
+                 style.textContent = [
+                     '.air-datepicker {',
+                     '  --adp-font-family: var(--font-sans);',
+                     '  --adp-accent-color: var(--color-primary-400);',
+                     '  --adp-cell-background-color-selected: var(--color-primary-400);',
+                     '  --adp-cell-background-color-selected-hover: var(--color-primary-400);',
+                     '  --adp-nav-color-secondary: var(--color-secondary-400);',
+                     '  --adp-day-name-color: var(--color-primary-400);',
+                     '  --adp-border-radius: var(--radius-2xl);',
+                     '  --adp-border-radius-inner: calc(var(--radius-2xl) - 4px);',
+                     '  --adp-cell-border-radius: calc(var(--radius-2xl) - 4px);',
+                     '}',
+                 ].join(' ');
+                 document.head.appendChild(style);
+             }
+         }
+     }">
 <label for="dp_{{ field_name }}" class="text-nowrap">{{ label }}</label>
 <input id="dp_{{ field_name }}" type="text"
        class="text-center cursor-pointer w-36"
@@ -28,97 +93,4 @@ Air Datepicker v3 widget:
 {# Hidden input — submits YYYY-MM-DD to Django #}
 <input id="dp_hidden_{{ field_name }}" name="{{ field_name }}" type="hidden"
        value="{{ value|default:'' }}">
-
-<script>
-  (function () {
-    var CSS_URL = '{% static "vendors/air-datepicker/air-datepicker.css" %}';
-    var JS_URL  = '{% static "vendors/air-datepicker/air-datepicker.js" %}';
-
-    function initPicker() {
-      var displayEl = document.getElementById('dp_{{ field_name }}');
-      var hiddenEl  = document.getElementById('dp_hidden_{{ field_name }}');
-      if (!displayEl || displayEl._adp) return;
-
-      var locale = {
-        days:        ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],
-        daysShort:   ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'],
-        daysMin:     ['Do','Lu','Ma','Mi','Ju','Vi','Sá'],
-        months:      ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                      'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
-        monthsShort: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'],
-        today: 'Hoy', clear: 'Limpiar',
-        dateFormat: 'dd/MM/yyyy', timeFormat: 'hh:mm aa', firstDay: 1,
-      };
-
-      var maxDate = new Date();
-      maxDate.setFullYear(maxDate.getFullYear() - {{ min_age|default:0 }});
-
-      var picker = new AirDatepicker(displayEl, {
-        view: 'years',
-        locale: locale,
-        isMobile: window.innerWidth < 768,
-        autoClose: true,
-        dateFormat: 'dd/MM/yyyy',
-        position: '{{ position|default:"bottom left" }}',
-        autoClose: true,
-        minDate: new Date({{ min_year|default:1920 }}, 0, 1),
-        maxDate: maxDate,
-        onSelect: function ({ date }) {
-          if (!date) { hiddenEl.value = ''; return; }
-          var d = Array.isArray(date) ? date[0] : date;
-          hiddenEl.value = d.getFullYear() + '-'
-            + String(d.getMonth() + 1).padStart(2, '0') + '-'
-            + String(d.getDate()).padStart(2, '0');
-        },
-      });
-
-      displayEl._adp = picker;
-
-      // Pre-populate if a value exists (e.g. after a validation error)
-      if (hiddenEl.value) {
-        var p = hiddenEl.value.split('-');
-        picker.selectDate(new Date(+p[0], +p[1] - 1, +p[2]));
-      }
-    }
-
-    // Inject CSS into <head> once — safe to call on every HTMX swap
-    if (!document.querySelector('link[href="' + CSS_URL + '"]')) {
-      var link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = CSS_URL;
-      document.head.appendChild(link);
-    }
-
-    // Inject theme overrides into <head> once
-    if (!document.getElementById('adp-theme')) {
-      var style = document.createElement('style');
-      style.id = 'adp-theme';
-      style.textContent = [
-        '.air-datepicker {',
-        '  --adp-font-family: var(--font-sans);',
-        '  --adp-accent-color: var(--color-primary-400);',
-        '  --adp-cell-background-color-selected: var(--color-primary-400);',
-        '  --adp-cell-background-color-selected-hover: var(--color-primary-400);',
-        '  --adp-nav-color-secondary: var(--color-secondary-400);',
-        '  --adp-day-name-color: var(--color-primary-400);',
-        '  --adp-border-radius: var(--radius-2xl);',
-        '  --adp-border-radius-inner: calc(var(--radius-2xl) - 4px);',
-        '  --adp-cell-border-radius: calc(var(--radius-2xl) - 4px);',
-        '}',
-      ].join('\n');
-      document.head.appendChild(style);
-    }
-
-    // If the library is already loaded (cached from a prior visit), init immediately.
-    // Otherwise inject the script tag and init on its load event.
-    if (typeof AirDatepicker !== 'undefined') {
-      initPicker();
-    } else {
-      var script = document.createElement('script');
-      script.src = JS_URL;
-      script.onload = initPicker;
-      document.head.appendChild(script);
-    }
-  })();
-</script>
 </div>

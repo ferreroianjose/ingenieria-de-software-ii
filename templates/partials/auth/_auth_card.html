@@ -2,13 +2,32 @@
 
 {% block header %}{% endblock %}
 {% block main_class %}{% endblock %}
-{% block footer %}
-{% firstof page_section flow_title page_title "" as footer_section %}
-{% firstof page_section_hint flow_subtitle page_subtitle "" as footer_section_hint %}
-<div>
-  {% include 'partials/layout/_footer.html' with footer_section=footer_section footer_section_hint=footer_section_hint %}
-</div>
+
+{% block page_chrome_head %}
+<meta name="color-scheme" id="meta-color-scheme" content="light">
 {% endblock %}
+
+{% block page_chrome_boot %}
+<style id="page-chrome-boot">
+	html,
+	body {
+		color-scheme: light;
+		background: #ffffff;
+	}
+	#page-canvas {
+		background:
+			radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14) 0%, transparent 32%),
+			radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09) 0%, transparent 28%),
+			#000000;
+	}
+</style>
+{% endblock %}
+{% block footer_variant %}dark{% endblock %}
+{% block color_scheme %}light{% endblock %}
+{% block body_background %}#f000f0{% endblock %}
+
+# no footer
+{% block footer %} {% endblock %}
 
 {% block content %}
 <style>
