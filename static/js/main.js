@@ -61,9 +61,16 @@ const modalScrollLock = (() => {
 
 window.modalScrollLock = modalScrollLock;
 
-document.body.addEventListener("htmx:beforeSwap", () => {
+document.body.addEventListener("htmx:beforeSwap", (evt) => {
 	if (document.documentElement.classList.contains("modal-scroll-lock")) {
 		modalScrollLock.reset();
+	}
+	// Destroy the outgoing Alpine tree on #main-content so that
+	// x-teleport nodes (modals, drawers) are removed from <body>
+	// before HTMX injects new content.
+	const outgoing = evt.detail?.target;
+	if (outgoing?.id === "main-content" && window.Alpine?.destroyTree) {
+		Alpine.destroyTree(outgoing);
 	}
 });
 
