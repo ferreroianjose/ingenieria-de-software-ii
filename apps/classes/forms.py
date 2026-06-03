@@ -3,6 +3,7 @@ from datetime import timedelta, datetime, time
 from django import forms
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.db import models
 
 from .models import Class, Teacher, Sede, Sala, Disciplina
 
@@ -80,6 +81,14 @@ class SalaForm(BaseStyledForm):
         capacidad = self.cleaned_data.get('capacidad')
         if capacidad is not None and capacidad <= 0:
             raise ValidationError('La capacidad debe ser mayor a 0.')
+
+        if self.instance.pk and capacidad:
+            max_cupo = Class.objects.filter(sala=self.instance).aggregate(max_cupo=models.Max('cupo_maximo'))['max_cupo']
+            if max_cupo and capacidad < max_cupo:
+                raise ValidationError(
+                    f'La capacidad ({capacidad}) no puede ser menor que el cupo máximo de las clases existentes ({max_cupo}).'
+                )
+
         return capacidad
 
 
