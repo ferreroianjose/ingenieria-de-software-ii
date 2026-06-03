@@ -25,6 +25,14 @@ class SedeForm(BaseStyledForm):
             'direccion': forms.TextInput(attrs={'placeholder': 'Dirección'}),
         }
 
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if nombre:
+            existe = Sede.objects.filter(nombre__iexact=nombre).exclude(pk=self.instance.pk).exists()
+            if existe:
+                raise ValidationError('Ya existe una sede con ese nombre.')
+        return nombre
+
 
 class DisciplinaForm(BaseStyledForm):
     class Meta:
@@ -34,6 +42,14 @@ class DisciplinaForm(BaseStyledForm):
             'nombre': forms.TextInput(attrs={'placeholder': 'Nombre de la disciplina'}),
             'descripcion': forms.Textarea(attrs={'placeholder': 'Descripción', 'rows': 3}),
         }
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        if nombre:
+            existe = Disciplina.objects.filter(nombre__iexact=nombre).exclude(pk=self.instance.pk).exists()
+            if existe:
+                raise ValidationError('Ya existe una disciplina con ese nombre.')
+        return nombre
 
 
 class SalaForm(BaseStyledForm):
@@ -50,6 +66,21 @@ class SalaForm(BaseStyledForm):
             'nombre': forms.TextInput(attrs={'placeholder': 'Nombre de la sala'}),
             'capacidad': forms.NumberInput(attrs={'placeholder': 'Capacidad máxima', 'min': 1}),
         }
+
+    def clean_nombre(self):
+        nombre = self.cleaned_data.get('nombre')
+        sede = self.cleaned_data.get('sede')
+        if nombre and sede:
+            existe = Sala.objects.filter(nombre__iexact=nombre, sede=sede).exclude(pk=self.instance.pk).exists()
+            if existe:
+                raise ValidationError('Ya existe una sala con ese nombre en esta sede.')
+        return nombre
+
+    def clean_capacidad(self):
+        capacidad = self.cleaned_data.get('capacidad')
+        if capacidad is not None and capacidad <= 0:
+            raise ValidationError('La capacidad debe ser mayor a 0.')
+        return capacidad
 
 
 class ClassForm(BaseStyledForm):
