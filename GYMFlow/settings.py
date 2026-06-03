@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Nuestras Apps
     "corsheaders",  # https://github.com/adamchainz/django-cors-headers
-    "django_browser_reload",  # Live reload
     "apps.users",  # Módulo de autenticación y gestión de usuarios
     "apps.classes",  # Módulo de gestión de clases e inscripciones
     "apps.payments",  # Módulo de gestion de cobros
@@ -69,8 +68,6 @@ MIDDLEWARE = [
     # Nuestros middlewares
     # https://github.com/adamchainz/django-cors-headers
     "corsheaders.middleware.CorsMiddleware",
-    # Recarga el navegador cuando se producen cambios en el código
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
 ]
 
 ROOT_URLCONF = "GYMFlow.urls"
