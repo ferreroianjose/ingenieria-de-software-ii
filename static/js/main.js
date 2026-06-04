@@ -90,22 +90,35 @@ let tailwindRescanTimer = null;
 function settleBoostedMainContent(target) {
 	if (!target || target.id !== "main-content") return;
 
+	// Con hx-swap="outerHTML" el nodo original es eliminado del DOM y
+	// `target` queda desconectado. Siempre operar sobre el nodo vivo.
+	const liveTarget = document.getElementById("main-content") ?? target;
+	if (!liveTarget) return;
+
 	if (window.htmx) {
-		htmx.process(target);
+		htmx.process(liveTarget);
 	}
 
-	if (window.Alpine?.initTree) {
-		Alpine.initTree(target);
+	// Solo llamar initTree cuando el target está desconectado (outerHTML swap).
+	// Alpine detecta el nodo nuevo vía MutationObserver y lo inicializa solo,
+	// pero con el nodo viejo llamaría initTree en un árbol ya destruido,
+	// re-teleportando modales fantasma a <body>.
+	const isDetached = !document.body.contains(target);
+	if (window.Alpine?.initTree && !isDetached) {
+		Alpine.initTree(liveTarget);
 	}
 
-	clearTimeout(tailwindRescanTimer);
-	tailwindRescanTimer = window.setTimeout(() => {
-		const root = document.documentElement;
-		root.classList.add("htmx-tailwind-rescan");
-		window.requestAnimationFrame(() => {
-			root.classList.remove("htmx-tailwind-rescan");
+	// Tailwind browser CDN: rescan solo cuando el nodo fue reemplazado.
+	// El toggle en <html> puede causar un salto visual en el sidebar;
+	// usar requestAnimationFrame para diferirlo al siguiente frame de pintura.
+	if (isDetached) {
+		clearTimeout(tailwindRescanTimer);
+		tailwindRescanTimer = window.requestAnimationFrame(() => {
+			const root = document.documentElement;
+			root.classList.add("htmx-tailwind-rescan");
+			requestAnimationFrame(() => root.classList.remove("htmx-tailwind-rescan"));
 		});
-	}, 50);
+	}
 }
 
 /** POST en formularios marcados hx-boost="false" siempre navega con recarga completa. */
