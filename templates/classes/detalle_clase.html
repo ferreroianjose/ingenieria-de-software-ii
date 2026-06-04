@@ -140,7 +140,7 @@
     {% elif info.ui_estado == 'en_espera' %}
     <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Estás en lista de espera para este horario. Si se libera un cupo, podrás completar el pago.' level='warning' %}</div>
     <form action="{% url 'classes:abandonar_espera' info.mi_inscripcion.id %}" method="post" hx-boost="false"
-          onsubmit="return confirm('¿Abandonás la lista de espera?');">
+          data-confirm="¿Abandonás la lista de espera?">
       {% csrf_token %}
       {% include 'partials/ui/buttons/_secondary_button.html' with label="Abandonar lista de espera" type="submit" class="w-full rounded-full px-6 py-3" %}
     </form>
