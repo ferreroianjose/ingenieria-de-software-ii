@@ -46,7 +46,7 @@
           <div class="relative min-h-[3.25rem] min-w-[8.5rem] shrink-0 overflow-hidden rounded-xl border border-white/12 bg-black/20">
             <form action="{% url 'classes:cancelar_reserva' item.inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false">
               {% csrf_token %}
-              {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Salir de lista' confirm_message='¿Salir de la lista de espera?' %}
+              {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Salir de lista' confirm_title='Salir de lista de espera' confirm_message=item.confirm_salir_espera confirm_label='Sí, salir' %}
             </form>
           </div>
           {% endif %}
@@ -67,12 +67,12 @@
           <form action="{% url 'classes:cancelar_ocurrencia' item.inscripcion.id %}" method="post" class="absolute inset-y-0 right-0 w-28" hx-boost="false">
             {% csrf_token %}
             <input type="hidden" name="fecha_clase" value="{{ oc.fecha|date:'c' }}">
-            {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_message=oc.confirm_cancelacion %}
+            {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_title='Cancelar clase' confirm_message=oc.confirm_cancelacion confirm_label='Sí, cancelar' %}
           </form>
           {% else %}
           <form action="{% url 'classes:cancelar_reserva' item.inscripcion.id %}" method="post" class="absolute inset-y-0 right-0 w-28" hx-boost="false">
             {% csrf_token %}
-            {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_message='¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.' %}
+            {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_title='Cancelar reserva' confirm_message=item.confirm_cancelar_reserva confirm_label='Sí, cancelar' %}
           </form>
           {% endif %}
           {% endif %}

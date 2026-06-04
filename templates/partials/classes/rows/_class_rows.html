@@ -6,7 +6,7 @@
 {% for clase in classes %}
 <tr
     class="admin-selectable-row"
-    @click="toggleClassSelection({{ clase.pk }}, '{% if clase.disciplina %}{{ clase.disciplina.nombre|escapejs }}{% else %}Clase{% endif %} · {{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }}', '{{ clase.estado }}')"
+    @click="toggleClassSelection({{ clase.pk }}, '{% if clase.disciplina %}{{ clase.disciplina.nombre|escapejs }}{% else %}Clase{% endif %} - {{ clase.profesor.nombre|escapejs }} {{ clase.profesor.apellido|escapejs }} - {{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }}', '{{ clase.estado }}')"
     :class="{ 'is-selected': selectedClassId === {{ clase.pk }} }"
     :aria-selected="selectedClassId === {{ clase.pk }}"
 >

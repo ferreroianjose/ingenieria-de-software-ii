@@ -26,7 +26,7 @@
 	type="button"
 	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
 	:disabled="!selectedClassId"
-	@click="if (selectedClassId && confirm('¿Eliminar esta clase?')) adminHtmxPost($refs.deleteClassForm)"
+	@click="selectedClassId && window.gymflowConfirm('¿Seguro que querés eliminar la clase «' + selectedClassLabel + '»?', { variant: 'danger', title: 'Eliminar clase', confirmLabel: 'Sí, eliminar' }).then(ok => { if (ok) adminHtmxPost($refs.deleteClassForm) })"
 >
 	Eliminar
 </button>

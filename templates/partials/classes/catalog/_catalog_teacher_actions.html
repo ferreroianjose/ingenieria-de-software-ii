@@ -13,7 +13,7 @@
 	type="button"
 	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
 	:disabled="!selectedTeacherId"
-	@click="if (selectedTeacherId && confirm('¿Eliminar este profesor?')) adminHtmxPost($refs.deleteTeacherForm)"
+	@click="selectedTeacherId && window.gymflowConfirm('¿Seguro que querés eliminar al profesor «' + selectedTeacherLabel + '»?', { variant: 'danger', title: 'Eliminar profesor', confirmLabel: 'Sí, eliminar' }).then(ok => { if (ok) adminHtmxPost($refs.deleteTeacherForm) })"
 >
 	Eliminar
 </button>

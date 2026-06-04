@@ -62,6 +62,9 @@ const modalScrollLock = (() => {
 window.modalScrollLock = modalScrollLock;
 
 document.body.addEventListener("htmx:beforeSwap", (evt) => {
+	if (window.gymflowConfirmDialog?.isOpen()) {
+		window.gymflowConfirmDialog.close(false);
+	}
 	if (document.documentElement.classList.contains("modal-scroll-lock")) {
 		modalScrollLock.reset();
 	}
@@ -494,58 +497,6 @@ function toggleInscripcionModalidad(form) {
 	}
 }
 
-/**
- * Cancelación de inscripción: type="button" + confirm antes de requestSubmit.
- * Evita que el POST se dispare si el usuario cancela el diálogo del navegador.
- */
-function bindConfirmSubmitButtons(root = document) {
-	const scope = root instanceof Document ? root : root;
-	scope.querySelectorAll("[data-confirm-submit]").forEach((btn) => {
-		if (btn.dataset.confirmBound === "1") return;
-		btn.dataset.confirmBound = "1";
-		btn.addEventListener("click", (event) => {
-			event.preventDefault();
-			const message = btn.dataset.confirmMessage;
-			if (!message || !window.confirm(message)) {
-				return;
-			}
-			const form = btn.closest("form");
-			if (!form) return;
-			if (typeof form.requestSubmit === "function") {
-				form.requestSubmit(btn);
-			} else {
-				form.submit();
-			}
-		});
-	});
-}
-
-/** Formularios con data-confirm: bloquean submit hasta confirmar. */
-function bindConfirmForms(root = document) {
-	const scope = root instanceof Document ? root : root;
-	scope.querySelectorAll("form[data-confirm]").forEach((form) => {
-		if (form.dataset.confirmBound === "1") return;
-		form.dataset.confirmBound = "1";
-		form.addEventListener("submit", (event) => {
-			if (form.dataset.confirmOk === "1") {
-				delete form.dataset.confirmOk;
-				return;
-			}
-			event.preventDefault();
-			event.stopImmediatePropagation();
-			const message = form.dataset.confirm;
-			if (message && window.confirm(message)) {
-				form.dataset.confirmOk = "1";
-				if (typeof form.requestSubmit === "function") {
-					form.requestSubmit();
-				} else {
-					form.submit();
-				}
-			}
-		});
-	});
-}
-
 function bindInscripcionClaseForm(root) {
 	const form =
 		(root?.querySelector?.("#form-inscripcion-clase")) ||
@@ -566,16 +517,12 @@ function bindInscripcionClaseForm(root) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-	bindConfirmSubmitButtons();
-	bindConfirmForms();
 	bindInscripcionClaseForm();
 	syncPageChrome();
 });
 document.body.addEventListener("htmx:afterSettle", (evt) => {
 	const target = evt.detail?.target || document;
 	settleBoostedMainContent(target);
-	bindConfirmSubmitButtons(target);
-	bindConfirmForms(target);
 	bindInscripcionClaseForm(target);
 	syncPageChrome();
 });

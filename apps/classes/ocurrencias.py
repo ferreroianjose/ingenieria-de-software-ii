@@ -22,17 +22,11 @@ def _mensaje_ocurrencia_activa(inscripcion):
     return "Clase individual"
 
 
-def _confirm_cancelacion_mensual(horas_restantes):
-    minimo = _horas_minimas_credito_mensual()
-    if horas_restantes is not None and horas_restantes >= minimo:
-        return (
-            "¿Cancelar esta clase? Recibirás un crédito para recuperarla "
-            "en otro horario de la misma disciplina este mes."
-        )
-    return (
-        "¿Cancelar esta clase? Con menos de "
-        f"{minimo:g} h de anticipación la sesión se pierde "
-        "(sin devolución de dinero)."
+def _confirm_cancelacion_mensual(inscripcion, fecha_clase, horas_restantes):
+    from apps.classes.confirmaciones import mensaje_confirm_cancelar_ocurrencia_mensual
+
+    return mensaje_confirm_cancelar_ocurrencia_mensual(
+        inscripcion, fecha_clase, horas_restantes
     )
 
 
@@ -164,7 +158,9 @@ def _filas_desde_queryset(ocurrencias_qs):
                     else _mensaje_ocurrencia_activa(oc.inscripcion)
                 ),
                 "confirm_cancelacion": (
-                    _confirm_cancelacion_mensual(horas_restantes)
+                    _confirm_cancelacion_mensual(
+                        oc.inscripcion, dt, horas_restantes
+                    )
                     if puede_cancelar
                     else None
                 ),

@@ -1710,6 +1710,22 @@
 	  }
 	</style>
 
+	<!-- Alpine no resuelve globals sin window.; stub hasta gymflow-confirm.js -->
+	<script>
+		window.gymflowConfirm =
+			window.gymflowConfirm ||
+			function (message) {
+				return Promise.resolve(Boolean(message && window.confirm(message)));
+			};
+		window.gymflowConfirmThen =
+			window.gymflowConfirmThen ||
+			async function (message, action, options) {
+				if (await window.gymflowConfirm(message, options)) {
+					await action();
+				}
+			};
+	</script>
+
 	<!-- Alpine Plugins -->
 	<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
 
@@ -1805,8 +1821,11 @@
 
 	{% block other_footer_classes %}{% endblock %}
 
-	<!-- Scripts globales -->
+	{% include 'partials/ui/modals/_confirm_modal.html' %}
+
+	<!-- Scripts globales (confirm antes de main: modalScrollLock vive en main.js) -->
 	<script id="gymflow-main-js" src="{% static 'js/main.js' %}"></script>
+	<script src="{% static 'js/gymflow-confirm.js' %}"></script>
 	{% block extra_js %}{% endblock %}
 </body>
 

@@ -1111,11 +1111,32 @@ def detalle_clase(request, clase_id):
         ).strip()
     else:
         flow_subtitle = info["subtitulo"]
+
+    from apps.classes.confirmaciones import (
+        mensaje_confirm_cancelar_reserva_suelta,
+        mensaje_confirm_salir_lista_espera,
+    )
+
+    confirm_salir_espera = None
+    confirm_cancelar_reserva = None
+    mi = info.get("mi_inscripcion")
+    if mi and info["ui_estado"] == "en_espera":
+        confirm_salir_espera = mensaje_confirm_salir_lista_espera(mi)
+    elif (
+        mi
+        and info["ui_estado"] == "inscripto"
+        and info.get("puede_cancelar")
+        and mi.tipo != Inscripcion.Tipo.MENSUAL
+    ):
+        confirm_cancelar_reserva = mensaje_confirm_cancelar_reserva_suelta(mi)
+
     return render(
         request,
         "classes/detalle_clase.html",
         {
             "info": info,
+            "confirm_salir_espera": confirm_salir_espera,
+            "confirm_cancelar_reserva": confirm_cancelar_reserva,
             "periodos_inscripcion_data": info["periodos_inscripcion"],
             "flow_step": "clase",
             "flow_back_url": horarios_url,
@@ -1343,6 +1364,10 @@ def mis_reservas(request):
         .order_by("-fecha_inscripcion")
     )
 
+    from apps.classes.confirmaciones import (
+        mensaje_confirm_cancelar_reserva_suelta,
+        mensaje_confirm_salir_lista_espera,
+    )
     from apps.classes.ocurrencias import ocurrencias_reserva_ui
 
     reservas_ui = []
@@ -1362,6 +1387,21 @@ def mis_reservas(request):
                 "es_mensual": i.tipo == Inscripcion.Tipo.MENSUAL,
                 "precio_unitario": unitario,
                 "ocurrencias": ocurrencias,
+                "confirm_salir_espera": (
+                    mensaje_confirm_salir_lista_espera(i)
+                    if i.estado == Inscripcion.Estado.ESPERA
+                    else None
+                ),
+                "confirm_cancelar_reserva": (
+                    mensaje_confirm_cancelar_reserva_suelta(i)
+                    if i.tipo != Inscripcion.Tipo.MENSUAL
+                    and i.estado
+                    in (
+                        Inscripcion.Estado.RESERVADA,
+                        Inscripcion.Estado.PENDIENTE_PAGO,
+                    )
+                    else None
+                ),
             }
         )
 

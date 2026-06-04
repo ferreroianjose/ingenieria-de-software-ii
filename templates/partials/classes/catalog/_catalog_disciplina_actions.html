@@ -13,7 +13,7 @@
 	type="button"
 	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
 	:disabled="!selectedDisciplinaId"
-	@click="if (selectedDisciplinaId && confirm('¿Eliminar esta disciplina?')) adminHtmxPost($refs.deleteDisciplinaForm)"
+	@click="selectedDisciplinaId && window.gymflowConfirm('¿Seguro que querés eliminar la disciplina «' + selectedDisciplinaLabel + '»?', { variant: 'danger', title: 'Eliminar disciplina', confirmLabel: 'Sí, eliminar' }).then(ok => { if (ok) adminHtmxPost($refs.deleteDisciplinaForm) })"
 >
 	Eliminar
 </button>

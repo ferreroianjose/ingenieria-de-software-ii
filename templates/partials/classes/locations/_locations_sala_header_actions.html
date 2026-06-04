@@ -15,7 +15,7 @@
 	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger btn-auto text-sm px-4 py-2"
 	x-show="selectedSalaId"
 	x-cloak
-	@click="if (selectedSalaId && confirm('¿Eliminar esta sala?')) adminHtmxPost($refs.deleteSalaForm)"
+	@click="selectedSalaId && window.gymflowConfirm('¿Seguro que querés eliminar la sala «' + selectedSalaLabel + '»?', { variant: 'danger', title: 'Eliminar sala', confirmLabel: 'Sí, eliminar' }).then(ok => { if (ok) adminHtmxPost($refs.deleteSalaForm) })"
 >
 	Eliminar sala
 </button>

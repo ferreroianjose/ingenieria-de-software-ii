@@ -140,7 +140,11 @@
     {% elif info.ui_estado == 'en_espera' %}
     <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Estás en lista de espera para este horario. Si se libera un cupo, podrás completar el pago.' level='warning' %}</div>
     <form action="{% url 'classes:abandonar_espera' info.mi_inscripcion.id %}" method="post" hx-boost="false"
-          data-confirm="¿Abandonás la lista de espera?">
+          data-confirm="{{ confirm_salir_espera|escape }}"
+          data-confirm-variant="danger"
+          data-confirm-title="Salir de lista de espera"
+          data-confirm-label="Sí, salir"
+          data-confirm-cancel-label="No, volver">
       {% csrf_token %}
       {% include 'partials/ui/buttons/_secondary_button.html' with label="Abandonar lista de espera" type="submit" class="w-full rounded-full px-6 py-3" %}
     </form>
@@ -168,7 +172,7 @@
       <form action="{% url 'classes:cancelar_reserva' info.mi_inscripcion.id %}" method="post" class="relative block min-h-[3.25rem]" hx-boost="false">
         {% csrf_token %}
         <input type="hidden" name="destino" value="detalle">
-        {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_message='¿Cancelar la reserva? Con 24 h o más de anticipación se reintegra la seña; con menos tiempo queda retenida.' %}
+        {% include 'partials/cliente/flow/_cancel_inrow.html' with label='Cancelar' confirm_title='Cancelar reserva' confirm_message=confirm_cancelar_reserva confirm_label='Sí, cancelar' %}
       </form>
     </div>
     {% endif %}
