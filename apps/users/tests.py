@@ -1,11 +1,16 @@
 from datetime import date, timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
-from apps.users.forms import CustomUserCreationForm
+from django.contrib.auth.password_validation import validate_password
+
+from apps.users.forms import (
+    CustomUserCreationForm,
+    GymAuthenticationForm,
+    LOGIN_INVALID_MESSAGE,
+)
 
 User = get_user_model()
 
@@ -13,10 +18,23 @@ User = get_user_model()
 # Tests de validación de contraseña (validators.py)
 class PasswordValidatorTests(TestCase):
     def test_password_min_length(self):
-        # Lo maneja Django, pero dejo el test jic
         with self.assertRaises(ValidationError) as cm:
             validate_password("Ab1!")
-        self.assertEqual(cm.exception.error_list[0].code, "password_too_short")
+        error = cm.exception.error_list[0]
+        self.assertEqual(error.code, "password_too_short")
+        self.assertIn("demasiado corta", str(error.message))
+
+    def test_password_too_common_message(self):
+        from apps.users.validators import CommonPasswordValidator
+
+        with self.assertRaises(ValidationError) as cm:
+            CommonPasswordValidator().validate("password")
+        error = cm.exception.error_list[0]
+        self.assertEqual(error.code, "password_too_common")
+        self.assertEqual(
+            str(error.message),
+            "La contraseña tiene un valor demasiado común.",
+        )
 
     def test_password_missing_letter(self):
         with self.assertRaises(ValidationError) as cm:
@@ -114,6 +132,18 @@ class CustomUserCreationFormTests(TestCase):
         self.assertIn("dni_exists", [e.code for e in form.errors.as_data()["dni"]])
 
 
+class GymAuthenticationFormTests(TestCase):
+    def test_invalid_login_message(self):
+        form = GymAuthenticationForm(
+            data={"username": "wrong@example.com", "password": "wrongpass"}
+        )
+        self.assertFalse(form.is_valid())
+        self.assertEqual(
+            form.non_field_errors()[0],
+            LOGIN_INVALID_MESSAGE,
+        )
+
+
 class UserViewsTests(TestCase):
     def setUp(self):
         self.staff_user = User.objects.create_user(
@@ -145,6 +175,14 @@ class UserViewsTests(TestCase):
             {"username": "client@example.com", "password": "password123"},
         )
         self.assertRedirects(response, reverse("dashboard"))
+
+    def test_login_wrong_password_shows_spanish_message(self):
+        response = self.client.post(
+            reverse("login"),
+            {"username": "client@example.com", "password": "wrong"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, LOGIN_INVALID_MESSAGE)
 
     def test_two_factor_view_requires_pending_session(self):
         self.client.login(username="staff@example.com", password="password123")

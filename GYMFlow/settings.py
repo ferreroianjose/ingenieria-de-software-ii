@@ -127,19 +127,19 @@ Q_CLUSTER = {
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
     {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+        "NAME": "apps.users.validators.UserAttributeSimilarityValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "NAME": "apps.users.validators.MinimumLengthValidator",
         "OPTIONS": {
             "min_length": 10,
         },
     },
     {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+        "NAME": "apps.users.validators.CommonPasswordValidator",
     },
     {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+        "NAME": "apps.users.validators.NumericPasswordValidator",
     },
     {
         "NAME": "apps.users.validators.LetterValidator",

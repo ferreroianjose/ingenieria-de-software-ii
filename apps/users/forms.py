@@ -1,15 +1,49 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.core.exceptions import ValidationError
 from django.utils import timezone
+
+from GYMFlow.forms import apply_required_error_messages
 
 from .validators import NameValidator
 
 User = get_user_model()
 name_validator = NameValidator()
 
+LOGIN_INVALID_MESSAGE = (
+    "Por favor introduzca un correo electrónico y una contraseña correctos. "
+    "Tenga en cuenta que ambos campos son sensibles a mayúsculas/minúsculas."
+)
+LOGIN_INACTIVE_MESSAGE = "Esta cuenta está inactiva."
+
+
+class GymAuthenticationForm(AuthenticationForm):
+    error_messages = {
+        "invalid_login": LOGIN_INVALID_MESSAGE,
+        "inactive": LOGIN_INACTIVE_MESSAGE,
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["username"].label = "Correo electrónico"
+        self.fields["password"].label = "Contraseña"
+        apply_required_error_messages(self)
+
+    def get_invalid_login_error(self):
+        return ValidationError(
+            self.error_messages["invalid_login"],
+            code="invalid_login",
+        )
+
 
 class CustomUserCreationForm(UserCreationForm):
+    error_messages = {
+        "password_mismatch": (
+            "Los dos campos de contraseñas no coinciden entre si."
+        ),
+    }
+
     class Meta(UserCreationForm.Meta):
         model = User
         fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento", "telefono_emergencia")
@@ -24,6 +58,12 @@ class CustomUserCreationForm(UserCreationForm):
         widgets = {
             "fecha_nacimiento": forms.DateInput(attrs={"type": "date"}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].label = "Contraseña"
+        self.fields["password2"].label = "Confirmación de contraseña"
+        apply_required_error_messages(self)
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
@@ -74,6 +114,10 @@ class ProfileUpdateForm(forms.ModelForm):
         fields = ("telefono_emergencia",)
         labels = {"telefono_emergencia": "Teléfono de emergencia"}
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_required_error_messages(self)
+
 
 class TwoFactorForm(forms.Form):
     code = forms.CharField(
@@ -83,6 +127,7 @@ class TwoFactorForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.expected_code = kwargs.pop("expected_code", None)
         super().__init__(*args, **kwargs)
+        apply_required_error_messages(self)
 
     def clean_code(self):
         code = self.cleaned_data.get("code")

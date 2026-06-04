@@ -5,16 +5,17 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.db import models
 
+from GYMFlow.forms import apply_required_error_messages
+
 from .models import Class, Teacher, Sede, Sala, Disciplina
 
 
 class BaseStyledForm(forms.ModelForm):
-    """Base form to handle custom required error messages with labels"""
+    """Base form to handle custom required error messages with labels."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            if field.required:
-                field.error_messages['required'] = f'El campo "{field.label}" es obligatorio.'
+        apply_required_error_messages(self)
 
 
 class SedeForm(BaseStyledForm):
@@ -183,7 +184,7 @@ class ClassForm(BaseStyledForm):
             self.fields['minuto'].widget = forms.HiddenInput()
             self.fields['minuto'].initial = 0
             self.fields['minuto'].required = False
-            
+
             self.fields['duracion_minutos'].widget = forms.HiddenInput()
             self.fields['duracion_minutos'].initial = 60
             self.fields['duracion_minutos'].required = False
@@ -232,7 +233,7 @@ class ClassForm(BaseStyledForm):
         dia_semana = cleaned_data.get('dia_semana')
         sede = cleaned_data.get('sede')
         duracion_min = cleaned_data.get('duracion_minutos')
-        
+
         if getattr(settings, 'GYM_RESTRICTED_SCHEDULE', False):
             minuto = 0
             duracion_min = 60
@@ -266,7 +267,7 @@ class ClassForm(BaseStyledForm):
             dummy_date = datetime.today().date()
             inicio_dt = cleaned_data.get('inicio_dt')
             fin_dt = cleaned_data.get('fin_dt')
-            
+
             # Since TimeField logic is tricky, we can do it in python memory for that specific day, sala or professor
             # Get all classes for the same day and sala
             clases_mismo_dia_sala = Class.objects.filter(
@@ -286,7 +287,7 @@ class ClassForm(BaseStyledForm):
                     raise ValidationError(
                         f'Superposición con otra clase en {sala.nombre} de {c.hora_inicio.strftime("%H:%M")} a {c_fin.strftime("%H:%M")}.'
                     )
-            
+
             # Get all classes for the same day and professor
             clases_mismo_dia_prof = Class.objects.filter(
                 profesor=profesor,
@@ -310,13 +311,13 @@ class ClassForm(BaseStyledForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.hora_inicio = self.cleaned_data.get('hora_inicio')
-        
+
         duracion_min = self.cleaned_data.get('duracion_minutos')
         if getattr(settings, 'GYM_RESTRICTED_SCHEDULE', False):
             duracion_min = 60
-            
+
         instance.duracion = timedelta(minutes=duracion_min)
-        
+
         if commit:
             instance.save()
         return instance

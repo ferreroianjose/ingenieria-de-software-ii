@@ -14,7 +14,12 @@ from django.core.paginator import Paginator
 from apps.notifications.services import notification_service
 from GYMFlow.access import admin_required, staff_required
 from GYMFlow.page_chrome import PAGE_CHROME_LIGHT, merge_page_chrome
-from .forms import CustomUserCreationForm, ProfileUpdateForm, TwoFactorForm
+from .forms import (
+    CustomUserCreationForm,
+    GymAuthenticationForm,
+    ProfileUpdateForm,
+    TwoFactorForm,
+)
 from .search import USER_PAGE_SIZE, filter_users_queryset
 
 User = get_user_model()
@@ -45,6 +50,8 @@ def update_profile(request):
 
 # Custom LoginView that forces admins through a 2FA step
 class CustomLoginView(LoginView):
+    form_class = GymAuthenticationForm
+
     def form_valid(self, form):
         response = super().form_valid(form)
 
