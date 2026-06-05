@@ -35,7 +35,22 @@
 
     <div class="cf-divider"></div>
 
-    {% if info.puede_inscribirse %}
+    {% if info.puede_anular_inscripcion and anular_inscripcion %}
+    <div class="mb-4">
+      {% if info.ui_estado == 'pendiente_pago' %}
+      {% include 'partials/cliente/flow/_flash_item.html' with text='Estamos esperando la acreditación del pago. Te avisamos cuando quede confirmado.' level='warning' %}
+      {% else %}
+      {% include 'partials/cliente/flow/_flash_item.html' with text='Tenés una inscripción pendiente de pago. Completá el pago para confirmar el cupo.' level='warning' %}
+      {% endif %}
+    </div>
+    <div class="flex flex-col gap-3">
+      <a href="{% url 'payments:seleccion_pago' info.mi_inscripcion.id %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
+        {% if info.ui_estado == 'pendiente_pago' %}Continuar al pago →{% else %}Ir a pagar →{% endif %}
+      </a>
+      {% include 'partials/cliente/flow/_anular_inscripcion_detalle.html' with inscripcion=info.mi_inscripcion anular=anular_inscripcion %}
+    </div>
+
+    {% elif info.puede_inscribirse %}
     {% with suelta=periodos_inscripcion_data.CLASE_SUELTA mensual=periodos_inscripcion_data.MENSUAL %}
     <p class="text-sm text-white/70 mb-1">
       {% if suelta and mensual %}
@@ -152,12 +167,6 @@
     {% elif info.ui_estado == 'en_pago' %}
     <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Tenés una reserva iniciada. Completá el pago para confirmar el cupo.' level='warning' %}</div>
     <a href="{% url 'payments:seleccion_pago_clase' info.clase.id %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
-      Continuar al pago →
-    </a>
-
-    {% elif info.ui_estado == 'pendiente_pago' %}
-    <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='Estamos esperando la acreditación del pago. Te avisamos cuando quede confirmado.' level='warning' %}</div>
-    <a href="{% url 'payments:seleccion_pago' info.mi_inscripcion.id %}" class="cf-cta btn-auto w-full justify-center py-3.5 text-center">
       Continuar al pago →
     </a>
 

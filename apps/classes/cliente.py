@@ -173,11 +173,15 @@ def info_clase_para_usuario(clase, usuario, request=None):
         "periodos_inscripcion": periodos_inscripcion,
         "puede_inscribirse": puede_inscribirse,
         "puede_anotarse_espera": ui_estado == "sin_inscripcion" and cupo == 0,
-        "puede_cancelar": ui_estado in ("inscripto", "pendiente_pago")
+        "puede_cancelar": ui_estado == "inscripto"
         and not (
             mi
             and mi.tipo == Inscripcion.Tipo.MENSUAL
             and mi.estado == Inscripcion.Estado.RESERVADA
+        ),
+        "puede_anular_inscripcion": (
+            mi is not None
+            and mi.estado == Inscripcion.Estado.PENDIENTE_PAGO
         ),
         "puede_abandonar_espera": ui_estado == "en_espera",
     }

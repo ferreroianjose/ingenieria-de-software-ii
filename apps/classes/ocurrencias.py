@@ -139,11 +139,7 @@ def _filas_desde_queryset(ocurrencias_qs):
             )
             or (
                 inscripcion.tipo == Inscripcion.Tipo.CLASE_SUELTA
-                and inscripcion.estado
-                in (
-                    Inscripcion.Estado.RESERVADA,
-                    Inscripcion.Estado.PENDIENTE_PAGO,
-                )
+                and inscripcion.estado == Inscripcion.Estado.RESERVADA
             )
         )
         filas.append(
@@ -217,10 +213,7 @@ def ocurrencias_reserva_ui(inscripcion, desde_fecha=None):
     if not ocurrencia:
         return []
     horas = horas_hasta_clase(ocurrencia) if ocurrencia > ahora else None
-    puede_cancelar = inscripcion.estado in (
-        Inscripcion.Estado.RESERVADA,
-        Inscripcion.Estado.PENDIENTE_PAGO,
-    )
+    puede_cancelar = inscripcion.estado == Inscripcion.Estado.RESERVADA
     return [
         {
             "fecha": ocurrencia,

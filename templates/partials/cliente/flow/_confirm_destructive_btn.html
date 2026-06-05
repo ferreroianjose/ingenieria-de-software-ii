@@ -1,0 +1,15 @@
+{% comment %}
+label, confirm_message — botón outline con confirmación previa al submit.
+confirm_title, confirm_label, confirm_cancel_label opcionales.
+danger_tint: borde/texto rojo (filas de clase). class: clases extra.
+{% endcomment %}
+<button
+  type="button"
+  data-confirm-submit
+  data-confirm-variant="danger"
+  data-confirm-title="{% if confirm_title %}{{ confirm_title|escape }}{% else %}Confirmar{% endif %}"
+  data-confirm-label="{% if confirm_label %}{{ confirm_label|escape }}{% else %}Sí, continuar{% endif %}"
+  data-confirm-cancel-label="{% if confirm_cancel_label %}{{ confirm_cancel_label|escape }}{% else %}No, volver{% endif %}"
+  data-confirm-message="{{ confirm_message|escape }}"
+  class="btn-auto rounded-full border px-5 py-2.5 text-center text-sm font-bold transition-colors focus:ring-0 focus:ring-offset-0 {% if danger_tint %}border-red-400/30 text-red-300 hover:border-red-400/45 hover:bg-red-500/10 hover:text-red-200{% else %}border-white/20 text-white/75 hover:border-white/30 hover:bg-white/5 hover:text-white{% endif %} {{ class }}"
+>{{ label }}</button>

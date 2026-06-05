@@ -1,0 +1,6 @@
+{% comment %}inscripcion, anular — anular inscripción impaga{% endcomment %}
+<form action="{% url 'classes:cancelar_reserva' inscripcion.id %}" method="post" class="{{ form_class|default:'w-full sm:w-auto shrink-0' }}" hx-boost="false">
+  {% csrf_token %}
+  {% if destino %}<input type="hidden" name="destino" value="{{ destino }}">{% endif %}
+  {% include 'partials/cliente/flow/_confirm_destructive_btn.html' with label=anular.label confirm_title=anular.confirm_title confirm_message=anular.confirm_message confirm_label=anular.confirm_label class='w-full' %}
+</form>

@@ -203,9 +203,13 @@ def resumen_credito_automatico(inscripcion, usuario):
     if pendiente <= 0:
         return {"aplica": False}
 
+    from apps.payments.creditos import creditos_disponibles_por_disciplina
+
+    cantidad = creditos_disponibles_por_disciplina(usuario, inscripcion.periodo, inscripcion.clase.disciplina)
     monto = min(valor, pendiente).quantize(Decimal("0.01"))
     return {
         "aplica": True,
+        "cantidad": cantidad,
         "monto": monto,
         "disciplina": inscripcion.clase.disciplina.nombre,
         "cubre_total": monto >= pendiente,
@@ -225,9 +229,13 @@ def resumen_credito_para_clase(clase, periodo, usuario):
         return {"aplica": False}
 
     base = precio_base_para_clase(clase, periodo, Inscripcion.Tipo.CLASE_SUELTA)
+    from apps.payments.creditos import creditos_disponibles_por_disciplina
+
+    cantidad = creditos_disponibles_por_disciplina(usuario, periodo, clase.disciplina)
     monto = min(valor, base).quantize(Decimal("0.01"))
     return {
         "aplica": True,
+        "cantidad": cantidad,
         "monto": monto,
         "disciplina": clase.disciplina.nombre,
         "cubre_total": monto >= base,

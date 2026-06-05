@@ -6,7 +6,9 @@ from django.test import TestCase
 from django.utils import timezone
 
 from apps.classes.confirmaciones import (
+    acciones_anular_inscripcion_impaga,
     etiqueta_horario_clase,
+    mensaje_confirm_anular_inscripcion_impaga,
     mensaje_confirm_cancelar_ocurrencia_mensual,
     mensaje_confirm_cancelar_reserva_suelta,
     mensaje_confirm_salir_lista_espera,
@@ -86,6 +88,29 @@ class ConfirmacionesMensajesTest(TestCase):
         msg = mensaje_confirm_salir_lista_espera(inscripcion)
         self.assertIn("lista de espera", msg)
         self.assertIn("«Yoga - Carlos Sánchez - Lunes 07:00»", msg)
+
+    def test_mensaje_anular_inscripcion_mensual_impaga(self):
+        inscripcion = Inscripcion.objects.create(
+            usuario=self.user,
+            clase=self.clase,
+            periodo=self.periodo,
+            tipo=Inscripcion.Tipo.MENSUAL,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        msg = mensaje_confirm_anular_inscripcion_impaga(inscripcion)
+        self.assertIn("inscripción mensual", msg)
+        self.assertIn("no hay pagos que reintegrar", msg.lower())
+
+    def test_acciones_anular_inscripcion_impaga_sin_pago(self):
+        inscripcion = Inscripcion.objects.create(
+            usuario=self.user,
+            clase=self.clase,
+            periodo=self.periodo,
+            tipo=Inscripcion.Tipo.CLASE_SUELTA,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        acciones = acciones_anular_inscripcion_impaga(inscripcion)
+        self.assertEqual(acciones["label"], "Anular inscripción")
 
     def test_mensaje_cancelar_ocurrencia_con_credito(self):
         inscripcion = Inscripcion.objects.create(

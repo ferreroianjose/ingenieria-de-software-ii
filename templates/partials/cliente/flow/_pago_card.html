@@ -1,41 +1,61 @@
 {% comment %}pago — dict from mis_pagos view{% endcomment %}
-<article class="cf-pago">
-  <header class="cf-pago__head">
-    <div class="min-w-0">
-      <p class="cf-pago__amount">${{ pago.monto|floatformat:2 }}</p>
-      <p class="cf-pago__meta">{{ pago.fecha|date:"d/m/Y · H:i" }} hs · {{ pago.metodo }}</p>
-    </div>
-    {% include 'partials/ui/_status_badge.html' with level=pago.estado_level label=pago.estado_label %}
-  </header>
-
-  {% if pago.detalles %}
-  <div class="cf-pago__body">
-    {% for detalle in pago.detalles %}
-    <div class="cf-pago__line">
-      <div class="flex flex-wrap items-center gap-2">
-        <h3 class="cf-pago__disciplina">{{ detalle.disciplina }}</h3>
-        <span class="cf-chip cf-chip--wait">{{ detalle.ubicacion }}</span>
-        <span class="cf-chip cf-chip--ok">{{ detalle.tipo_label }}</span>
+<article class="cf-surface p-5">
+  <div class="cf-surface__body">
+    <div class="flex flex-col gap-1.5 md:flex-row md:items-center md:gap-6">
+      <div class="flex items-start justify-between gap-3 md:contents">
+        <p class="cf-item__title !text-2xl shrink-0 tabular-nums md:order-1">${{ pago.monto|floatformat:2 }}</p>
+        <div class="shrink-0 pt-0.5 md:order-3">
+          {% include 'partials/ui/_status_badge.html' with level=pago.estado_level label=pago.estado_label %}
+        </div>
       </div>
-
-      {% if detalle.es_mensual and detalle.ocurrencias %}
-      <p class="cf-pago__hint mt-1.5">
-        {{ detalle.ocurrencias|length }} clase{{ detalle.ocurrencias|length|pluralize }} incluida{{ detalle.ocurrencias|length|pluralize }}
-        · ${{ detalle.precio_unitario|floatformat:2 }} c/u
+      <p class="cf-item__meta !mt-0 min-w-0 md:order-2 md:flex-1 md:text-center">
+        {{ pago.fecha|date:"d/m/Y · H:i" }} hs · {{ pago.metodo }}
       </p>
-      {% endif %}
+    </div>
 
-      {% if detalle.ocurrencias %}
-      <ul class="cf-pago__dates">
-        {% for dt in detalle.ocurrencias %}
-        <li>{% include 'partials/cliente/flow/_fecha_hora.html' with dt=dt %}</li>
+    {% if pago.detalles %}
+    <div class="mt-4 border-t border-white/12 pt-4">
+      <ul class="space-y-4">
+        {% for detalle in pago.detalles %}
+        <li class="{% if not forloop.first %}border-t border-white/10 pt-4{% endif %}">
+          <p class="text-base font-bold text-white">{{ detalle.disciplina }}</p>
+          <p class="cf-item__meta !mt-1">
+            {{ detalle.ubicacion }} · {{ detalle.tipo_label }}
+            {% if detalle.es_mensual %}
+            · {{ detalle.ocurrencias|length }} clase{{ detalle.ocurrencias|length|pluralize }}
+            · ${{ detalle.precio_unitario|floatformat:2 }} c/u
+            · {{ detalle.horario_label }}
+            {% elif detalle.ocurrencias %}
+            · {% include 'partials/cliente/flow/_fecha_hora.html' with dt=detalle.ocurrencias.0 con_ano=False %}
+            {% endif %}
+          </p>
+
+          {% if detalle.es_mensual and detalle.ocurrencias %}
+          <div x-data="{ open: false }" class="mt-2.5">
+            <button
+              type="button"
+              @click="open = !open"
+              class="w-full text-right text-xs font-bold text-primary-300 transition-colors hover:text-primary-200"
+              :aria-expanded="open"
+            >
+              <span x-show="!open">Ver {{ detalle.ocurrencias|length }} fecha{{ detalle.ocurrencias|length|pluralize }}</span>
+              <span x-show="open" x-cloak>Ocultar fechas</span>
+            </button>
+            <div x-show="open" x-collapse x-cloak class="mt-2.5 space-y-1 border-l-2 border-primary-400/40 pl-3">
+              {% for dt in detalle.ocurrencias %}
+              <p class="text-sm font-semibold text-white/80">
+                {% include 'partials/cliente/flow/_fecha_hora.html' with dt=dt %}
+              </p>
+              {% endfor %}
+            </div>
+          </div>
+          {% elif not detalle.ocurrencias %}
+          <p class="cf-item__meta !mt-1.5">Sin clases para mostrar en este cobro.</p>
+          {% endif %}
+        </li>
         {% endfor %}
       </ul>
-      {% else %}
-      <p class="mt-1.5 cf-pago__hint">Sin clases para mostrar en este cobro.</p>
-      {% endif %}
     </div>
-    {% endfor %}
+    {% endif %}
   </div>
-  {% endif %}
 </article>

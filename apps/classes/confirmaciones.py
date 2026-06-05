@@ -39,6 +39,45 @@ def mensaje_confirm_eliminar_sala(nombre):
     return f"¿Seguro que querés eliminar la sala «{nombre}»?"
 
 
+def mensaje_confirm_anular_inscripcion_impaga(inscripcion):
+    from apps.classes.models import Inscripcion
+
+    etiqueta = etiqueta_horario_clase(inscripcion.clase)
+    if inscripcion.tipo == Inscripcion.Tipo.MENSUAL:
+        return (
+            f"¿Seguro que querés anular la inscripción mensual de «{etiqueta}»? "
+            "Liberás el cupo; no hay pagos que reintegrar."
+        )
+    return (
+        f"¿Seguro que querés anular la inscripción de «{etiqueta}»? "
+        "Liberás el cupo; no hay pagos que reintegrar."
+    )
+
+
+def acciones_anular_inscripcion_impaga(inscripcion):
+    """Label y textos del modal para anular una inscripción PENDIENTE_PAGO."""
+    from apps.classes.models import Inscripcion
+    from apps.payments.inscripcion_pago import resumen_pago_inscripcion
+
+    pago = resumen_pago_inscripcion(inscripcion)
+    if (
+        inscripcion.tipo == Inscripcion.Tipo.CLASE_SUELTA
+        and pago["mostrar_pagar_saldo"]
+    ):
+        return {
+            "label": "Cancelar reserva",
+            "confirm_title": "Cancelar reserva",
+            "confirm_message": mensaje_confirm_cancelar_reserva_suelta(inscripcion),
+            "confirm_label": "Sí, cancelar",
+        }
+    return {
+        "label": "Anular inscripción",
+        "confirm_title": "Anular inscripción",
+        "confirm_message": mensaje_confirm_anular_inscripcion_impaga(inscripcion),
+        "confirm_label": "Sí, anular",
+    }
+
+
 def mensaje_confirm_cancelar_reserva_suelta(inscripcion):
     etiqueta = etiqueta_horario_clase(inscripcion.clase)
     return (

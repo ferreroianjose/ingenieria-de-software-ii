@@ -91,6 +91,47 @@ class CancelacionesTestCase(TestCase):
         self.assertEqual(len(filas), 1)
         self.assertTrue(filas[0]["puede_cancelar"])
 
+    def test_ocurrencias_reserva_ui_suelta_impaga_no_muestra_cancelar_en_fila(self):
+        from apps.classes.ocurrencias import ocurrencias_reserva_ui
+
+        inscripcion = self._inscripcion_suelta(estado=Inscripcion.Estado.PENDIENTE_PAGO)
+        filas = ocurrencias_reserva_ui(inscripcion)
+
+        self.assertEqual(len(filas), 1)
+        self.assertFalse(filas[0]["puede_cancelar"])
+
+    def test_ocurrencias_reserva_ui_mensual_impaga_no_muestra_cancelar_en_fila(self):
+        from apps.classes.ocurrencias import ocurrencias_reserva_ui
+
+        inscripcion = Inscripcion.objects.create(
+            usuario=self.user,
+            clase=self.clase,
+            periodo=self.periodo,
+            tipo=Inscripcion.Tipo.MENSUAL,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        filas = ocurrencias_reserva_ui(inscripcion)
+
+        self.assertFalse(any(fila["puede_cancelar"] for fila in filas))
+
+    def test_cancelar_reserva_mensual_impaga(self):
+        inscripcion = Inscripcion.objects.create(
+            usuario=self.user,
+            clase=self.clase,
+            periodo=self.periodo,
+            tipo=Inscripcion.Tipo.MENSUAL,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(
+            reverse("classes:cancelar_reserva", args=[inscripcion.id]),
+        )
+
+        self.assertRedirects(response, reverse("classes:mis_reservas"))
+        inscripcion.refresh_from_db()
+        self.assertEqual(inscripcion.estado, Inscripcion.Estado.CANCELADA)
+
     def test_ocurrencias_reserva_ui_mensual_muestra_cancelar_por_clase(self):
         from apps.classes.ocurrencias import ocurrencias_reserva_ui
 

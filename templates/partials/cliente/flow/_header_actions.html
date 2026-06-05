@@ -1,6 +1,10 @@
-<div class="relative flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-  {% include 'partials/cliente/flow/_creditos_chip.html' %}
+<div class="relative flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-stretch sm:gap-4">
+  <div class="w-full min-w-0 sm:w-auto [&>div]:w-full [&>div]:sm:w-auto">
+    {% include 'partials/cliente/flow/_creditos_chip.html' %}
+  </div>
   {% if page_actions_template %}
-  {% include page_actions_template %}
+  <div class="flex w-full items-stretch sm:w-auto">
+    {% include page_actions_template %}
+  </div>
   {% endif %}
 </div>

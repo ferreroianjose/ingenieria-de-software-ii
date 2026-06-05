@@ -11,7 +11,7 @@
       {% if fecha_clase %}
       {% include 'partials/cliente/flow/_fecha_hora.html' with dt=fecha_clase %}
       {% elif es_inscripcion_mensual %}
-      {{ periodo.nombre }} · este horario, mes completo
+      {{ periodo.nombre }} · {{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }} hs · mes completo
       {% else %}
       {{ clase.get_dia_semana_display }} · {{ clase.hora_inicio|time:"H:i" }} hs
       {% endif %}
@@ -22,28 +22,34 @@
     {% if credito_auto.aplica %}
     <div class="mb-5 rounded-2xl border border-primary-400/35 bg-primary-400/10 px-4 py-4 text-sm text-white/90">
       <p class="font-bold text-white">
-        Tenés un crédito de {{ credito_auto.disciplina }} y se aplicará automáticamente
-        (−${{ credito_auto.monto|floatformat:2 }}).
+        Tenés {{ credito_auto.cantidad }} crédito{{ credito_auto.cantidad|pluralize }} de {{ credito_auto.disciplina }} y se aplicará automáticamente.
       </p>
       <p class="mt-2 text-white/70">
-        {% if credito_auto.cubre_total %}
-        Con este crédito la reserva queda confirmada sin cargo en Mercado Pago.
+        {% if abono_resumen %}
+        Cubre 1 de las {{ abono_resumen.cantidad_clases }} clases del mes. El total pasa de ${{ abono_resumen.precio_total }} a ${{ abono_resumen.precio_total_con_credito }}.
+        {% elif credito_auto.cubre_total %}
+        Con este crédito la reserva queda confirmada sin cargo adicional.
         {% else %}
-        El monto en Mercado Pago ya incluye el descuento de tu crédito.
+        El monto en Mercado Pago ya incluye el descuento proporcionado por el crédito que tenés disponible.
         {% endif %}
       </p>
     </div>
     {% endif %}
 
     {% if abono_resumen %}
-    <p class="cf-kicker">Resumen del mes</p>
+    <p class="cf-kicker">Resumen</p>
     <div class="rounded-2xl border border-primary-400/30 bg-primary-400/10 px-4 py-4 text-sm text-white/85 mb-6">
       <p class="font-bold text-white">
         {{ abono_resumen.cantidad_clases }} clase{{ abono_resumen.cantidad_clases|pluralize }}
-        de este día y horario en {{ periodo.nombre }}
+        el {{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }} hs en {{ periodo.nombre }}
       </p>
       <p class="mt-2 text-white/70">
-        ${{ abono_resumen.precio_unitario }} por clase · Total ${{ abono_resumen.precio_total }}
+        ${{ abono_resumen.precio_unitario }} por clase ·
+        {% if abono_resumen.precio_total_con_credito %}
+        <span class="line-through opacity-50">${{ abono_resumen.precio_total }}</span> ${{ abono_resumen.precio_total_con_credito }}
+        {% else %}
+        Total ${{ abono_resumen.precio_total }}
+        {% endif %}
       </p>
       <p class="mt-2 text-xs text-white/50">Con un solo pago en Mercado Pago confirmás todas esas clases.</p>
     </div>

@@ -1113,15 +1113,19 @@ def detalle_clase(request, clase_id):
         flow_subtitle = info["subtitulo"]
 
     from apps.classes.confirmaciones import (
+        acciones_anular_inscripcion_impaga,
         mensaje_confirm_cancelar_reserva_suelta,
         mensaje_confirm_salir_lista_espera,
     )
 
     confirm_salir_espera = None
     confirm_cancelar_reserva = None
+    anular_inscripcion = None
     mi = info.get("mi_inscripcion")
     if mi and info["ui_estado"] == "en_espera":
         confirm_salir_espera = mensaje_confirm_salir_lista_espera(mi)
+    elif mi and info.get("puede_anular_inscripcion"):
+        anular_inscripcion = acciones_anular_inscripcion_impaga(mi)
     elif (
         mi
         and info["ui_estado"] == "inscripto"
@@ -1137,6 +1141,7 @@ def detalle_clase(request, clase_id):
             "info": info,
             "confirm_salir_espera": confirm_salir_espera,
             "confirm_cancelar_reserva": confirm_cancelar_reserva,
+            "anular_inscripcion": anular_inscripcion,
             "periodos_inscripcion_data": info["periodos_inscripcion"],
             "flow_step": "clase",
             "flow_back_url": horarios_url,
@@ -1365,6 +1370,7 @@ def mis_reservas(request):
     )
 
     from apps.classes.confirmaciones import (
+        acciones_anular_inscripcion_impaga,
         mensaje_confirm_cancelar_reserva_suelta,
         mensaje_confirm_salir_lista_espera,
     )
@@ -1392,14 +1398,15 @@ def mis_reservas(request):
                     if i.estado == Inscripcion.Estado.ESPERA
                     else None
                 ),
+                "anular_inscripcion": (
+                    acciones_anular_inscripcion_impaga(i)
+                    if i.estado == Inscripcion.Estado.PENDIENTE_PAGO
+                    else None
+                ),
                 "confirm_cancelar_reserva": (
                     mensaje_confirm_cancelar_reserva_suelta(i)
                     if i.tipo != Inscripcion.Tipo.MENSUAL
-                    and i.estado
-                    in (
-                        Inscripcion.Estado.RESERVADA,
-                        Inscripcion.Estado.PENDIENTE_PAGO,
-                    )
+                    and i.estado == Inscripcion.Estado.RESERVADA
                     else None
                 ),
             }

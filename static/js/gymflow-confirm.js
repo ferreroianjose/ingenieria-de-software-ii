@@ -129,7 +129,7 @@
 				const form = btn.closest("form");
 				if (!form) return;
 				if (typeof form.requestSubmit === "function") {
-					form.requestSubmit(btn);
+					form.requestSubmit();
 				} else {
 					form.submit();
 				}

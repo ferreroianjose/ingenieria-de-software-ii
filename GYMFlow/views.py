@@ -86,7 +86,10 @@ def _proximas_clases_para_dashboard(user, limite=4):
         )
 
     proximas.sort(key=lambda item: item["_sort_key"])
-    return [{k: v for k, v in item.items() if k != "_sort_key"} for item in proximas[:limite]]
+    return [
+        {k: v for k, v in item.items() if k != "_sort_key"}
+        for item in proximas[:limite]
+    ]
 
 
 def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
@@ -99,7 +102,6 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
     if periodo.fecha_inicio_periodo > hoy:
         return {
             "label": disciplina.nombre,
-            "tag": "Próximo",
             "subtitle": periodo.nombre,
             "is_future": True,
         }
@@ -107,7 +109,6 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
     if vigente and periodo.id == vigente.id:
         return {
             "label": disciplina.nombre,
-            "tag": "Activo",
             "subtitle": f"Este mes · {periodo.nombre}",
             "is_future": False,
         }
@@ -115,14 +116,12 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
     if periodo_anterior and periodo.id == periodo_anterior.id:
         return {
             "label": disciplina.nombre,
-            "tag": "Activo",
             "subtitle": f"Mes anterior · {periodo.nombre}",
             "is_future": False,
         }
 
     return {
         "label": disciplina.nombre,
-        "tag": "Activo",
         "subtitle": periodo.nombre,
         "is_future": False,
     }
@@ -176,14 +175,19 @@ def _estado_cliente_para_dashboard(user):
     periodo_anterior = None
     if considerar_periodo_anterior:
         periodo_anterior = (
-            PeriodoCobro.objects.filter(fecha_fin_periodo__lt=vigente.fecha_inicio_periodo)
+            PeriodoCobro.objects.filter(
+                fecha_fin_periodo__lt=vigente.fecha_inicio_periodo
+            )
             .order_by("-fecha_fin_periodo")
             .first()
         )
     tiene_anterior_valido = bool(
-        periodo_anterior and inscripciones_mensuales.filter(periodo=periodo_anterior).exists()
+        periodo_anterior
+        and inscripciones_mensuales.filter(periodo=periodo_anterior).exists()
     )
-    tiene_futuro = inscripciones_mensuales.filter(periodo__fecha_inicio_periodo__gt=hoy).exists()
+    tiene_futuro = inscripciones_mensuales.filter(
+        periodo__fecha_inicio_periodo__gt=hoy
+    ).exists()
     es_abonado = tiene_vigente or tiene_anterior_valido or tiene_futuro
     if not es_abonado:
         return {
@@ -198,9 +202,9 @@ def _estado_cliente_para_dashboard(user):
     if tiene_anterior_valido and periodo_anterior:
         periodos_visibles.add(periodo_anterior.id)
     periodos_visibles.update(
-        inscripciones_mensuales.filter(periodo__fecha_inicio_periodo__gt=hoy).values_list(
-            "periodo_id", flat=True
-        )
+        inscripciones_mensuales.filter(
+            periodo__fecha_inicio_periodo__gt=hoy
+        ).values_list("periodo_id", flat=True)
     )
 
     inscripciones = (
@@ -228,7 +232,9 @@ def _estado_cliente_para_dashboard(user):
         if item:
             items.append(item)
 
-    pagos_pendientes = Pago.objects.filter(usuario=user, estado=Pago.Estado.PENDIENTE).count()
+    pagos_pendientes = Pago.objects.filter(
+        usuario=user, estado=Pago.Estado.PENDIENTE
+    ).count()
     tiene_proximo = any(item["is_future"] for item in items)
     tiene_activo = any(not item["is_future"] for item in items)
 
@@ -263,7 +269,8 @@ def _cartelera_para_dashboard(limite=5):
             "subtitle": (
                 disciplina.descripcion[:110] + "..."
                 if disciplina.descripcion and len(disciplina.descripcion) > 110
-                else disciplina.descripcion or "Mirá horarios y elegí la clase que mejor te quede."
+                else disciplina.descripcion
+                or "Mirá horarios y elegí la clase que mejor te quede."
             ),
             "badge": f"{disciplina.clases_disponibles} horario{'s' if disciplina.clases_disponibles != 1 else ''}",
             "url": reverse("classes:cronograma", args=[disciplina.pk]),

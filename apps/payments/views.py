@@ -103,18 +103,24 @@ def mis_pagos(request):
                     ocurrencia = class_services.proxima_ocurrencia(inscripcion.clase)
                 ocurrencias = [ocurrencia] if ocurrencia else []
 
-            sala = inscripcion.clase.sala
-            if sala:
-                ubicacion = f"{sala.sede.nombre} - {sala.nombre}"
+            clase = inscripcion.clase
+            sala = clase.sala
+            ubicacion = sala.nombre if sala else ""
+            if clase.hora_inicio:
+                horario_label = (
+                    f"{clase.get_dia_semana_display()} "
+                    f"{clase.hora_inicio.strftime('%H:%M')} hs"
+                )
             else:
-                ubicacion = ""
+                horario_label = clase.get_dia_semana_display()
 
             detalles_ui.append(
                 {
-                    "disciplina": inscripcion.clase.disciplina.nombre,
+                    "disciplina": clase.disciplina.nombre,
                     "ubicacion": ubicacion,
                     "tipo_label": "Mensualidad" if es_mensual else "Clase individual",
                     "es_mensual": es_mensual,
+                    "horario_label": horario_label,
                     "precio_unitario": unitario,
                     "ocurrencias": ocurrencias,
                     "subtotal": (
@@ -184,7 +190,14 @@ def _contexto_seleccion_pago(
         "fecha_clase": fecha_clase,
         "es_inscripcion_mensual": tipo == Inscripcion.Tipo.MENSUAL,
         "opciones": opciones,
-        "abono_resumen": abono_resumen,
+        "abono_resumen": {
+            **abono_resumen,
+            "precio_total_con_credito": (
+                (abono_resumen["precio_total"] - credito_auto["monto"]).quantize(Decimal("0.01"))
+                if abono_resumen and credito_auto and credito_auto.get("aplica")
+                else None
+            ),
+        } if abono_resumen else None,
         "credito_auto": credito_auto,
         "pagar_url": pagar_url,
         "flow_step": "pago",

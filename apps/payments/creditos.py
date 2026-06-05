@@ -47,6 +47,16 @@ def tiene_credito_disponible(usuario, periodo, disciplina):
     ).exists()
 
 
+def creditos_disponibles_por_disciplina(usuario, periodo, disciplina):
+    """Cantidad de créditos disponibles para una disciplina y período concretos."""
+    return Credito.objects.filter(
+        usuario=usuario,
+        periodo=periodo,
+        disciplina=disciplina,
+        estado=Credito.Estado.DISPONIBLE,
+    ).count()
+
+
 def valor_credito_disponible(usuario, periodo, disciplina):
     """Monto que cubre un crédito disponible (precio unitario de la disciplina)."""
     from apps.payments.inscripcion_pago import precio_disciplina_periodo
