@@ -12,10 +12,14 @@ Para levantar el entorno de desarrollo rápidamente:
     ```bash
     cp .env.example .env
     ```
-2.  **Iniciá los contenedores:**
+2.  **Arranque con el script de desarrollo** (requiere Docker, Node.js y npm):
     ```bash
-    docker compose up
+    ./dev.sh
     ```
+    En Windows (PowerShell): `.\dev.ps1`
+
+    El script instala dependencias npm si hace falta, levanta `docker compose` en segundo plano si no está corriendo y deja activo `npm run tw:watch`. Para solo correr los contenedores sin recompilar el CSS: `docker compose up`.
+
 3.  **Accedé al sistema:** [http://localhost:8000](http://localhost:8000)
 
 ## Documentación

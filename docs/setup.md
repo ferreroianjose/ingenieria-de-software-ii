@@ -2,24 +2,39 @@
 
 ## Pre-requisitos
 
-Para desarrollo utilizamos **docker**, con Python 3.14 y el gestor de paquetes uv. Especificado en `docker-compose.yml` y Dockerfile. Solo necesitás tener docker y docker-compose instalado.
+Para desarrollo utilizamos **docker**, con Python 3.14 y el gestor de paquetes uv. Especificado en `docker-compose.yml` y Dockerfile. Además es necesario **Node.js** y **npm** para compilar Tailwind.
 
 Si preferís correr el backend localmente sin Docker podés, mirá [instalar uv](https://github.com/astral-sh/uv). Pero aún deberías conectarte a la base de datos PostgreSQL para poder ejecutar las migraciones y el servidor de Django.
 
-## Desarrollo con docker (recomendado)
+## Arranque rápido (`dev.sh` / `dev.ps1`)
 
-Esta es la forma más sencilla de levantar el proyecto. Incluye el servidor de Django con *live reload* (*gymflow_web*), la base de datos PostgreSQL (*gymflow_db*) y Django Q (*gymflow_qcluster*) para ejecución asíncrona. Los contenedores comparten la misma red (*gymflow_network*) para comunicarse entre sí.
+Forma recomendada para el día a día: un solo comando levanta el stack en Docker y el compilador de Tailwind en modo watch.
 
-1. Para configurar las variables de entorno, copiá el archivo de ejemplo `.env.example` en `.env`, y modificalo:
-  ```bash
-    cp .env.example .env
-  ```
-2. Para levantar el entorno ejecutá:
-  ```bash
-    docker compose up
-  ```
-3. Para acceder:
-  - App: [http://localhost:8000](http://localhost:8000)
+1. Copiá y ajustá el entorno:
+   ```bash
+   cp .env.example .env
+   ```
+2. Desde la raíz del repo:
+   ```bash
+   ./dev.sh
+   ```
+   En Windows (PowerShell):
+   ```powershell
+   .\dev.ps1
+   ```
+
+**Ctrl+C** detiene el watch de Tailwind y ejecuta `docker compose down`. Para ver logs mientras corre: `docker compose logs -f web`.
+
+## Desarrollo con docker (manual)
+
+Incluye el servidor de Django con *live reload* (*gymflow_web*), PostgreSQL (*gymflow_db*) y Django Q (*gymflow_qcluster*). Los contenedores comparten la red *gymflow-network*.
+
+1. `cp .env.example .env`
+2. ```bash
+   docker compose up
+   ```
+   (sin Tailwind watch; corré `npm run tw:watch` en otra terminal si editás estilos).
+3. App: [http://localhost:8000](http://localhost:8000)
 
 ## Desarrollo local (con `uv`)
 
@@ -44,7 +59,7 @@ Si preferís no usar Docker para el servidor de Django:
 
 Los estilos se compilan en build time. Django sirve solo el archivo generado `static/css/tailwind.css`. La fuente de build es `styles/input.css`. `tailwind.config.js` en la raíz define las mismas rutas para el LSP; el CLI no lo usa en el build.
 
-**Requisito:** Node.js y npm.
+**Requisito:** Node.js y npm. Con `./dev.sh` o `.\dev.ps1` el watch se inicia solo; también podés usar los comandos npm a mano.
 
 1. Instalá dependencias:
 
