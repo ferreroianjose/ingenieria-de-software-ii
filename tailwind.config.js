@@ -1,3 +1,10 @@
-// El uso de este archivo fue discontinuado en la versión que usamos,
-// pero es necesario para que funcione el language server de tailwind >.<
-{}
+/** @type {import('tailwindcss').Config} */
+// Rutas para Tailwind CSS IntelliSense (LSP). El build usa @source en styles/input.css.
+export default {
+  content: [
+    "./templates/**/*.html",
+    "./apps/**/*.html",
+    "./apps/**/*.py",
+    "./static/js/**/*.js",
+  ],
+};

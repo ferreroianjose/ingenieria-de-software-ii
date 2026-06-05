@@ -23,5 +23,5 @@ Para levantar el entorno de desarrollo rápidamente:
 Para profundizar en la implementación consultá:
 
 * [Arquitectura](docs/architecture.md): Stack tecnológico, organización del proyecto y modelos de datos.
-* [Guía de Instalación y comandos útiles](docs/setup.md): Requisitos previos, uso de `uv`, migraciones y carga de datos iniciales.
+* [Guía de Instalación y comandos útiles](docs/setup.md): Requisitos previos, uso de `uv`, compilación de Tailwind, migraciones y carga de datos iniciales.
 * [Módulo de Notificaciones](docs/notifications.md): Documentación relevante sobre el envío de alertas.

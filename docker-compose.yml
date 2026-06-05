@@ -65,6 +65,7 @@ services:
     networks:
       - gymflow-network
 
+
 volumes:
   postgres_data: {}
 

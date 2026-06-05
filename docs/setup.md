@@ -40,6 +40,32 @@ Si preferís no usar Docker para el servidor de Django:
     uv run python manage.py runserver
   ```
 
+## Tailwind CSS
+
+Los estilos se compilan en build time. Django sirve solo el archivo generado `static/css/tailwind.css`. La fuente de build es `styles/input.css`. `tailwind.config.js` en la raíz define las mismas rutas para el LSP; el CLI no lo usa en el build.
+
+**Requisito:** Node.js y npm.
+
+1. Instalá dependencias:
+
+   ```bash
+   npm install
+   ```
+
+2. En el desarrollo recompilar al guardar cambios en `input.css`, templates o clases de Tailwind:
+
+   ```bash
+   npm run tw:watch
+   ```
+
+3. Build puntual (antes de commitear o desplegar, si tocaste estilos):
+
+   ```bash
+   npm run tw:build
+   ```
+
+   Commiteá `static/css/tailwind.css` (y `styles/input.css` si cambiaste la fuente) para que quien levante solo Docker tenga los estilos sin correr Node.
+
 ## Comandos útiles
 
 El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno virtual. Si no estás utilizando docker, el prefijo `docker exec -it gymflow_web` no es necesario.

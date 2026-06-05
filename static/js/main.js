@@ -7,10 +7,6 @@
 	}
 	window.__gymflowMainLoaded = true;
 
-// hacer visible la página luego de que tailwind cargue
-window.onload = function() {
-  document.body.style.opacity = '1';
-}
 
 /** Ref-counted scroll lock while modals/drawers are open (supports multiple overlays). */
 const modalScrollLock = (() => {
@@ -84,9 +80,7 @@ if (window.htmx) {
 	htmx.config.allowScriptTags = false;
 }
 
-let tailwindRescanTimer = null;
-
-/** Tras reemplazar #main-content, re-inicializar HTMX/Alpine y Tailwind Play CDN. */
+/** Tras reemplazar #main-content, re-inicializar HTMX y Alpine. */
 function settleBoostedMainContent(target) {
 	if (!target || target.id !== "main-content") return;
 
@@ -106,18 +100,6 @@ function settleBoostedMainContent(target) {
 	const isDetached = !document.body.contains(target);
 	if (window.Alpine?.initTree && !isDetached) {
 		Alpine.initTree(liveTarget);
-	}
-
-	// Tailwind browser CDN: rescan solo cuando el nodo fue reemplazado.
-	// El toggle en <html> puede causar un salto visual en el sidebar;
-	// usar requestAnimationFrame para diferirlo al siguiente frame de pintura.
-	if (isDetached) {
-		clearTimeout(tailwindRescanTimer);
-		tailwindRescanTimer = window.requestAnimationFrame(() => {
-			const root = document.documentElement;
-			root.classList.add("htmx-tailwind-rescan");
-			requestAnimationFrame(() => root.classList.remove("htmx-tailwind-rescan"));
-		});
 	}
 }
 
