@@ -26,12 +26,16 @@ class CancelacionesTestCase(TestCase):
             dni="11223344",
             telefono_emergencia="3515559999",
         )
+        tz = timezone.get_current_timezone()
+        ahora = timezone.now()
+        hoy = ahora.date()
+        
         self.periodo = PeriodoCobro.objects.create(
-            nombre="Mayo 2026",
-            fecha_inicio_periodo=date(2026, 5, 1),
-            fecha_fin_periodo=date(2026, 5, 31),
-            apertura_abonados=date(2026, 4, 15),
-            apertura_general=date(2026, 5, 1),
+            nombre="Mes Test",
+            fecha_inicio_periodo=hoy.replace(day=1),
+            fecha_fin_periodo=(hoy.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1),
+            apertura_abonados=hoy.replace(day=1) - timedelta(days=15),
+            apertura_general=hoy.replace(day=1),
         )
         self.disciplina = Disciplina.objects.create(nombre="Yoga")
         PrecioDisciplina.objects.create(
@@ -42,22 +46,30 @@ class CancelacionesTestCase(TestCase):
         sede = Sede.objects.create(nombre="Central", direccion="Calle 1")
         sala = Sala.objects.create(nombre="Sala A", capacidad=10, sede=sede)
         profesor = Teacher.objects.create(nombre="Ana", apellido="Pro")
+        
+        dia_semana_test = (hoy.weekday() + 1) % 7 # Mañana
+        
         self.clase = Class.objects.create(
             disciplina=self.disciplina,
             sala=sala,
             profesor=profesor,
-            dia_semana=4,
+            dia_semana=dia_semana_test,
             hora_inicio=time(18, 0),
             duracion=timedelta(hours=1),
             cupo_maximo=10,
             estado="disponible",
         )
-        tz = timezone.get_current_timezone()
+        
+        dias_hasta = (dia_semana_test - hoy.weekday()) % 7
+        if dias_hasta <= 0:
+            dias_hasta += 7
+        
+        proxima_fecha = hoy + timedelta(days=dias_hasta)
         self.fecha_mensual = timezone.make_aware(
-            datetime(2026, 5, 15, 18, 0), tz
+            datetime.combine(proxima_fecha, time(18, 0)), tz
         )
         self.fecha_suelta = timezone.make_aware(
-            datetime(2026, 5, 22, 18, 0), tz
+            datetime.combine(proxima_fecha + timedelta(days=7), time(18, 0)), tz
         )
 
     def _inscripcion_mensual(self):
@@ -143,9 +155,7 @@ class CancelacionesTestCase(TestCase):
 
     @patch("django.utils.timezone.now")
     def test_cancelar_ocurrencia_mensual_otorga_credito_con_48h(self, mock_now):
-        mock_now.return_value = timezone.make_aware(
-            datetime(2026, 5, 13, 10, 0), timezone.get_current_timezone()
-        )
+        mock_now.return_value = self.fecha_mensual - timedelta(hours=50)
         inscripcion = self._inscripcion_mensual()
 
         resultado = cancelar_ocurrencia_mensual(
@@ -165,9 +175,7 @@ class CancelacionesTestCase(TestCase):
 
     @patch("django.utils.timezone.now")
     def test_cancelar_ocurrencia_mensual_sin_credito_dentro_de_48h(self, mock_now):
-        mock_now.return_value = timezone.make_aware(
-            datetime(2026, 5, 14, 20, 0), timezone.get_current_timezone()
-        )
+        mock_now.return_value = self.fecha_mensual - timedelta(hours=10)
         inscripcion = self._inscripcion_mensual()
 
         resultado = cancelar_ocurrencia_mensual(
@@ -236,9 +244,7 @@ class CancelacionesTestCase(TestCase):
 
     @patch("django.utils.timezone.now")
     def test_cancelar_clase_suelta_retiene_sena_dentro_de_24h(self, mock_now):
-        mock_now.return_value = timezone.make_aware(
-            datetime(2026, 5, 22, 10, 0), timezone.get_current_timezone()
-        )
+        mock_now.return_value = self.fecha_suelta - timedelta(hours=8)
         inscripcion = self._inscripcion_suelta()
         base = precio_base_inscripcion(inscripcion)
         pago = Pago.objects.create(
@@ -260,9 +266,7 @@ class CancelacionesTestCase(TestCase):
 
     @patch("django.utils.timezone.now")
     def test_vista_cancelar_ocurrencia_mensual(self, mock_now):
-        mock_now.return_value = timezone.make_aware(
-            datetime(2026, 5, 10, 10, 0), timezone.get_current_timezone()
-        )
+        mock_now.return_value = self.fecha_mensual - timedelta(hours=50)
         inscripcion = self._inscripcion_mensual()
         self.client.force_login(self.user)
 
@@ -276,9 +280,7 @@ class CancelacionesTestCase(TestCase):
 
     @patch("django.utils.timezone.now")
     def test_pagar_clase_individual_con_credito(self, mock_now):
-        mock_now.return_value = timezone.make_aware(
-            datetime(2026, 5, 10, 10, 0), timezone.get_current_timezone()
-        )
+        mock_now.return_value = self.fecha_mensual - timedelta(hours=50)
         Credito.objects.create(
             usuario=self.user,
             periodo=self.periodo,
@@ -437,7 +439,7 @@ class CancelacionesTestCase(TestCase):
             resumen[1],
             {
                 "disciplina": "Yoga",
-                "periodo": "Mayo 2026",
+                "periodo": "Mes Test",
                 "cantidad": 2,
             },
         )

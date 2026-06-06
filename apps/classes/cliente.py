@@ -57,12 +57,14 @@ def periodos_inscripcion_para_clase(clase):
     for dt, periodo in ocurrencias_clase_en_ventana(clase):
         if periodo.id not in periodos_suelta_elegibles:
             continue
+        cupo_dt = cupo_disponible(clase, fecha=dt, periodo=periodo)
         suelta.append(
             {
                 "fecha_clase": dt.isoformat(),
                 "fecha_dt": dt,
                 "periodo_id": periodo.id,
                 "periodo_nombre": periodo.nombre,
+                "cupo": cupo_dt,
             }
         )
 
@@ -74,6 +76,7 @@ def periodos_inscripcion_para_clase(clase):
             "nombre": p.nombre,
             "etiqueta": p.nombre,
             "hint": hint_periodo_mensual(p),
+            "cupo": cupo_disponible(clase, periodo=p),
         }
         for p in periodos_elegibles_mensual()
         if clases_mensuales_cobrables(clase, p) > 0
@@ -172,7 +175,7 @@ def info_clase_para_usuario(clase, usuario, request=None):
         "ui_estado": ui_estado,
         "periodos_inscripcion": periodos_inscripcion,
         "puede_inscribirse": puede_inscribirse,
-        "puede_anotarse_espera": ui_estado == "sin_inscripcion" and cupo == 0,
+        "puede_anotarse_espera": ui_estado == "sin_inscripcion" and cupo == 0 and not en_pago and (puede_suelta or puede_mensual),
         "puede_cancelar": ui_estado == "inscripto"
         and not (
             mi

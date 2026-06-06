@@ -1288,7 +1288,8 @@ def _reservar_desde_detalle(request, clase_id):
         messages.error(request, str(exc))
         return redirect("classes:detalle", clase_id=clase_id)
 
-    if services.cupo_disponible(clase) > 0 and not (
+    cupo = services.cupo_disponible(clase, fecha=fecha_clase, periodo=periodo) if tipo == Inscripcion.Tipo.CLASE_SUELTA else services.cupo_disponible(clase, periodo=periodo)
+    if cupo > 0 and not (
         tipo == Inscripcion.Tipo.CLASE_SUELTA and requiere_precola_suelta(periodo)
     ):
         return _ir_a_pantalla_pago(request, clase_id)
@@ -1326,10 +1327,7 @@ def anotar_espera_view(request, clase_id):
     if request.method != "POST":
         return redirect("classes:detalle", clase_id=clase_id)
 
-    clase = get_object_or_404(Class, pk=clase_id, estado="disponible")
-    if services.cupo_disponible(clase) > 0:
-        messages.info(request, "Hay cupos libres. Podés inscribirte directamente.")
-        return redirect("classes:detalle", clase_id=clase_id)
+    # El cupo se verificará internamente en `_reservar_desde_detalle` y `reservar_clase`.
     return _reservar_desde_detalle(request, clase_id)
 
 

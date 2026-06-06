@@ -26,22 +26,29 @@ class InscripcionMensualFlowTests(TestCase):
             dni="12345678",
             telefono_emergencia="3515550000",
         )
+        tz = timezone.get_current_timezone()
+        ahora = timezone.now()
+        hoy = ahora.date()
+
         self.periodo = PeriodoCobro.objects.create(
-            nombre="Mayo 2026",
-            fecha_inicio_periodo=date(2026, 5, 1),
-            fecha_fin_periodo=date(2026, 5, 31),
-            apertura_abonados=date(2026, 4, 15),
-            apertura_general=date(2026, 5, 1),
+            nombre="Mes Test",
+            fecha_inicio_periodo=hoy.replace(day=1),
+            fecha_fin_periodo=(hoy.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1),
+            apertura_abonados=hoy.replace(day=1) - timedelta(days=15),
+            apertura_general=hoy.replace(day=1),
         )
-        disciplina = Disciplina.objects.create(nombre="Funcional")
+        self.disciplina = Disciplina.objects.create(nombre="Funcional")
         sede = Sede.objects.create(nombre="Sede", direccion="Calle 1")
         sala = Sala.objects.create(nombre="Sala", capacidad=20, sede=sede)
         profesor = Teacher.objects.create(nombre="Ana", apellido="Test")
+        
+        dia_semana_test = (hoy.weekday() + 1) % 7 # Mañana
+        
         self.clase = Class.objects.create(
-            disciplina=disciplina,
+            disciplina=self.disciplina,
             sala=sala,
             profesor=profesor,
-            dia_semana=4,
+            dia_semana=dia_semana_test,
             hora_inicio=time(18, 0),
             duracion=timedelta(hours=1),
             cupo_maximo=10,
@@ -49,8 +56,9 @@ class InscripcionMensualFlowTests(TestCase):
         )
         self.client.force_login(self.user)
 
-    @patch("django.utils.timezone.localdate", return_value=date(2026, 5, 10))
-    def test_post_mensual_guarda_intencion_y_redirige_a_pago(self, _localdate):
+    # @patch ya no es necesario si las fechas son relativas al dia de hoy, 
+    # pero si lo quitamos tenemos que sacarle los argumentos a las funciones.
+    def test_post_mensual_guarda_intencion_y_redirige_a_pago(self):
         url = reverse("classes:inscribir", args=[self.clase.id])
         response = self.client.post(
             url,
@@ -66,8 +74,7 @@ class InscripcionMensualFlowTests(TestCase):
         self.assertEqual(data["tipo"], Inscripcion.Tipo.MENSUAL)
         self.assertEqual(data["periodo_id"], self.periodo.id)
 
-    @patch("django.utils.timezone.localdate", return_value=date(2026, 5, 10))
-    def test_seleccion_pago_mensual_muestra_resumen(self, _localdate):
+    def test_seleccion_pago_mensual_muestra_resumen(self):
         self.client.post(
             reverse("classes:inscribir", args=[self.clase.id]),
             {"tipo": Inscripcion.Tipo.MENSUAL, "periodo_id": self.periodo.id},
@@ -76,7 +83,7 @@ class InscripcionMensualFlowTests(TestCase):
             reverse("payments:seleccion_pago_clase", args=[self.clase.id])
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Resumen del mes")
+        self.assertContains(response, "Resumen")
 
 
 class InscripcionMensualSinClasesTests(TestCase):

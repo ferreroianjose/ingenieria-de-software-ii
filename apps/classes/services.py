@@ -207,12 +207,57 @@ def resolver_periodo_inscripcion(periodo_id, tipo, fecha_clase=None):
     return periodo
 
 
-def cupo_disponible(clase):
-    """Cupos libres: inscripciones RESERVADA o PENDIENTE_PAGO (creadas al intentar pagar)."""
+def cupo_disponible(clase, fecha=None, periodo=None):
+    """
+    Cupos libres inteligentes:
+    - Si se provee `fecha`, cupo disponible para esa ocurrencia.
+    - Si se provee `periodo` (sin fecha), cupo disponible para todo el mes (el mínimo a lo largo del mes).
+    - Sin argumentos, devuelve el cupo libre máximo en la ventana futura.
+    """
+    from apps.classes.models import Inscripcion, InscripcionOcurrencia
+    from apps.payments.periodos import periodo_conteniendo_fecha
+    from apps.classes.services import _normalizar_fecha_clase, ocurrencias_clase_en_ventana
+    from datetime import datetime, timedelta
+    from django.utils import timezone
+
     activas = clase.inscripciones.filter(
         estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
-    ).count()
-    return max(0, clase.cupo_maximo - activas)
+    )
+
+    def _cupo_en_fecha(dt, p=None):
+        dt_norm = _normalizar_fecha_clase(dt)
+        p = p or periodo_conteniendo_fecha(dt_norm)
+        mensuales = activas.filter(tipo=Inscripcion.Tipo.MENSUAL, periodo=p).count() if p else 0
+        sueltas = InscripcionOcurrencia.objects.filter(
+            inscripcion__in=activas.filter(tipo=Inscripcion.Tipo.CLASE_SUELTA),
+            fecha_clase=dt_norm,
+            estado=InscripcionOcurrencia.Estado.ACTIVA
+        ).count()
+        return max(0, clase.cupo_maximo - mensuales - sueltas)
+
+    if fecha:
+        return _cupo_en_fecha(fecha, periodo)
+
+    if periodo:
+        inicio = max(periodo.fecha_inicio_periodo, timezone.localdate())
+        cursor = inicio + timedelta(days=(clase.dia_semana - inicio.weekday()) % 7)
+        tz = timezone.get_current_timezone()
+        
+        fechas = []
+        while cursor <= periodo.fecha_fin_periodo:
+            dt = timezone.make_aware(datetime.combine(cursor, clase.hora_inicio), tz)
+            if dt.date() >= timezone.localdate():
+                fechas.append(dt)
+            cursor += timedelta(days=7)
+            
+        if not fechas:
+            return 0
+        return min(_cupo_en_fecha(dt, periodo) for dt in fechas)
+
+    fechas_ventana = [dt for dt, p in ocurrencias_clase_en_ventana(clase)]
+    if not fechas_ventana:
+        return 0
+    return max(_cupo_en_fecha(dt) for dt in fechas_ventana)
 
 
 def validar_intencion_inscripcion(
@@ -287,7 +332,8 @@ def validar_intencion_inscripcion(
         if existing:
             raise InscripcionDuplicada(existing)
 
-    if not permitir_sin_cupo and cupo_disponible(clase) <= 0:
+    cupo_actual = cupo_disponible(clase, fecha=fecha_clase, periodo=periodo) if tipo == Inscripcion.Tipo.CLASE_SUELTA else cupo_disponible(clase, periodo=periodo)
+    if not permitir_sin_cupo and cupo_actual <= 0:
         raise ClaseNoDisponible("No hay cupos disponibles.")
 
     return clase, tipo
@@ -368,7 +414,8 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
         forzar_espera = (
             tipo == Inscripcion.Tipo.CLASE_SUELTA and requiere_precola_suelta(periodo)
         )
-        if cupo_disponible(clase) > 0 and not forzar_espera:
+        cupo_actual = cupo_disponible(clase, fecha=fecha_clase, periodo=periodo) if tipo == Inscripcion.Tipo.CLASE_SUELTA else cupo_disponible(clase, periodo=periodo)
+        if cupo_actual > 0 and not forzar_espera:
             inscripcion = Inscripcion.objects.create(
                 **create_kwargs,
                 estado=Inscripcion.Estado.PENDIENTE_PAGO,
