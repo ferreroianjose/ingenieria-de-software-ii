@@ -285,8 +285,7 @@
     background: rgba(0, 0, 0, 0.32);
   }
   .cliente-flow .cf-choice__input {
-    margin-top: auto !important;
-    margin-bottom: auto !important;
+    @apply sr-only;
   }
   .cliente-flow .cf-choice__dot {
     @apply mt-1 size-4 shrink-0 rounded-full border-2 border-white/30 bg-transparent;
