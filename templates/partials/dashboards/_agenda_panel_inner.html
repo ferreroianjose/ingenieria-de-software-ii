@@ -15,16 +15,16 @@
 
   <div class="dash-agenda-grid mt-6">
     {% for item in next_classes %}
-      <a href="{{ item.detail_url }}" class="dash-agenda-class @container/agenda flex flex-col @sm/agenda:flex-row items-start justify-between gap-3">
-        <div class="min-w-0 w-full @sm/agenda:flex-1">
+      <a href="{{ item.detail_url }}" class="dash-agenda-class flex flex-wrap items-start gap-3">
+        <div class="min-w-[12rem] flex-1">
           <h3 class="text-xl font-black uppercase tracking-tight text-white truncate">{{ item.disciplina }}</h3>
           <p class="text-sm font-bold text-white/70 mt-1">{{ item.weekday }} {{ item.date }} · {{ item.time }}</p>
           <p class="text-xs font-semibold text-white/55 mt-1 truncate">{{ item.location }}</p>
         </div>
         {% if item.status == 'Pendiente de pago' or item.status == 'Pendiente' %}
-          <span class="dash-chip shrink-0 mt-0.5 self-end @sm/agenda:self-auto bg-amber-500/20 text-amber-300 border border-amber-500/30">{{ item.status }}</span>
+          <span class="dash-chip shrink-0 mt-0.5 ml-auto bg-amber-500/20 text-amber-300 border border-amber-500/30">{{ item.status }}</span>
         {% else %}
-          <span class="dash-chip shrink-0 mt-0.5 self-end @sm/agenda:self-auto bg-secondary-300/20 text-secondary-100 border border-secondary-300/30">{{ item.status }}</span>
+          <span class="dash-chip shrink-0 mt-0.5 ml-auto bg-secondary-300/20 text-secondary-100 border border-secondary-300/30">{{ item.status }}</span>
         {% endif %}
       </a>
     {% empty %}
