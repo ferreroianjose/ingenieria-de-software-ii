@@ -459,6 +459,51 @@ def reconciliar_vencimientos_mensuales(fecha=None):
     return len(vencidas)
 
 
+def reconciliar_vencimientos_sueltas():
+    """
+    Cancela reservas sueltas que quedaron en estado PENDIENTE_PAGO
+    y ya pasaron su tiempo de gracia (default: 15 minutos).
+    """
+    from datetime import timedelta
+    from django.conf import settings
+    from apps.classes.ocurrencias import marcar_ocurrencias_inscripcion_canceladas
+    from apps.payments.cancelaciones import cancelar_pagos_pendientes_inscripcion
+
+    minutos = getattr(settings, "TIEMPO_GRACIA_PAGO_SUELTO_MINUTOS", 15)
+    limite = timezone.now() - timedelta(minutes=minutos)
+
+    with transaction.atomic():
+        vencidas = list(
+            Inscripcion.objects.select_for_update()
+            .filter(
+                tipo=Inscripcion.Tipo.CLASE_SUELTA,
+                estado=Inscripcion.Estado.PENDIENTE_PAGO,
+                fecha_inscripcion__lt=limite,
+            )
+            .select_related("clase")
+            .order_by("fecha_inscripcion")
+        )
+        if not vencidas:
+            return 0
+
+        por_clase = {}
+        for inscripcion in vencidas:
+            por_clase[inscripcion.clase_id] = por_clase.get(inscripcion.clase_id, 0) + 1
+            
+            cancelar_pagos_pendientes_inscripcion(inscripcion)
+            
+            inscripcion.estado = Inscripcion.Estado.CANCELADA
+            inscripcion.save(update_fields=["estado"])
+            marcar_ocurrencias_inscripcion_canceladas(inscripcion)
+
+        for clase_id, cantidad in por_clase.items():
+            clase = Class.objects.select_for_update().get(pk=clase_id)
+            for _ in range(cantidad):
+                _promover_lista_espera(clase)
+
+    return len(vencidas)
+
+
 def _fecha_clase_inscripcion(inscripcion):
     from apps.classes.ocurrencias import primera_ocurrencia_activa
 

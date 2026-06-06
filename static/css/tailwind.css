@@ -624,6 +624,9 @@
   .mb-8 {
     margin-bottom: calc(var(--spacing) * 8);
   }
+  .mb-auto {
+    margin-bottom: auto;
+  }
   .-ml-1 {
     margin-left: calc(var(--spacing) * -1);
   }
@@ -1101,6 +1104,9 @@
   .justify-end {
     justify-content: flex-end;
   }
+  .justify-start {
+    justify-content: flex-start;
+  }
   .gap-1 {
     gap: calc(var(--spacing) * 1);
   }
@@ -1204,6 +1210,9 @@
   }
   .self-center {
     align-self: center;
+  }
+  .self-end {
+    align-self: flex-end;
   }
   .self-start {
     align-self: flex-start;

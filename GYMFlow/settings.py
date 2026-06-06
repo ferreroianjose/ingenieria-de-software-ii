@@ -173,7 +173,7 @@ LOGIN_URL = "/users/login/"  # nombre de la URL de login
 LOGIN_REDIRECT_URL = "dashboard"  # después de iniciar sesión, a dónde va
 LOGOUT_REDIRECT_URL = "login"  # después de cerrar sesión
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = "users.User"
 
 # Servidor
 runserver.default_port = "8000"
@@ -185,14 +185,18 @@ EMAIL_PORT = int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True").lower() == "true"
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "GYMFlow <noreply@gymflow.com>")
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", "GYMFlow <noreply@gymflow.com>"
+)
 
 # Notification Configuration
 NOTIFICATION_ADAPTERS = [
     "apps.notifications.adapters.email.EmailNotificationAdapter",
 ]
 if DEBUG:
-    NOTIFICATION_ADAPTERS.insert(0, "apps.notifications.adapters.email.FakeEmailNotificationAdapter")
+    NOTIFICATION_ADAPTERS.insert(
+        0, "apps.notifications.adapters.email.FakeEmailNotificationAdapter"
+    )
 
 # Restricciones de horarios (clases de 60 min y que arrancan en :00)
 GYM_RESTRICTED_SCHEDULE = True
@@ -208,9 +212,7 @@ VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS = int(
 
 # Cantidad de días previos al inicio del período en que se habilita
 # la preinscripción de abonados para el mes siguiente.
-DIAS_PREINSCRIPCION_ABONADOS = int(
-    os.environ.get("DIAS_PREINSCRIPCION_ABONADOS", "10")
-)
+DIAS_PREINSCRIPCION_ABONADOS = int(os.environ.get("DIAS_PREINSCRIPCION_ABONADOS", "10"))
 
 # Si está en True, no abonados pueden anotarse en pre-cola para clases
 # del período siguiente antes de apertura_general (quedan en ESPERA).
@@ -222,9 +224,7 @@ HABILITAR_PRECOLA_NO_ABONADOS = (
 
 # Día del mes (inclusive) hasta el que un abonado puede pagar su mensualidad
 # sin perder la reserva. La conciliación empieza a considerar vencido desde el día siguiente.
-DIA_LIMITE_PAGO_MENSUAL = int(
-    os.environ.get("DIA_LIMITE_PAGO_MENSUAL", "10")
-)
+DIA_LIMITE_PAGO_MENSUAL = int(os.environ.get("DIA_LIMITE_PAGO_MENSUAL", "10"))
 
 # Activa la el proceso (Django Q) de la reconciliación de impagos mensuales.
 # Esto es, cancela las inscripciones mensuales impagas vencidas del período vigente
@@ -245,4 +245,21 @@ CANCELACION_MENSUAL_HORAS_MIN = int(
 # Horas mínimas de anticipación para cancelar una clase suelta
 CANCELACION_CLASE_SUELTA_HORAS_MIN = int(
     os.environ.get("CANCELACION_CLASE_SUELTA_HORAS_MIN", "24")
+)
+
+# Activar o desactivar la reconciliación de cupos de clases sueltas
+AUTO_RECONCILIACION_SUELTA_ACTIVA = (
+    os.environ.get("AUTO_RECONCILIACION_SUELTA_ACTIVA", "true").lower() == "true"
+)
+
+# Frecuencia en minutos para correr la tarea que limpia clases sueltas pendientes de pago
+FRECUENCIA_RECONCILIACION_SUELTA_MINUTOS = int(
+    os.environ.get("FRECUENCIA_RECONCILIACION_SUELTA_MINUTOS", "15")
+)
+
+# Tiempo de gracia (en minutos) antes de liberar una reserva de clase suelta impaga.
+# Durante este período, el cupo de la clase SE ENCUENTRA RESERVADO para el usuario,
+# quitándole lugar a otros posibles alumnos hasta que el pago se complete o el tiempo expire.
+TIEMPO_GRACIA_PAGO_SUELTO_MINUTOS = int(
+    os.environ.get("TIEMPO_GRACIA_PAGO_SUELTO_MINUTOS", "15")
 )

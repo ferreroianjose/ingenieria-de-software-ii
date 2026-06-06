@@ -236,3 +236,40 @@ class PrioridadYCuposTests(TestCase):
         self.assertEqual(canceladas, 0)
         self.assertEqual(mensual_impaga.estado, Inscripcion.Estado.PENDIENTE_PAGO)
         self.assertEqual(suelta_espera.estado, Inscripcion.Estado.ESPERA)
+
+    def test_reconciliacion_sueltas_cancela_vencidas(self):
+        from apps.classes.services import reconciliar_vencimientos_sueltas
+        from datetime import timedelta
+        from django.test.utils import override_settings
+        
+        # Una reciente (no debe cancelarse)
+        suelta_reciente = Inscripcion.objects.create(
+            usuario=self.user_suelta,
+            clase=self.clase,
+            periodo=self.junio,
+            tipo=Inscripcion.Tipo.CLASE_SUELTA,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        suelta_reciente.fecha_inscripcion = timezone.now() - timedelta(minutes=5)
+        suelta_reciente.save(update_fields=['fecha_inscripcion'])
+
+        # Una vencida (debe cancelarse)
+        suelta_vencida = Inscripcion.objects.create(
+            usuario=self.user_mensual,
+            clase=self.clase,
+            periodo=self.junio,
+            tipo=Inscripcion.Tipo.CLASE_SUELTA,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        suelta_vencida.fecha_inscripcion = timezone.now() - timedelta(minutes=20)
+        suelta_vencida.save(update_fields=['fecha_inscripcion'])
+
+        with override_settings(TIEMPO_GRACIA_PAGO_SUELTO_MINUTOS=15):
+            canceladas = reconciliar_vencimientos_sueltas()
+
+        suelta_reciente.refresh_from_db()
+        suelta_vencida.refresh_from_db()
+
+        self.assertEqual(canceladas, 1)
+        self.assertEqual(suelta_reciente.estado, Inscripcion.Estado.PENDIENTE_PAGO)
+        self.assertEqual(suelta_vencida.estado, Inscripcion.Estado.CANCELADA)

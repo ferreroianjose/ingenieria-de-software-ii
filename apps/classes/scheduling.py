@@ -35,16 +35,30 @@ def ensure_reconciliation_schedule(sender=None, **kwargs):
         if next_run <= ahora:
             next_run += timedelta(days=1)
 
-        schedule_type = getattr(Schedule, "DAILY", "D")
         Schedule.objects.update_or_create(
             name="classes.reconciliar_vencimientos_mensuales",
             defaults={
                 "func": "apps.classes.services.reconciliar_vencimientos_mensuales",
-                "schedule_type": schedule_type,
+                "schedule_type": getattr(Schedule, "DAILY", "D"),
                 "repeats": -1,
                 "next_run": next_run,
             },
         )
+        
+        # Scheduling for cleaning up unpaid individual classes
+        if getattr(settings, "AUTO_RECONCILIACION_SUELTA_ACTIVA", True):
+            minutes = getattr(settings, "FRECUENCIA_RECONCILIACION_SUELTA_MINUTOS", 15)
+            Schedule.objects.update_or_create(
+                name="classes.reconciliar_vencimientos_sueltas",
+                defaults={
+                    "func": "apps.classes.services.reconciliar_vencimientos_sueltas",
+                    "schedule_type": getattr(Schedule, "MINUTES", "I"),
+                    "minutes": minutes,
+                    "repeats": -1,
+                    # Starts running now
+                    "next_run": ahora,
+                },
+            )
     except (OperationalError, ProgrammingError):
         # Durante etapas tempranas de migración la tabla de Schedule puede no existir.
         return
