@@ -833,7 +833,47 @@
   @container dashboard (min-width: 52rem) {
     .dash-layout-bottom {
       grid-template-columns: minmax(0, 1.35fr) minmax(17.5rem, 1fr);
-      align-items: center;
+      align-items: stretch;
+    }
+    .dash-cartelera {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .dash-cartelera > .relative.z-10 {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 0%;
+      min-height: 0;
+    }
+    /* Scroll container gets a definite height from flex layout */
+    .dash-cartelera-scroll {
+      flex: 1 1 0%;
+      min-height: 0;
+      overflow-y: clip; /* prevent overflow-x:auto from promoting overflow-y:visible→auto */
+    }
+    /* Track fills the scroll container height */
+    .dash-cartelera-track {
+      height: 100%;
+    }
+  }
+  /* Right column: base = single column (mobile) */
+  .dash-side-stack {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    min-width: 0;
+  }
+  /* Mid-range: cartelera is full-width above, so the two side panels go side-by-side. FAQ is narrower. */
+  @container dashboard (min-width: 30rem) {
+    .dash-side-stack {
+      grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    }
+  }
+  /* Desktop: cartelera is on the left column, so stack them vertically again */
+  @container dashboard (min-width: 52rem) {
+    .dash-side-stack {
+      grid-template-columns: 1fr;
     }
   }
   .dash-badges-grid {
@@ -1480,6 +1520,14 @@
       border-color 260ms ease,
       box-shadow 260ms ease;
     scroll-snap-align: start;
+  }
+  /* On desktop the card stretches to fill available height via flex align-self */
+  @container dashboard (min-width: 52rem) {
+    .dash-cartelera-card {
+      height: auto;
+      min-height: 15.5rem;
+      align-self: stretch;
+    }
   }
   .dash-cartelera-card:hover {
     transform: translateY(-4px) scale(1.01);
