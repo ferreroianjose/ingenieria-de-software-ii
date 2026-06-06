@@ -57,11 +57,16 @@
       </article>
 
       {% if show_membership_status %}
-        <article class="dash-panel dash-panel-membership-energy">
+        <article class="dash-panel {% if membership_pending_payments %}dash-panel-neon-alert{% else %}dash-panel-membership-energy{% endif %}">
           <div class="dash-panel__ambient" aria-hidden="true">
+            {% if membership_pending_payments %}
+            <div class="absolute -top-12 -right-8 size-40 rounded-full bg-yellow-400/30 blur-3xl"></div>
+            <div class="absolute -bottom-16 -left-10 size-44 rounded-full bg-yellow-300/20 blur-3xl"></div>
+            {% else %}
             <div class="absolute -top-12 -right-8 size-40 rounded-full bg-primary-400/30 blur-3xl"></div>
             <div class="absolute -bottom-16 -left-10 size-44 rounded-full bg-secondary-300/20 blur-3xl"></div>
             <div class="dash-membership-shimmer" aria-hidden="true"></div>
+            {% endif %}
           </div>
 
           <div class="relative z-10">
@@ -84,7 +89,7 @@
 
             <div class="dash-membership-list mt-6">
               {% for item in membership_items %}
-                {% include 'partials/dashboards/_membership_item.html' with label=item.label subtitle=item.subtitle is_future=item.is_future %}
+                {% include 'partials/dashboards/_membership_item.html' with label=item.label subtitle=item.subtitle is_future=item.is_future is_pending=item.is_pending %}
               {% empty %}
                 <p class="text-sm font-semibold text-white/65 italic">
                   Todavía no registramos disciplinas en tu membresía mensual.

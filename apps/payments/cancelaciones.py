@@ -67,6 +67,20 @@ def reintegrar_pagos_inscripcion(inscripcion):
     return True
 
 
+def cancelar_pagos_pendientes_inscripcion(inscripcion):
+    """Marca como fallidos los pagos pendientes vinculados a la inscripción."""
+    pagos_ids = (
+        PagoInscripcion.objects.filter(
+            inscripcion=inscripcion,
+            pago__estado=Pago.Estado.PENDIENTE,
+        )
+        .values_list("pago_id", flat=True)
+        .distinct()
+    )
+    if pagos_ids:
+        Pago.objects.filter(id__in=pagos_ids).update(estado=Pago.Estado.FALLIDO)
+
+
 def aplicar_credito_automatico(inscripcion, usuario):
     """
     Consume 1 crédito si aplica a una clase suelta y descuenta lo pendiente.

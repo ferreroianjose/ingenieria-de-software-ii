@@ -99,11 +99,14 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
     if not disciplina or not periodo:
         return None
 
+    is_pending = inscripcion.estado == "PENDIENTE_PAGO"
+
     if periodo.fecha_inicio_periodo > hoy:
         return {
             "label": disciplina.nombre,
             "subtitle": periodo.nombre,
             "is_future": True,
+            "is_pending": is_pending,
         }
 
     if vigente and periodo.id == vigente.id:
@@ -111,6 +114,7 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
             "label": disciplina.nombre,
             "subtitle": f"Este mes · {periodo.nombre}",
             "is_future": False,
+            "is_pending": is_pending,
         }
 
     if periodo_anterior and periodo.id == periodo_anterior.id:
@@ -118,12 +122,14 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
             "label": disciplina.nombre,
             "subtitle": f"Mes anterior · {periodo.nombre}",
             "is_future": False,
+            "is_pending": is_pending,
         }
 
     return {
         "label": disciplina.nombre,
         "subtitle": periodo.nombre,
         "is_future": False,
+        "is_pending": is_pending,
     }
 
 

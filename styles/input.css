@@ -1232,6 +1232,16 @@
   .dash-membership-item--future .dash-membership-item__accent {
     background: linear-gradient(180deg, rgba(92, 225, 230, 0.95) 0%, rgba(92, 225, 230, 0.35) 100%);
   }
+  .dash-membership-item--pending {
+    border-color: rgba(255, 196, 86, 0.45);
+    background: rgba(255, 196, 86, 0.12);
+  }
+  .dash-membership-item--pending .dash-membership-item__accent {
+    background: linear-gradient(180deg, #ffc456 0%, #ff8a00 100%);
+  }
+  .dash-membership-item--pending .dash-membership-item__title {
+    color: rgba(255, 232, 170, 0.95);
+  }
   .dash-membership-item__title {
     font-size: 0.875rem;
     font-weight: 900;

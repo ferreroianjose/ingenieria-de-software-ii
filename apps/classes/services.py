@@ -560,6 +560,7 @@ def cancelar_reserva(inscripcion_id, usuario):
         ResultadoCancelacion,
         anticipacion_suficiente_clase_suelta,
         reintegrar_pagos_inscripcion,
+        cancelar_pagos_pendientes_inscripcion,
     )
 
     with transaction.atomic():
@@ -605,6 +606,8 @@ def cancelar_reserva(inscripcion_id, usuario):
                     "la seña queda retenida."
                 )
 
+        cancelar_pagos_pendientes_inscripcion(inscripcion)
+        
         inscripcion.estado = Inscripcion.Estado.CANCELADA
         inscripcion.save(update_fields=["estado"])
 
