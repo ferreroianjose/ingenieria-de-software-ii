@@ -834,7 +834,7 @@
   @container dashboard (min-width: 52rem) {
     .dash-layout-bottom {
       grid-template-columns: minmax(0, 1.35fr) minmax(17.5rem, 1fr);
-      align-items: start;
+      align-items: center;
     }
   }
   .dash-badges-grid {
@@ -859,6 +859,8 @@
     }
   }
   .dash-agenda-grid {
+    height: 100%;
+    width: 100%;
     display: grid;
     gap: 1rem;
     grid-template-columns: 1fr;

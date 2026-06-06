@@ -1,13 +1,16 @@
 {% comment %}Contenido de Tu agenda (sin calendario; va en _agenda_panel_shell).{% endcomment %}
 <div class="relative z-10">
-  <div class="flex flex-wrap items-start justify-between gap-3">
-    <div class="min-w-0 dash-agenda-head">
+  <div class="flex flex-wrap items-start justify-between gap-3 @md:gap-0 shrink">
+
+    <div class="min-w-0 dash-agenda-head flex-2 grow">
       <p class="text-xs font-black uppercase tracking-widest text-secondary-300">Tu agenda</p>
-      <h2 class="dash-title !text-white mt-1">Tus próximas clases</h2>
+      <h2 class="dash-title !text-white mt-1 w-full">Tus próximas clases</h2>
     </div>
-    <a href="{{ my_reservations_url }}" class="dash-ghost-cta dash-ghost-cta--filled text-white relative z-10 flex-1 w-fit max-w-fit text-center md:text-left">
+
+    <a href="{{ my_reservations_url }}" class="dash-ghost-cta dash-ghost-cta--filled text-white relative z-10 flex-1 grow-0 text-center w-full min-w-full max-w-full @md:min-w-fit @md:max-w-fit">
       Ver mis reservas
     </a>
+
   </div>
 
   <div class="dash-agenda-grid mt-6">
@@ -22,8 +25,8 @@
       </a>
     {% empty %}
       <div class="dash-agenda-class p-6 dash-agenda-grid__full">
-        <p class="text-sm font-semibold text-white/75 max-w-md">
-          No tenés clases próximas cargadas. Cuando reserves una, te va a aparecer acá.
+        <p class="text-sm size-full font-semibold text-white/75 max-w-md">
+          No tenés clases próximas registradas. Cuando reserves una, te va a aparecer acá.
         </p>
       </div>
     {% endfor %}
