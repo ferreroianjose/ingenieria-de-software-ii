@@ -42,17 +42,18 @@
 
       <div class="mt-4 space-y-2">
         {% for oc in item.ocurrencias %}
-        <div class="relative flex flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-white/12 bg-black/20 p-3 sm:p-4 {% if oc.cancelada %}opacity-60{% endif %}">
-          {% if oc.puede_cancelar %}<span class="pointer-events-none absolute inset-y-0 right-0 w-24 sm:w-48" style="background: linear-gradient(to left, rgba(255,20,20,0.40) 0%, transparent 100%);"></span>{% endif %}
-          <div class="min-w-0">
-            <p class="text-sm font-semibold text-white/90 {% if oc.cancelada %}line-through{% endif %}">
-              {% include 'partials/cliente/flow/_fecha_hora.html' with dt=oc.fecha %}
-            </p>
-            <p class="mt-0.5 text-xs font-bold text-white/55">{{ oc.mensaje_estado }}</p>
+        <div class="flex items-stretch gap-2 w-full">
+          <div class="flex-1 min-w-0 relative flex flex-row items-center justify-between gap-2 overflow-hidden rounded-xl border border-white/12 bg-black/20 p-3 sm:p-4 {% if oc.cancelada %}opacity-60{% endif %}">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-white/90 {% if oc.cancelada %}line-through{% endif %}">
+                {% include 'partials/cliente/flow/_fecha_hora.html' with dt=oc.fecha %}
+              </p>
+              <p class="mt-0.5 text-xs font-bold text-white/55">{{ oc.mensaje_estado }}</p>
+            </div>
           </div>
           {% if oc.puede_cancelar %}
           {% if item.es_mensual %}
-          <form action="{% url 'classes:cancelar_ocurrencia' item.inscripcion.id %}" method="post" class="relative z-10 shrink-0" hx-boost="false">
+          <form action="{% url 'classes:cancelar_ocurrencia' item.inscripcion.id %}" method="post" class="shrink-0 flex" hx-boost="false">
             {% csrf_token %}
             <input type="hidden" name="fecha_clase" value="{{ oc.fecha|date:'c' }}">
             <button
@@ -63,11 +64,11 @@
               data-confirm-label="Sí, cancelar"
               data-confirm-cancel-label="No, volver"
               data-confirm-message="{{ oc.confirm_cancelacion|escape }}"
-              class="py-2 px-3 sm:px-5 text-sm font-bold text-red-200 transition-opacity hover:opacity-70"
+              class="dash-ghost-cta dash-ghost-cta--danger h-full py-2 px-3 sm:px-5 text-xs sm:text-sm !rounded-xl"
             >Cancelar</button>
           </form>
           {% else %}
-          <form action="{% url 'classes:cancelar_reserva' item.inscripcion.id %}" method="post" class="relative z-10 shrink-0" hx-boost="false">
+          <form action="{% url 'classes:cancelar_reserva' item.inscripcion.id %}" method="post" class="shrink-0 flex" hx-boost="false">
             {% csrf_token %}
             <button
               type="button"
@@ -77,7 +78,7 @@
               data-confirm-label="Sí, cancelar"
               data-confirm-cancel-label="No, volver"
               data-confirm-message="{{ item.confirm_cancelar_reserva|escape }}"
-              class="py-2 px-3 sm:px-5 text-sm font-bold text-red-200 transition-opacity hover:opacity-70"
+              class="dash-ghost-cta dash-ghost-cta--danger h-full py-2 px-3 sm:px-5 text-xs sm:text-sm !rounded-xl"
             >Cancelar</button>
           </form>
           {% endif %}
