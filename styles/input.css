@@ -1251,8 +1251,8 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     padding: 0.875rem 1rem;
     background: rgba(255, 255, 255, 0.05);
-    /* backdrop-filter: blur(12px); */
-    /* -webkit-backdrop-filter: blur(12px); */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: background-color 0.2s, border-color 0.2s;
   }
   .dash-membership-item:hover {
