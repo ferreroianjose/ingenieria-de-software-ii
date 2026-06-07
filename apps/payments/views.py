@@ -54,7 +54,7 @@ def mis_pagos(request):
 
     estado_meta = {
         Pago.Estado.COMPLETADO: {"level": "success", "label": "Completado"},
-        Pago.Estado.PENDIENTE: {"level": "warning", "label": "Pendiente"},
+        Pago.Estado.PENDIENTE: {"level": "warning-alert", "label": "Pendiente"},
         Pago.Estado.FALLIDO: {"level": "error", "label": "Fallido"},
         Pago.Estado.REEMBOLSADO: {"level": "info", "label": "Reembolsado"},
     }
@@ -116,6 +116,7 @@ def mis_pagos(request):
 
             detalles_ui.append(
                 {
+                    "clase_id": clase.id,
                     "disciplina": clase.disciplina.nombre,
                     "ubicacion": ubicacion,
                     "tipo_label": "Mensualidad" if es_mensual else "Clase individual",
