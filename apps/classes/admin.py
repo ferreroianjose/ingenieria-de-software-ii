@@ -12,6 +12,13 @@ class SedeAdmin(admin.ModelAdmin):
 class DisciplinaAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'descripcion', 'created_at')
     search_fields = ('nombre',)
+    
+    class PrecioDisciplinaInline(admin.TabularInline):
+        from apps.payments.models import PrecioDisciplina
+        model = PrecioDisciplina
+        extra = 1
+        
+    inlines = [PrecioDisciplinaInline]
 
 
 @admin.register(Sala)
