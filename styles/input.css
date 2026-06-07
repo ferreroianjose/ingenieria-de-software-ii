@@ -1655,4 +1655,97 @@
   body:has(.internal-page.cliente-flow) {
     background-color: #000000;
   }
+
+  /* ── View Transitions ────────────────────────────────────────────────── */
+
+  @view-transition {
+    navigation: auto;
+  }
+
+  .cliente-flow .cf-stepper {
+    view-transition-name: flow-stepper;
+  }
+
+  .cliente-flow .internal-page-header {
+    view-transition-name: flow-header;
+  }
+
+  .cliente-flow .cf-surface {
+    view-transition-name: flow-card;
+  }
+
+  /* Slide animation parameters */
+  ::view-transition-image-pair(flow-card) {
+    isolation: isolate;
+  }
+
+  ::view-transition-old(flow-card),
+  ::view-transition-new(flow-card) {
+    mix-blend-mode: normal;
+    animation-fill-mode: both;
+    height: 100%;
+  }
+
+  /* ── Forward Transition (iOS Push style) ── */
+  html.transition-forward::view-transition-old(flow-card) {
+    animation: 320ms cubic-bezier(0.25, 0.8, 0.25, 1) both ios-exit-to-left;
+    z-index: 1;
+  }
+  html.transition-forward::view-transition-new(flow-card) {
+    animation: 320ms cubic-bezier(0.25, 0.8, 0.25, 1) both ios-enter-from-right;
+    z-index: 10;
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.3);
+  }
+
+  /* ── Backward Transition (iOS Pop style) ── */
+  html.transition-backward::view-transition-old(flow-card) {
+    animation: 320ms cubic-bezier(0.25, 0.8, 0.25, 1) both ios-exit-to-right;
+    z-index: 10;
+    box-shadow: -6px 0 20px rgba(0, 0, 0, 0.3);
+  }
+  html.transition-backward::view-transition-new(flow-card) {
+    animation: 320ms cubic-bezier(0.25, 0.8, 0.25, 1) both ios-enter-from-left;
+    z-index: 1;
+  }
+
+  /* ── Keyframe Animations ── */
+  @keyframes ios-exit-to-left {
+    from {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(-30px) scale(0.98);
+      opacity: 0;
+    }
+  }
+
+  @keyframes ios-enter-from-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes ios-exit-to-right {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes ios-enter-from-left {
+    from {
+      transform: translateX(-30px) scale(0.98);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0) scale(1);
+      opacity: 1;
+    }
+  }
 }

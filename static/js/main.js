@@ -80,6 +80,55 @@ if (window.htmx) {
 	htmx.config.allowScriptTags = false;
 }
 
+// Detect transition direction for client flow view transitions
+document.body.addEventListener("htmx:beforeSwap", (evt) => {
+	const trigger = evt.detail.requestConfig ? evt.detail.requestConfig.trigger : null;
+	const currentDot = document.querySelector(".cf-stepper .is-current");
+
+	if (trigger && currentDot) {
+		const currentNum = parseInt(currentDot.textContent.trim(), 10);
+
+		// 1. Stepper Dot clicked
+		if (trigger.classList.contains("cf-step__dot") || trigger.closest(".cf-stepper")) {
+			const clickedDot = trigger.closest(".cf-step__dot") || trigger.querySelector(".cf-step__dot") || trigger;
+			const targetNum = parseInt(clickedDot.textContent.trim(), 10);
+			if (!isNaN(currentNum) && !isNaN(targetNum)) {
+				if (targetNum > currentNum) {
+					document.documentElement.classList.add("transition-forward");
+					document.documentElement.classList.remove("transition-backward");
+				} else if (targetNum < currentNum) {
+					document.documentElement.classList.add("transition-backward");
+					document.documentElement.classList.remove("transition-forward");
+				}
+				return;
+			}
+		}
+
+		// 2. Back button clicked
+		const text = trigger.textContent || "";
+		const isBackBtn = text.includes("Volver") || text.includes("←") || trigger.closest("[href*='volver']");
+		if (isBackBtn) {
+			document.documentElement.classList.add("transition-backward");
+			document.documentElement.classList.remove("transition-forward");
+			return;
+		}
+
+		// 3. Default main content click (discipline, schedule, or continue pay)
+		if (trigger.closest("#main-content") || trigger.closest(".cliente-flow")) {
+			document.documentElement.classList.add("transition-forward");
+			document.documentElement.classList.remove("transition-backward");
+			return;
+		}
+	}
+});
+
+// Set popstate (browser back/forward) to default to backward transition animation
+window.addEventListener("popstate", () => {
+	document.documentElement.classList.add("transition-backward");
+	document.documentElement.classList.remove("transition-forward");
+});
+
+
 /** Tras reemplazar #main-content, re-inicializar HTMX y Alpine. */
 function settleBoostedMainContent(target) {
 	if (!target || target.id !== "main-content") return;
