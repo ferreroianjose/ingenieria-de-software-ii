@@ -3,7 +3,7 @@
   <div class="flex flex-wrap items-start justify-between gap-3 @md:gap-0 shrink">
 
     <div class="min-w-0 dash-agenda-head flex-2 grow">
-      <p class="text-xs font-black uppercase tracking-widest text-secondary-300">Tu agenda</p>
+      <p class="text-xs font-black uppercase tracking-widest {% if agenda_pending_payments %}text-yellow-500{% else %}text-secondary-300{% endif %}">Tu agenda</p>
       <h2 class="dash-title !text-white mt-1 w-full">Tus próximas clases</h2>
     </div>
 
@@ -13,10 +13,16 @@
 
   </div>
 
+  {% if agenda_pending_payments %}
+    <p class="dash-membership-alert mt-5">
+      Tenés {{ agenda_pending_payments }} pago{{ agenda_pending_payments|pluralize }} pendiente{{ agenda_pending_payments|pluralize }}.
+    </p>
+  {% endif %}
+
   <div class="dash-agenda-grid mt-6">
     {% for item in next_classes %}
       <a href="{{ item.detail_url }}" class="dash-agenda-class flex flex-wrap items-start gap-3">
-        <div class="min-w-[12rem] flex-1">
+        <div class="w-fit text-nowrap flex-1">
           <h3 class="text-xl font-black uppercase tracking-tight text-white truncate">{{ item.disciplina }}</h3>
           <p class="text-sm font-bold text-white/70 mt-1">{{ item.weekday }} {{ item.date }} · {{ item.time }}</p>
           <p class="text-xs font-semibold text-white/55 mt-1 truncate">{{ item.location }}</p>

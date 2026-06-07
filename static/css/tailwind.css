@@ -28,11 +28,11 @@
     --color-yellow-200: oklch(94.5% 0.129 101.54);
     --color-yellow-300: oklch(90.5% 0.182 98.111);
     --color-yellow-400: oklch(85.2% 0.199 91.936);
+    --color-yellow-500: oklch(79.5% 0.184 86.047);
     --color-yellow-800: oklch(47.6% 0.114 61.907);
     --color-yellow-900: oklch(42.1% 0.095 57.708);
     --color-green-50: oklch(98.2% 0.018 155.826);
     --color-green-100: oklch(96.2% 0.044 156.743);
-    --color-green-500: oklch(72.3% 0.219 149.579);
     --color-green-600: oklch(62.7% 0.194 149.214);
     --color-green-800: oklch(44.8% 0.119 151.328);
     --color-green-900: oklch(39.3% 0.095 152.535);
@@ -297,10 +297,6 @@
   }
 }
 @layer utilities {
-  .\@container\/agenda {
-    container-type: inline-size;
-    container-name: agenda;
-  }
   .\@container\/cartelera {
     container-type: inline-size;
     container-name: cartelera;
@@ -308,6 +304,10 @@
   .\@container\/dashboard {
     container-type: inline-size;
     container-name: dashboard;
+  }
+  .\@container\/qr {
+    container-type: inline-size;
+    container-name: qr;
   }
   .\@container {
     container-type: inline-size;
@@ -944,9 +944,6 @@
   .min-w-\[1\.75rem\] {
     min-width: 1.75rem;
   }
-  .min-w-\[12rem\] {
-    min-width: 12rem;
-  }
   .min-w-full {
     min-width: 100%;
   }
@@ -1219,9 +1216,6 @@
   .self-center {
     align-self: center;
   }
-  .self-end {
-    align-self: flex-end;
-  }
   .self-start {
     align-self: flex-start;
   }
@@ -1340,9 +1334,6 @@
   }
   .border-gray-700 {
     border-color: var(--color-gray-700);
-  }
-  .border-green-500 {
-    border-color: var(--color-green-500);
   }
   .border-primary-300\/20 {
     border-color: color-mix(in srgb, oklch(76% 63% 328deg) 20%, transparent);
@@ -1514,9 +1505,6 @@
   }
   .bg-gray-950 {
     background-color: var(--color-gray-950);
-  }
-  .bg-green-50 {
-    background-color: var(--color-green-50);
   }
   .bg-green-100 {
     background-color: var(--color-green-100);
@@ -2054,6 +2042,12 @@
   .\!text-white {
     color: var(--color-white) !important;
   }
+  .\!text-white\/70 {
+    color: color-mix(in srgb, #fff 70%, transparent) !important;
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-white) 70%, transparent) !important;
+    }
+  }
   .text-amber-300 {
     color: var(--color-amber-300);
   }
@@ -2083,9 +2077,6 @@
   }
   .text-gray-900 {
     color: var(--color-gray-900);
-  }
-  .text-green-500 {
-    color: var(--color-green-500);
   }
   .text-green-600 {
     color: var(--color-green-600);
@@ -2291,6 +2282,9 @@
       color: color-mix(in oklab, var(--color-yellow-200) 90%, transparent);
     }
   }
+  .text-yellow-500 {
+    color: var(--color-yellow-500);
+  }
   .text-yellow-800 {
     color: var(--color-yellow-800);
   }
@@ -2303,6 +2297,9 @@
   .tabular-nums {
     --tw-numeric-spacing: tabular-nums;
     font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,) var(--tw-numeric-fraction,);
+  }
+  .\!no-underline {
+    text-decoration-line: none !important;
   }
   .line-through {
     text-decoration-line: line-through;
@@ -2330,6 +2327,9 @@
   }
   .opacity-100 {
     opacity: 100%;
+  }
+  .opacity-\[0\.04\] {
+    opacity: 0.04;
   }
   .opacity-\[0\.25\] {
     opacity: 0.25;
@@ -2994,6 +2994,13 @@
     &:hover {
       @media (hover: hover) {
         color: var(--color-white);
+      }
+    }
+  }
+  .hover\:\!no-underline {
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: none !important;
       }
     }
   }
@@ -3692,29 +3699,66 @@
       letter-spacing: var(--tracking-wide);
     }
   }
-  .\@sm\/agenda\:w-auto {
-    @container agenda (width >= 24rem) {
-      width: auto;
-    }
-  }
-  .\@sm\/agenda\:flex-1 {
-    @container agenda (width >= 24rem) {
-      flex: 1;
-    }
-  }
-  .\@sm\/agenda\:flex-row {
-    @container agenda (width >= 24rem) {
-      flex-direction: row;
-    }
-  }
   .\@sm\:items-start {
     @container (width >= 24rem) {
       align-items: flex-start;
     }
   }
-  .\@sm\/agenda\:self-auto {
-    @container agenda (width >= 24rem) {
-      align-self: auto;
+  .\@md\/qr\:-bottom-24 {
+    @container qr (width >= 28rem) {
+      bottom: calc(var(--spacing) * -24);
+    }
+  }
+  .\@md\/qr\:-left-16 {
+    @container qr (width >= 28rem) {
+      left: calc(var(--spacing) * -16);
+    }
+  }
+  .\@md\/qr\:col-start-1 {
+    @container qr (width >= 28rem) {
+      grid-column-start: 1;
+    }
+  }
+  .\@md\/qr\:col-start-2 {
+    @container qr (width >= 28rem) {
+      grid-column-start: 2;
+    }
+  }
+  .\@md\/qr\:row-span-2 {
+    @container qr (width >= 28rem) {
+      grid-row: span 2 / span 2;
+    }
+  }
+  .\@md\/qr\:row-start-1 {
+    @container qr (width >= 28rem) {
+      grid-row-start: 1;
+    }
+  }
+  .\@md\/qr\:row-start-2 {
+    @container qr (width >= 28rem) {
+      grid-row-start: 2;
+    }
+  }
+  .\@md\/qr\:mt-0 {
+    @container qr (width >= 28rem) {
+      margin-top: calc(var(--spacing) * 0);
+    }
+  }
+  .\@md\/qr\:grid {
+    @container qr (width >= 28rem) {
+      display: grid;
+    }
+  }
+  .\@md\/qr\:size-32 {
+    @container qr (width >= 28rem) {
+      width: calc(var(--spacing) * 32);
+      height: calc(var(--spacing) * 32);
+    }
+  }
+  .\@md\/qr\:size-\[24rem\] {
+    @container qr (width >= 28rem) {
+      width: 24rem;
+      height: 24rem;
     }
   }
   .\@md\/cartelera\:w-max {
@@ -3732,19 +3776,54 @@
       min-width: fit-content;
     }
   }
+  .\@md\/qr\:grid-cols-\[1fr_auto\] {
+    @container qr (width >= 28rem) {
+      grid-template-columns: 1fr auto;
+    }
+  }
+  .\@md\/qr\:grid-rows-\[auto_1fr\] {
+    @container qr (width >= 28rem) {
+      grid-template-rows: auto 1fr;
+    }
+  }
   .\@md\/cartelera\:flex-row {
     @container cartelera (width >= 28rem) {
       flex-direction: row;
     }
   }
-  .\@md\:items-center {
-    @container (width >= 28rem) {
+  .\@md\/qr\:items-center {
+    @container qr (width >= 28rem) {
       align-items: center;
+    }
+  }
+  .\@md\/qr\:justify-start {
+    @container qr (width >= 28rem) {
+      justify-content: flex-start;
     }
   }
   .\@md\:gap-0 {
     @container (width >= 28rem) {
       gap: calc(var(--spacing) * 0);
+    }
+  }
+  .\@md\/qr\:gap-x-8 {
+    @container qr (width >= 28rem) {
+      column-gap: calc(var(--spacing) * 8);
+    }
+  }
+  .\@md\/qr\:self-end {
+    @container qr (width >= 28rem) {
+      align-self: flex-end;
+    }
+  }
+  .\@md\/qr\:self-start {
+    @container qr (width >= 28rem) {
+      align-self: flex-start;
+    }
+  }
+  .\@md\/qr\:text-left {
+    @container qr (width >= 28rem) {
+      text-align: left;
     }
   }
   .\@lg\:grid-cols-2 {
@@ -6325,7 +6404,7 @@
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: 9999px;
+    border-radius: 12px;
     border: 1px solid rgba(92, 225, 230, 0.45);
     background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.16), transparent 55%), rgba(255, 255, 255, 0.04);
     box-shadow: inset 0 0 20px rgba(223, 2, 255, 0.18);
@@ -6347,11 +6426,7 @@
   .dash-membership-list {
     display: grid;
     gap: 0.75rem;
-  }
-  @container dashboard (min-width: 36rem) {
-    .dash-membership-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
   }
   .dash-membership-item {
     position: relative;
@@ -6360,8 +6435,11 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     padding: 0.875rem 1rem;
     background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .dash-membership-item:hover {
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(223, 2, 255, 0.45);
   }
   .dash-membership-item__accent {
     position: absolute;
@@ -6371,10 +6449,6 @@
   }
   .dash-membership-item--future .dash-membership-item__accent {
     background: linear-gradient(180deg, rgba(92, 225, 230, 0.95) 0%, rgba(92, 225, 230, 0.35) 100%);
-  }
-  .dash-membership-item--pending {
-    border-color: rgba(255, 196, 86, 0.45);
-    background: rgba(255, 196, 86, 0.12);
   }
   .dash-membership-item--pending .dash-membership-item__accent {
     background: linear-gradient(180deg, #ffc456 0%, #ff8a00 100%);
@@ -6475,10 +6549,10 @@
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
   .dash-ghost-cta--filled {
-    background: rgba(12, 16, 24, 0.55);
+    background: rgba(12, 16, 24, 0.5);
     border-color: rgba(255, 255, 255, 0.22);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
   .dash-ghost-cta--filled:hover {
     background: rgba(12, 16, 24, 0.72);
@@ -6489,10 +6563,10 @@
     border: 1px solid rgb(255 255 255 / 0.15);
     padding: 1.25rem;
     text-decoration: none;
-    transition: all 0.15s;
+    transition: background-color 0.2s, border-color 0.2s;
     background: rgba(255, 255, 255, 0.07);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
   .dash-agenda-class:hover {
     background: rgba(255, 255, 255, 0.11);

@@ -101,12 +101,15 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
 
     is_pending = inscripcion.estado == "PENDIENTE_PAGO"
 
+    url = reverse("classes:detalle", args=[clase.id])
+
     if periodo.fecha_inicio_periodo > hoy:
         return {
             "label": disciplina.nombre,
             "subtitle": periodo.nombre,
             "is_future": True,
             "is_pending": is_pending,
+            "detail_url": url,
         }
 
     if vigente and periodo.id == vigente.id:
@@ -115,6 +118,7 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
             "subtitle": f"Este mes · {periodo.nombre}",
             "is_future": False,
             "is_pending": is_pending,
+            "detail_url": url,
         }
 
     if periodo_anterior and periodo.id == periodo_anterior.id:
@@ -123,6 +127,7 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
             "subtitle": f"Mes anterior · {periodo.nombre}",
             "is_future": False,
             "is_pending": is_pending,
+            "detail_url": url,
         }
 
     return {
@@ -130,36 +135,33 @@ def _item_membresia_dashboard(inscripcion, *, hoy, vigente, periodo_anterior):
         "subtitle": periodo.nombre,
         "is_future": False,
         "is_pending": is_pending,
+        "detail_url": url,
     }
 
 
-def _hint_membresia_dashboard(items):
+def _titulo_membresia_dashboard(items):
     activas = sum(1 for item in items if not item["is_future"])
     proximas = sum(1 for item in items if item["is_future"])
+    
     if activas and proximas:
-        return (
-            f"{activas} disciplina{'s' if activas != 1 else ''} este mes · "
-            f"{proximas} confirmada{'s' if proximas != 1 else ''} para el próximo"
-        )
+        return f"{activas} este mes · {proximas} el próximo"
     if proximas:
-        return (
-            f"{proximas} disciplina{'s' if proximas != 1 else ''} "
-            f"confirmada{'s' if proximas != 1 else ''} para el próximo mes"
-        )
+        return f"{proximas} disciplina{'s' if proximas != 1 else ''} el próximo mes"
     if activas:
-        return f"{activas} disciplina{'s' if activas != 1 else ''} incluidas este mes"
-    return "Tus clases mensuales están al día"
-
-
-def _titulo_membresia_dashboard(*, tiene_activo, tiene_proximo):
-    if tiene_activo and tiene_proximo:
-        return "Este mes y el próximo"
-    if tiene_proximo:
-        return "Próximo mes confirmado"
-    return "Mes en curso"
+        return f"{activas} disciplina{'s' if activas != 1 else ''} este mes"
+    return "Tus clases mensuales"
 
 
 def _estado_cliente_para_dashboard(user):
+    from apps.payments.models import Pago
+    from apps.classes.models import Inscripcion
+
+    pagos_pendientes_sueltas = Pago.objects.filter(
+        usuario=user,
+        estado=Pago.Estado.PENDIENTE,
+        detalles__inscripcion__tipo=Inscripcion.Tipo.CLASE_SUELTA
+    ).distinct().count()
+
     hoy = timezone.localdate()
     vigente = periodo_vigente(hoy)
     if not vigente:
@@ -169,6 +171,7 @@ def _estado_cliente_para_dashboard(user):
             "membership_status_hint": "",
             "membership_items": [],
             "membership_pending_payments": 0,
+            "agenda_pending_payments": pagos_pendientes_sueltas,
         }
 
     inscripciones_mensuales = Inscripcion.objects.filter(
@@ -199,9 +202,9 @@ def _estado_cliente_para_dashboard(user):
         return {
             "show_membership_status": False,
             "membership_status_label": "",
-            "membership_status_hint": "",
             "membership_items": [],
             "membership_pending_payments": 0,
+            "agenda_pending_payments": pagos_pendientes_sueltas,
         }
 
     periodos_visibles = {vigente.id}
@@ -238,21 +241,21 @@ def _estado_cliente_para_dashboard(user):
         if item:
             items.append(item)
 
-    pagos_pendientes = Pago.objects.filter(
-        usuario=user, estado=Pago.Estado.PENDIENTE
-    ).count()
+    pagos_pendientes_mensual = Pago.objects.filter(
+        usuario=user,
+        estado=Pago.Estado.PENDIENTE,
+        detalles__inscripcion__tipo=Inscripcion.Tipo.MENSUAL
+    ).distinct().count()
+
     tiene_proximo = any(item["is_future"] for item in items)
     tiene_activo = any(not item["is_future"] for item in items)
 
     return {
         "show_membership_status": True,
-        "membership_status_label": _titulo_membresia_dashboard(
-            tiene_activo=tiene_activo,
-            tiene_proximo=tiene_proximo,
-        ),
-        "membership_status_hint": _hint_membresia_dashboard(items),
+        "membership_status_label": _titulo_membresia_dashboard(items),
         "membership_items": items,
-        "membership_pending_payments": pagos_pendientes,
+        "membership_pending_payments": pagos_pendientes_mensual,
+        "agenda_pending_payments": pagos_pendientes_sueltas,
     }
 
 
@@ -349,9 +352,9 @@ def dashboard(request):
             "featured_disciplines": _cartelera_para_dashboard(),
             "payment_history": _historial_pagos_para_dashboard(user),
             "membership_status_label": estado["membership_status_label"],
-            "membership_status_hint": estado["membership_status_hint"],
             "membership_items": estado["membership_items"],
             "membership_pending_payments": estado["membership_pending_payments"],
+            "agenda_pending_payments": estado.get("agenda_pending_payments", 0),
             "show_membership_status": estado["show_membership_status"],
             "activities_url": reverse("classes:actividades"),
             "my_reservations_url": reverse("classes:mis_reservas"),
