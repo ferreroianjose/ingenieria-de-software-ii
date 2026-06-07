@@ -95,7 +95,7 @@
 
             <div class="dash-membership-list mt-6">
               {% for item in membership_items %}
-                {% include 'partials/dashboards/_membership_item.html' with label=item.label subtitle=item.subtitle is_future=item.is_future is_pending=item.is_pending %}
+                {% include 'partials/dashboards/_membership_item.html' with label=item.label subtitle=item.subtitle is_future=item.is_future is_pending=item.is_pending detail_url=item.detail_url %}
               {% empty %}
                 <p class="text-sm font-semibold text-white/65 italic">
                   Todavía no registramos disciplinas en tu membresía mensual.
