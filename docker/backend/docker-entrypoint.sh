@@ -22,5 +22,8 @@ if [ "$RUN_MIGRATIONS" = "True" ]; then
     fi
 fi
 
+echo "Collecting static files..."
+uv run python manage.py collectstatic --noinput
+
 echo "Starting command: $@"
 exec "$@"

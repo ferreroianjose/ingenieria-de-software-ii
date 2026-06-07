@@ -304,7 +304,7 @@
 	{% include 'partials/ui/modals/_confirm_modal.html' %}
 
 	<!-- Scripts globales (confirm antes de main: modalScrollLock vive en main.js) -->
-	<script id="gymflow-main-js" src="{% static 'js/main.js' %}"></script>
+	<script id="gymflow-main-js" src="{% static 'js/main.js' %}?v={% now 'U' %}"></script>
 	<script src="{% static 'js/gymflow-confirm.js' %}"></script>
 	{% block extra_js %}{% endblock %}
 </body>
