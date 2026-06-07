@@ -100,7 +100,7 @@
         {% elif item.inscripcion.estado == 'ESPERA' %}
         <form action="{% url 'classes:cancelar_reserva' item.inscripcion.id %}" method="post" class="w-full sm:w-auto shrink-0" hx-boost="false">
           {% csrf_token %}
-          {% include 'partials/cliente/flow/_confirm_destructive_btn.html' with label='Salir de lista' confirm_title='Salir de lista de espera' confirm_message=item.confirm_salir_espera confirm_label='Sí, salir' class='w-full' %}
+          {% include 'partials/cliente/flow/_confirm_destructive_btn.html' with label='Salir de lista' confirm_title='Salir de lista de espera' confirm_message=item.confirm_salir_espera confirm_label='Sí, salir' class='w-full' variant='danger' %}
         </form>
         {% endif %}
       </div>

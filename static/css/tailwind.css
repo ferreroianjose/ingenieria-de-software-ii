@@ -1377,10 +1377,10 @@
       border-color: color-mix(in oklab, var(--color-primary-700) 40%, transparent);
     }
   }
-  .border-red-400\/30 {
-    border-color: color-mix(in srgb, oklch(70.4% 0.191 22.216) 30%, transparent);
+  .border-red-400\/50 {
+    border-color: color-mix(in srgb, oklch(70.4% 0.191 22.216) 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
-      border-color: color-mix(in oklab, var(--color-red-400) 30%, transparent);
+      border-color: color-mix(in oklab, var(--color-red-400) 50%, transparent);
     }
   }
   .border-secondary-300 {
@@ -2801,16 +2801,6 @@
         border-color: color-mix(in srgb, oklch(70.4% 0.191 22.216) 45%, transparent);
         @supports (color: color-mix(in lab, red, red)) {
           border-color: color-mix(in oklab, var(--color-red-400) 45%, transparent);
-        }
-      }
-    }
-  }
-  .hover\:border-white\/30 {
-    &:hover {
-      @media (hover: hover) {
-        border-color: color-mix(in srgb, #fff 30%, transparent);
-        @supports (color: color-mix(in lab, red, red)) {
-          border-color: color-mix(in oklab, var(--color-white) 30%, transparent);
         }
       }
     }
@@ -6557,6 +6547,20 @@
   .dash-ghost-cta--filled:hover {
     background: rgba(12, 16, 24, 0.72);
     border-color: rgba(92, 225, 230, 0.55);
+  }
+  .dash-ghost-cta--danger {
+    background: rgba(12, 16, 24, 0.5);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: rgba(252, 165, 165, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: inset rgba(255,50,50, 0.10) 0 0 18px;
+  }
+  .dash-ghost-cta--danger:hover {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: rgba(255, 226, 226, 1.0);
+    box-shadow: inset rgba(255,50,50, 0.50) 0 0 24px;
   }
   .dash-agenda-class {
     border-radius: var(--radius-4xl);

@@ -11,5 +11,5 @@ danger_tint: borde/texto rojo (filas de clase). class: clases extra.
   data-confirm-label="{% if confirm_label %}{{ confirm_label|escape }}{% else %}Sí, continuar{% endif %}"
   data-confirm-cancel-label="{% if confirm_cancel_label %}{{ confirm_cancel_label|escape }}{% else %}No, volver{% endif %}"
   data-confirm-message="{{ confirm_message|escape }}"
-  class="btn-auto rounded-full border px-5 py-2.5 text-center text-sm font-bold transition-colors focus:ring-0 focus:ring-offset-0 {% if danger_tint %}border-red-400/30 text-red-300 hover:border-red-400/45 hover:bg-red-500/10 hover:text-red-200{% else %}border-white/20 text-white/75 hover:border-white/30 hover:bg-white/5 hover:text-white{% endif %} {{ class }}"
+  class="btn-auto text-center text-sm font-bold focus:ring-0 focus:ring-offset-0 {% if danger_tint %}rounded-full border px-5 py-2.5 transition-colors border-red-400/50 text-red-300 hover:border-red-400/45 hover:bg-red-500/10 hover:text-red-200{% elif variant == 'danger' %}dash-ghost-cta dash-ghost-cta--danger py-2.5{% else %}dash-ghost-cta dash-ghost-cta--filled text-white py-2.5{% endif %} {{ class }}"
 >{{ label }}</button>

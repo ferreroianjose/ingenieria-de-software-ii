@@ -1340,6 +1340,20 @@
     background: rgba(12, 16, 24, 0.72);
     border-color: rgba(92, 225, 230, 0.55);
   }
+  .dash-ghost-cta--danger {
+    background: rgba(12, 16, 24, 0.5);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: rgba(252, 165, 165, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: inset rgba(255,50,50, 0.10) 0 0 18px;
+  }
+  .dash-ghost-cta--danger:hover {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: rgba(255, 226, 226, 1.0);
+    box-shadow: inset rgba(255,50,50, 0.50) 0 0 24px;
+  }
   .dash-agenda-class {
     border-radius: var(--radius-4xl);
     border: 1px solid rgb(255 255 255 / 0.15);
