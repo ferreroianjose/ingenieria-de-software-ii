@@ -295,8 +295,11 @@
 				{% block page_modals %}{% endblock %}
 			</div>
 
-			<div id="global-spinner" class="hidden fixed top-0 left-0 w-full h-1 bg-primary-400 animate-pulse"></div>
 		</main>
+	</div>
+
+	<div id="global-spinner" class="fixed top-0 left-0 w-full h-1 pointer-events-none z-9999 transition-opacity duration-300 opacity-0">
+		<div class="w-full h-full bg-primary-400 animate-pulse"></div>
 	</div>
 
 	{% block other_footer_classes %}{% endblock %}

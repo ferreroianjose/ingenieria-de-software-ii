@@ -364,12 +364,23 @@ document.body.addEventListener("htmx:responseError", function (evt) {
 });
 
 document.body.addEventListener("htmx:beforeRequest", function () {
-	document.getElementById("global-spinner")?.classList.remove("hidden");
+	const spinner = document.getElementById("global-spinner");
+	if (spinner) {
+		spinner.classList.remove("opacity-0");
+		spinner.classList.add("opacity-100");
+	}
 });
 
 document.body.addEventListener("htmx:afterRequest", function (evt) {
-	document.getElementById("global-spinner")?.classList.add("hidden");
 	applyHtmxTriggers(evt.detail?.xhr);
+});
+
+document.body.addEventListener("htmx:afterSettle", function (evt) {
+	const spinner = document.getElementById("global-spinner");
+	if (spinner) {
+		spinner.classList.remove("opacity-100");
+		spinner.classList.add("opacity-0");
+	}
 });
 
 /** POST via HTMX (pause/delete) without a full page navigation. */
