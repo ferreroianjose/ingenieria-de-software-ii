@@ -305,6 +305,10 @@
     container-type: inline-size;
     container-name: dashboard;
   }
+  .\@container\/pago {
+    container-type: inline-size;
+    container-name: pago;
+  }
   .\@container\/qr {
     container-type: inline-size;
     container-name: qr;
@@ -1312,6 +1316,34 @@
   .rounded-xl {
     border-radius: var(--radius-xl);
   }
+  .rounded-t-2xl {
+    border-top-left-radius: var(--radius-2xl);
+    border-top-right-radius: var(--radius-2xl);
+  }
+  .rounded-t-4xl {
+    border-top-left-radius: var(--radius-4xl);
+    border-top-right-radius: var(--radius-4xl);
+  }
+  .rounded-t-8xl {
+    border-top-left-radius: var(--radius-8xl);
+    border-top-right-radius: var(--radius-8xl);
+  }
+  .rounded-t-lg {
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+  }
+  .rounded-t-none {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+  .rounded-t-xl {
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+  }
+  .rounded-b-3xl {
+    border-bottom-right-radius: var(--radius-3xl);
+    border-bottom-left-radius: var(--radius-3xl);
+  }
   .rounded-b-8xl {
     border-bottom-right-radius: var(--radius-8xl);
     border-bottom-left-radius: var(--radius-8xl);
@@ -1430,6 +1462,12 @@
     border-color: color-mix(in srgb, oklch(0.416 0.071 202.91) 15%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       border-color: color-mix(in oklab, var(--color-secondary-700) 15%, transparent);
+    }
+  }
+  .border-white\/8 {
+    border-color: color-mix(in srgb, #fff 8%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-white) 8%, transparent);
     }
   }
   .border-white\/10 {
@@ -1681,6 +1719,12 @@
   .bg-white {
     background-color: var(--color-white);
   }
+  .bg-white\/5 {
+    background-color: color-mix(in srgb, #fff 5%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-white) 5%, transparent);
+    }
+  }
   .bg-white\/10 {
     background-color: color-mix(in srgb, #fff 10%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -1803,6 +1847,9 @@
   }
   .p-2 {
     padding: calc(var(--spacing) * 2);
+  }
+  .p-2\.5 {
+    padding: calc(var(--spacing) * 2.5);
   }
   .p-3 {
     padding: calc(var(--spacing) * 3);
@@ -2314,6 +2361,12 @@
     color: color-mix(in srgb, #fff 90%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       color: color-mix(in oklab, var(--color-white) 90%, transparent);
+    }
+  }
+  .text-white\/95 {
+    color: color-mix(in srgb, #fff 95%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-white) 95%, transparent);
     }
   }
   .text-yellow-200\/90 {
@@ -3635,6 +3688,11 @@
       display: flex;
     }
   }
+  .lg\:grid {
+    @media (width >= 64rem) {
+      display: grid;
+    }
+  }
   .lg\:h-18 {
     @media (width >= 64rem) {
       height: calc(var(--spacing) * 18);
@@ -3658,6 +3716,11 @@
   .lg\:flex-1 {
     @media (width >= 64rem) {
       flex: 1;
+    }
+  }
+  .lg\:grid-cols-2 {
+    @media (width >= 64rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
   .lg\:grid-cols-3 {
@@ -3688,6 +3751,11 @@
   .lg\:gap-3 {
     @media (width >= 64rem) {
       gap: calc(var(--spacing) * 3);
+    }
+  }
+  .lg\:gap-4 {
+    @media (width >= 64rem) {
+      gap: calc(var(--spacing) * 4);
     }
   }
   .lg\:gap-6 {
@@ -3738,15 +3806,35 @@
       letter-spacing: var(--tracking-normal);
     }
   }
+  .xl\:grid {
+    @media (width >= 80rem) {
+      display: grid;
+    }
+  }
+  .xl\:grid-cols-2 {
+    @media (width >= 80rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
   .xl\:grid-cols-4 {
     @media (width >= 80rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .xl\:gap-4 {
+    @media (width >= 80rem) {
+      gap: calc(var(--spacing) * 4);
     }
   }
   .xl\:tracking-wide {
     @media (width >= 80rem) {
       --tw-tracking: var(--tracking-wide);
       letter-spacing: var(--tracking-wide);
+    }
+  }
+  .\@sm\/pago\:grid-cols-2 {
+    @container pago (width >= 24rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
   .\@sm\:items-start {
@@ -3826,6 +3914,11 @@
       min-width: fit-content;
     }
   }
+  .\@md\/pago\:grid-cols-3 {
+    @container pago (width >= 28rem) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
   .\@md\/qr\:grid-cols-\[1fr_auto\] {
     @container qr (width >= 28rem) {
       grid-template-columns: 1fr auto;
@@ -3876,9 +3969,29 @@
       text-align: left;
     }
   }
+  .\@lg\/pago\:grid-cols-2 {
+    @container pago (width >= 32rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .\@lg\/pago\:grid-cols-3 {
+    @container pago (width >= 32rem) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
   .\@lg\:grid-cols-2 {
     @container (width >= 32rem) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  .\@xl\/pago\:grid-cols-4 {
+    @container pago (width >= 36rem) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .\@3xl\/pago\:grid-cols-3 {
+    @container pago (width >= 48rem) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
   .\[\&_\.btn-auto\]\:w-full {
