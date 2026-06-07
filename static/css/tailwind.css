@@ -2202,6 +2202,9 @@
   .text-green-800 {
     color: var(--color-green-800);
   }
+  .text-inherit {
+    color: inherit;
+  }
   .text-on-light-bg-500 {
     color: var(--color-on-light-bg-500);
   }

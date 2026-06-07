@@ -16,7 +16,11 @@
   <article class="cf-surface {% if item.inscripcion.estado == 'PENDIENTE_PAGO' %}cf-surface--pending-payment{% endif %} p-6">
     <div class="cf-surface__body">
       <div class="flex items-start justify-between gap-3">
-        <h2 class="cf-item__title min-w-0 !text-2xl">{{ item.inscripcion.clase.disciplina.nombre }}</h2>
+        <h2 class="cf-item__title min-w-0 !text-2xl">
+          <a href="{% url 'classes:detalle' item.inscripcion.clase.id %}" class="no-underline text-inherit hover:opacity-80 transition-opacity">
+            {{ item.inscripcion.clase.disciplina.nombre }}
+          </a>
+        </h2>
         <div class="shrink-0 pt-1">
           {% if item.inscripcion.estado == 'RESERVADA' %}
           {% include 'partials/ui/_status_badge.html' with level='success' label='Confirmada' %}
