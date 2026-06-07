@@ -87,7 +87,6 @@
           :action="estaAgotada ? '{% url 'classes:anotar_espera' info.clase.id %}' : '{% url 'classes:inscribir' info.clase.id %}'"
           action="{% url 'classes:inscribir' info.clase.id %}"
           method="post" class="mt-4 flex flex-col gap-5"
-          hx-boost="false"
           id="form-inscripcion-clase"
           data-default-tipo="{% if suelta %}CLASE_SUELTA{% else %}MENSUAL{% endif %}">
       {% csrf_token %}
