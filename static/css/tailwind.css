@@ -2131,6 +2131,12 @@
       color: color-mix(in oklab, var(--color-primary-300) 80%, transparent);
     }
   }
+  .text-primary-300\/90 {
+    color: color-mix(in srgb, oklch(76% 63% 328deg) 90%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      color: color-mix(in oklab, var(--color-primary-300) 90%, transparent);
+    }
+  }
   .text-primary-400 {
     color: var(--color-primary-400);
   }
@@ -6938,6 +6944,18 @@
   }
   .cliente-flow .cf-surface {
     view-transition-name: flow-card;
+  }
+  #sidebar {
+    view-transition-name: sidebar;
+  }
+  #topbar-mobile {
+    view-transition-name: topbar;
+  }
+  ::view-transition-group(sidebar), ::view-transition-group(topbar) {
+    z-index: 999;
+  }
+  ::view-transition-old(sidebar), ::view-transition-new(sidebar), ::view-transition-old(topbar), ::view-transition-new(topbar) {
+    animation: none;
   }
   ::view-transition-image-pair(flow-card) {
     isolation: isolate;

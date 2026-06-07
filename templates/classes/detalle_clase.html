@@ -5,7 +5,14 @@
 {% block flow_main %}
 <section class="cf-surface">
   <div class="cf-surface__body">
-    <p class="cf-kicker">{{ info.clase.get_dia_semana_display }} · {{ info.clase.hora_inicio|time:"H:i" }} hs</p>
+    <div class="flex items-center justify-between gap-4 mb-2">
+      <p class="cf-kicker !mb-0">{{ info.clase.get_dia_semana_display }} · {{ info.clase.hora_inicio|time:"H:i" }} hs</p>
+      {% if flow_back_url %}
+      <a href="{{ flow_back_url }}" class="text-xs font-bold uppercase tracking-widest text-primary-300/90 hover:text-primary-200 no-underline inline-flex items-center gap-1 transition-colors">
+        <span aria-hidden="true">←</span> {{ flow_back_label|default:"Volver" }}
+      </a>
+      {% endif %}
+    </div>
     <h2 class="cf-title cf-title--lg">{{ info.clase.disciplina.nombre }}</h2>
     <p class="cf-sub">{% if info.tiene_proximo_inicio %}{% include 'partials/cliente/flow/_fecha_hora.html' with dt=info.proximo_inicio con_ano=False %}{% else %}{{ info.subtitulo }}{% endif %}</p>
 

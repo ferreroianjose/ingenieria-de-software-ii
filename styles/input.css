@@ -1674,6 +1674,26 @@
     view-transition-name: flow-card;
   }
 
+  #sidebar {
+    view-transition-name: sidebar;
+  }
+
+  #topbar-mobile {
+    view-transition-name: topbar;
+  }
+
+  ::view-transition-group(sidebar),
+  ::view-transition-group(topbar) {
+    z-index: 999;
+  }
+
+  ::view-transition-old(sidebar),
+  ::view-transition-new(sidebar),
+  ::view-transition-old(topbar),
+  ::view-transition-new(topbar) {
+    animation: none;
+  }
+
   /* Slide animation parameters */
   ::view-transition-image-pair(flow-card) {
     isolation: isolate;

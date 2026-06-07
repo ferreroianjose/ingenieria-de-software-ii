@@ -5,7 +5,14 @@
 {% block flow_main %}
 <section class="cf-surface">
   <div class="cf-surface__body">
-    <p class="cf-kicker">Tu reserva</p>
+    <div class="flex items-center justify-between gap-4 mb-2">
+      <p class="cf-kicker !mb-0">Tu reserva</p>
+      {% if flow_back_url %}
+      <a href="{{ flow_back_url }}" class="text-xs font-bold uppercase tracking-widest text-primary-300/90 hover:text-primary-200 no-underline inline-flex items-center gap-1 transition-colors">
+        <span aria-hidden="true">←</span> {{ flow_back_label|default:"Volver" }}
+      </a>
+      {% endif %}
+    </div>
     <h2 class="cf-title">{{ clase.disciplina.nombre }}</h2>
     <p class="cf-sub">
       {% if fecha_clase %}
