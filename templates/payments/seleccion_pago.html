@@ -6,7 +6,7 @@
 <section class="cf-surface">
   <div class="cf-surface__body">
     <div class="flex items-center justify-between gap-4 mb-2">
-      <p class="cf-kicker !mb-0">Tu reserva</p>
+      <p class="cf-kicker !mb-0">Paso 4 - Pago</p>
       {% if flow_back_url %}
       <a href="{{ flow_back_url }}" class="text-xs font-bold uppercase tracking-widest text-primary-300/90 hover:text-primary-200 no-underline inline-flex items-center gap-1 transition-colors">
         <span aria-hidden="true">←</span> {{ flow_back_label|default:"Volver" }}
@@ -63,6 +63,7 @@
     <form action="{{ pagar_url }}" method="post" hx-boost="false">
       {% csrf_token %}
       <input type="hidden" name="modalidad" value="TOTAL">
+      <p class="mb-4 text-xs text-white/45 text-center">Tené en cuenta que el cupo en la clase no se reserva hasta saldar el pago.</p>
       {% include 'partials/ui/buttons/_primary_button.html' with label="Pagar con Mercado Pago" type="submit" class="w-full !py-3.5" %}
     </form>
     {% else %}
@@ -73,6 +74,7 @@
     <p class="text-sm text-white/60 mb-3">Podés pagar el total o una seña del 50% y el saldo más adelante.</p>
     {% endif %}
     <div class="mt-4 flex flex-col gap-3">
+      <p class="text-xs text-white/45 text-center mb-1">Tené en cuenta que el cupo en la clase no se reserva hasta saldar el pago.</p>
       {% for opcion in opciones %}
       {% include 'partials/cliente/flow/_pay_row.html' with pagar_url=pagar_url modalidad=opcion.modalidad titulo=opcion.titulo descripcion=opcion.descripcion monto=opcion.monto monto_original=opcion.monto_original credito_aplicado=opcion.credito_aplicado %}
       {% empty %}

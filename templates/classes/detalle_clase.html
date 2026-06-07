@@ -6,7 +6,7 @@
 <section class="cf-surface">
   <div class="cf-surface__body">
     <div class="flex items-center justify-between gap-4 mb-2">
-      <p class="cf-kicker !mb-0">{{ info.clase.get_dia_semana_display }} · {{ info.clase.hora_inicio|time:"H:i" }} hs</p>
+      <p class="cf-kicker !mb-0">Paso 3 - Modalidad</p>
       {% if flow_back_url %}
       <a href="{{ flow_back_url }}" class="text-xs font-bold uppercase tracking-widest text-primary-300/90 hover:text-primary-200 no-underline inline-flex items-center gap-1 transition-colors">
         <span aria-hidden="true">←</span> {{ flow_back_label|default:"Volver" }}
@@ -14,7 +14,9 @@
       {% endif %}
     </div>
     <h2 class="cf-title cf-title--lg">{{ info.clase.disciplina.nombre }}</h2>
-    <p class="cf-sub">{% if info.tiene_proximo_inicio %}{% include 'partials/cliente/flow/_fecha_hora.html' with dt=info.proximo_inicio con_ano=False %}{% else %}{{ info.subtitulo }}{% endif %}</p>
+    {% if info.subtitulo %}
+    <p class="cf-sub">{{ info.subtitulo }}</p>
+    {% endif %}
 
     <div class="mt-6 grid gap-3 sm:grid-cols-3">
       <div class="cf-meta">
@@ -163,13 +165,16 @@
         <p class="cf-choice__label mb-2 !text-xs uppercase tracking-widest text-white/50">¿Qué mes?</p>
         {% if mensual|length == 1 %}
         <input type="hidden" name="periodo_id" value="{{ mensual.0.id }}" x-model="periodoId">
-        <p class="text-sm text-white/80 font-medium flex items-center justify-between gap-2 w-full">
-            <span class="{% if mensual.0.cupo <= 0 %}opacity-50{% endif %}">{{ mensual.0.etiqueta }}</span>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 w-full {% if mensual.0.cupo <= 0 %}opacity-50{% endif %}">
+            <span class="text-sm text-white/90 font-medium">{{ mensual.0.etiqueta }}</span>
+            <span class="hidden sm:inline text-white/30">&mdash;</span>
+            <span class="text-xs text-white/60">{{ mensual.0.hint }}</span>
             {% if mensual.0.cupo <= 0 %}
-            {% include 'partials/ui/_status_badge.html' with level='error' label='Agotada' %}
+            <div class="ml-auto">
+              {% include 'partials/ui/_status_badge.html' with level='error' label='Agotada' %}
+            </div>
             {% endif %}
-        </p>
-        <p class="text-xs text-white/50 mt-1 {% if mensual.0.cupo <= 0 %}opacity-50{% endif %}">{{ mensual.0.hint }}</p>
+        </div>
         {% else %}
         <div class="grid grid-cols-1 @lg:grid-cols-2 gap-3">
         {% for p in mensual %}
@@ -201,7 +206,6 @@
       <template x-if="!estaAgotada">
         <div>
           {% include 'partials/ui/buttons/_primary_button.html' with label="Continuar al pago" type="submit" class="w-full !py-3.5" %}
-          <p class="mt-4 text-xs text-white/45 text-center">Tené en cuenta que el cupo en la clase no se reserva hasta saldar el pago.</p>
         </div>
       </template>
     </form>

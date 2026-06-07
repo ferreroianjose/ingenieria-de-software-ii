@@ -20,11 +20,11 @@
   <div class="cf-step__connector" aria-hidden="true"><span class="cf-step__line {% if step == 'clase' or step == 'pago' %}is-done{% endif %}"></span></div>
   <div class="cf-step" role="listitem">
     {% if flow_step_enabled.clase and flow_step_links.clase %}
-    <a href="{{ flow_step_links.clase }}" class="cf-step__dot no-underline {% if step == 'clase' %}is-current{% elif step == 'pago' %}is-done{% else %}is-todo{% endif %}" aria-label="Ir a Tu clase">3</a>
+    <a href="{{ flow_step_links.clase }}" class="cf-step__dot no-underline {% if step == 'clase' %}is-current{% elif step == 'pago' %}is-done{% else %}is-todo{% endif %}" aria-label="Ir a Modalidad">3</a>
     {% else %}
     <span class="cf-step__dot {% if step == 'clase' %}is-current{% elif step == 'pago' %}is-done{% else %}is-todo{% endif %}" aria-disabled="true">3</span>
     {% endif %}
-    <span class="cf-step__label {% if step == 'clase' %}is-current{% elif step == 'pago' %}is-done{% endif %}">Tu clase</span>
+    <span class="cf-step__label {% if step == 'clase' %}is-current{% elif step == 'pago' %}is-done{% endif %}">Modalidad</span>
   </div>
   <div class="cf-step__connector" aria-hidden="true"><span class="cf-step__line {% if step == 'pago' %}is-done{% endif %}"></span></div>
   <div class="cf-step" role="listitem">
