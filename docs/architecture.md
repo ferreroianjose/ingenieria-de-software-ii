@@ -84,9 +84,9 @@ erDiagram
         datetime created_at
         datetime updated_at
     }
-    PRECIO_DISCIPLINA {
+    PRECIO_CLASE {
         int id PK
-        int disciplina_id FK
+        int clase_id FK
         int periodo_id FK
         decimal monto
     }
@@ -139,10 +139,10 @@ erDiagram
         int id PK
         int usuario_id FK
         int periodo_id FK
-        int disciplina_id FK 
+        int disciplina_id FK
         string estado "DISPONIBLE, UTILIZADO"
     }
-    
+
     PAGO_INSCRIPCION {
         int id PK
         int pago_id FK
@@ -157,13 +157,13 @@ erDiagram
     SALA ||--o{ CLASE : "alberga"
     PROFESOR ||--o{ CLASE : "dicta"
     PERIODO_COBRO ||--o{ INSCRIPCION : "agrupa"
-    PERIODO_COBRO ||--o{ PRECIO_DISCIPLINA : "define tarifas"
+    PERIODO_COBRO ||--o{ PRECIO_CLASE : "define tarifas"
     PERIODO_COBRO ||--o{ PAGO : "registra recaudación"
     PERIODO_COBRO ||--o{ CREDITO : "limita validez"
     USUARIO ||--o{ INSCRIPCION : "realiza"
     USUARIO ||--o{ ASISTENCIA : "valida ingreso"
     USUARIO ||--o{ CREDITO : "obtiene"
-    DISCIPLINA ||--o{ PRECIO_DISCIPLINA : "tiene costo"
+    CLASE ||--o{ PRECIO_CLASE : "tiene costo"
     DISCIPLINA ||--o{ CLASE : "se dicta"
     CLASE ||--o{ INSCRIPCION : "recibe"
     INSCRIPCION ||--o{ INSCRIPCION_OCURRENCIA : "tiene sesiones"
