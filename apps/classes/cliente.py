@@ -100,9 +100,7 @@ def info_clase_para_usuario(clase, usuario, request=None):
         and mi.estado != Inscripcion.Estado.CANCELADA
     )
 
-    if mi is None and en_pago:
-        ui_estado = "en_pago"
-    elif mi is None:
+    if mi is None:
         ui_estado = "sin_inscripcion"
     elif mi.estado == Inscripcion.Estado.ESPERA:
         ui_estado = "en_espera"
@@ -162,7 +160,6 @@ def info_clase_para_usuario(clase, usuario, request=None):
     puede_inscribirse = (
         ui_estado == "sin_inscripcion"
         and cupo > 0
-        and not en_pago
         and (puede_suelta or puede_mensual)
     )
 
@@ -175,7 +172,7 @@ def info_clase_para_usuario(clase, usuario, request=None):
         "ui_estado": ui_estado,
         "periodos_inscripcion": periodos_inscripcion,
         "puede_inscribirse": puede_inscribirse,
-        "puede_anotarse_espera": ui_estado == "sin_inscripcion" and cupo == 0 and not en_pago and (puede_suelta or puede_mensual),
+        "puede_anotarse_espera": ui_estado == "sin_inscripcion" and cupo == 0 and (puede_suelta or puede_mensual),
         "puede_cancelar": ui_estado == "inscripto"
         and not (
             mi
