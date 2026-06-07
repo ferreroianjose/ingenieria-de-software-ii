@@ -1416,7 +1416,7 @@ def mis_reservas(request):
         {
             "reservas_ui": reservas_ui,
             "flow_title": "Mis reservas",
-            "flow_subtitle": "Reservas confirmadas, pagos pendientes y lista de espera.",
+            "flow_subtitle": "Consulta el estado de tus reservas y el detalle de tus clases agendadas.",
             "page_actions_template": "partials/classes/cliente/_mis_reservas_actions.html",
         },
     )
