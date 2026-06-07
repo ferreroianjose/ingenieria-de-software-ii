@@ -12,16 +12,16 @@ class PeriodoCobro(models.Model):
     def __str__(self):
         return self.nombre
 
-class PrecioDisciplina(models.Model):
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE)
+class PrecioClase(models.Model):
+    clase = models.ForeignKey('classes.Class', on_delete=models.CASCADE)
     periodo = models.ForeignKey(PeriodoCobro, on_delete=models.CASCADE)
     monto = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        unique_together = ('disciplina', 'periodo')
+        unique_together = ('clase', 'periodo')
 
     def __str__(self):
-        return f"{self.disciplina} - {self.periodo}: ${self.monto}"
+        return f"{self.clase} - {self.periodo}: ${self.monto}"
 
 class Pago(models.Model):
     class Metodo(models.TextChoices):

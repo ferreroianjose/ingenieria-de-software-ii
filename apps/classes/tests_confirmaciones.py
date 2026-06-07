@@ -15,7 +15,7 @@ from apps.classes.confirmaciones import (
 )
 from apps.classes.models import Class, Disciplina, Inscripcion, Sala, Sede, Teacher
 from apps.classes.ocurrencias import crear_ocurrencia_suelta
-from apps.payments.models import PeriodoCobro, PrecioDisciplina
+from apps.payments.models import PeriodoCobro, PrecioClase
 
 User = get_user_model()
 
@@ -30,11 +30,6 @@ class ConfirmacionesMensajesTest(TestCase):
             apertura_general=date(2026, 5, 1),
         )
         self.disciplina = Disciplina.objects.create(nombre="Yoga")
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
-            periodo=self.periodo,
-            monto=Decimal("3000.00"),
-        )
         sede = Sede.objects.create(nombre="Central", direccion="Calle 1")
         sala = Sala.objects.create(nombre="Sala A", capacidad=10, sede=sede)
         profesor = Teacher.objects.create(nombre="Carlos", apellido="Sánchez")
@@ -47,6 +42,11 @@ class ConfirmacionesMensajesTest(TestCase):
             duracion=timedelta(hours=1),
             cupo_maximo=10,
             estado="disponible",
+        )
+        PrecioClase.objects.create(
+            clase=self.clase,
+            periodo=self.periodo,
+            monto=Decimal("3000.00"),
         )
         self.user = User.objects.create_user(
             username="confirm@test.com",

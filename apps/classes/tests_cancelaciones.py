@@ -11,7 +11,7 @@ from apps.classes.models import Class, Disciplina, Inscripcion, InscripcionOcurr
 from apps.classes.ocurrencias import crear_ocurrencia_suelta, generar_ocurrencias_mensual
 from apps.classes.services import cancelar_ocurrencia_mensual, cancelar_reserva
 from apps.classes.exceptions import CancelacionMensualNoPermitida, OcurrenciaYaCancelada
-from apps.payments.models import Credito, Pago, PagoInscripcion, PeriodoCobro, PrecioDisciplina
+from apps.payments.models import Credito, Pago, PagoInscripcion, PeriodoCobro, PrecioClase
 from apps.payments.inscripcion_pago import PAGO_PENDIENTE_SESSION, monto_sena, precio_base_inscripcion
 
 User = get_user_model()
@@ -38,11 +38,6 @@ class CancelacionesTestCase(TestCase):
             apertura_general=hoy.replace(day=1),
         )
         self.disciplina = Disciplina.objects.create(nombre="Yoga")
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
-            periodo=self.periodo,
-            monto=Decimal("3000.00"),
-        )
         sede = Sede.objects.create(nombre="Central", direccion="Calle 1")
         sala = Sala.objects.create(nombre="Sala A", capacidad=10, sede=sede)
         profesor = Teacher.objects.create(nombre="Ana", apellido="Pro")
@@ -58,6 +53,11 @@ class CancelacionesTestCase(TestCase):
             duracion=timedelta(hours=1),
             cupo_maximo=10,
             estado="disponible",
+        )
+        PrecioClase.objects.create(
+            clase=self.clase,
+            periodo=self.periodo,
+            monto=Decimal("3000.00"),
         )
         
         dias_hasta = (dia_semana_test - hoy.weekday()) % 7

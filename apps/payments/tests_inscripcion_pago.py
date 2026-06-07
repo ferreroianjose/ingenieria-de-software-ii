@@ -10,7 +10,7 @@ from apps.payments.inscripcion_pago import (
     resumen_abono_mensual,
     resumen_pago_inscripcion,
 )
-from apps.payments.models import Pago, PagoInscripcion, PeriodoCobro, PrecioDisciplina
+from apps.payments.models import Pago, PagoInscripcion, PeriodoCobro, PrecioClase
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -51,8 +51,8 @@ class InscripcionPagoHelpersTests(TestCase):
             tipo=Inscripcion.Tipo.CLASE_SUELTA,
             estado=Inscripcion.Estado.PENDIENTE_PAGO,
         )
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal("4000.00"),
         )

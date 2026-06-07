@@ -1355,7 +1355,7 @@ def abandonar_espera_view(request, inscripcion_id):
 def mis_reservas(request):
     from apps.payments.inscripcion_pago import (
         filtro_inscripciones_en_reservas,
-        precio_disciplina_periodo,
+        precio_clase_periodo,
         resumen_pago_inscripcion,
     )
 
@@ -1378,7 +1378,7 @@ def mis_reservas(request):
     for i in inscripciones:
         ocurrencias = ocurrencias_reserva_ui(i, desde_fecha=timezone.localdate())
 
-        unitario = precio_disciplina_periodo(i.clase.disciplina, i.periodo)
+        unitario = precio_clase_periodo(i.clase, i.periodo)
         reservas_ui.append(
             {
                 "inscripcion": i,

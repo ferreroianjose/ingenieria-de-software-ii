@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         User = apps.get_model("users", "User")
         PeriodoCobro = apps.get_model("payments", "PeriodoCobro")
-        PrecioDisciplina = apps.get_model("payments", "PrecioDisciplina")
+        PrecioClase = apps.get_model("payments", "PrecioClase")
         Pago = apps.get_model("payments", "Pago")
         PagoInscripcion = apps.get_model("payments", "PagoInscripcion")
         Credito = apps.get_model("payments", "Credito")
@@ -45,7 +45,7 @@ class Command(BaseCommand):
         precios_created = 0
         for meta in periodos_por_nombre.values():
             precios_created += self._load_precios(
-                PrecioDisciplina,
+                PrecioClase,
                 Disciplina,
                 meta["periodo"],
                 data.get("precios_disciplina", []),
@@ -180,12 +180,15 @@ class Command(BaseCommand):
             return meta["periodo"]
         return periodo_default
 
-    def _load_precios(self, PrecioDisciplina, Disciplina, periodo, precios_data):
+    def _load_precios(self, PrecioClase, Disciplina, periodo, precios_data):
         created = 0
         for row in precios_data:
             disciplina = Disciplina.objects.get(nombre=row["disciplina"])
-            _, was_created = PrecioDisciplina.objects.update_or_create(
-                disciplina=disciplina,
+            clase_representativa = apps.get_model("classes", "Class").objects.filter(disciplina=disciplina).first()
+            if not clase_representativa:
+                continue
+            _, was_created = PrecioClase.objects.update_or_create(
+                clase=clase_representativa,
                 periodo=periodo,
                 defaults={"monto": Decimal(row["monto"])},
             )

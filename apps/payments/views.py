@@ -22,7 +22,7 @@ from apps.payments.inscripcion_pago import (
     monto_a_cobrar,
     opciones_pago_inscripcion,
     opciones_pago_para_clase,
-    precio_disciplina_periodo,
+    precio_clase_periodo,
     preparar_pago_mercadopago,
     resumen_abono_para_clase,
     resumen_abono_para_inscripcion,
@@ -69,7 +69,7 @@ def mis_pagos(request):
         for detalle in pago.detalles.all():
             inscripcion = detalle.inscripcion
             es_mensual = inscripcion.tipo == Inscripcion.Tipo.MENSUAL
-            unitario = precio_disciplina_periodo(
+            unitario = precio_clase_periodo(
                 inscripcion.clase.disciplina,
                 inscripcion.periodo,
             )

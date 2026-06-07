@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Credito, Pago, PagoInscripcion, PeriodoCobro, PrecioDisciplina
+from .models import Credito, Pago, PagoInscripcion, PeriodoCobro, PrecioClase
 
 
 @admin.register(PeriodoCobro)
@@ -15,11 +15,11 @@ class PeriodoCobroAdmin(admin.ModelAdmin):
     search_fields = ("nombre",)
 
 
-@admin.register(PrecioDisciplina)
-class PrecioDisciplinaAdmin(admin.ModelAdmin):
-    list_display = ("disciplina", "periodo", "monto")
-    list_filter = ("periodo", "disciplina")
-    search_fields = ("disciplina__nombre", "periodo__nombre")
+@admin.register(PrecioClase)
+class PrecioClaseAdmin(admin.ModelAdmin):
+    list_display = ("clase", "periodo", "monto")
+    list_filter = ("periodo", "clase")
+    search_fields = ("clase__disciplina__nombre", "periodo__nombre")
 
 
 class PagoInscripcionInline(admin.TabularInline):

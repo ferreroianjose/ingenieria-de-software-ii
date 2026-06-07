@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db.models import Q, Sum
 
 from apps.classes.models import Inscripcion
-from apps.payments.models import Pago, PagoInscripcion, PrecioDisciplina
+from apps.payments.models import Pago, PagoInscripcion, PrecioClase
 
 PAGO_PENDIENTE_SESSION = "pago_pendiente"
 
@@ -95,14 +95,14 @@ def aplicar_pago_aprobado(pago):
             generar_ocurrencias_mensual(inscripcion)
 
 
-def precio_disciplina_periodo(disciplina, periodo):
+def precio_clase_periodo(clase, periodo):
     """Precio por clase en el período (una ocurrencia del horario semanal)."""
     try:
-        return PrecioDisciplina.objects.get(
-            disciplina=disciplina,
+        return PrecioClase.objects.get(
+            clase=clase,
             periodo=periodo,
         ).monto
-    except PrecioDisciplina.DoesNotExist:
+    except PrecioClase.DoesNotExist:
         return Decimal(getattr(settings, "CLASE_DEFAULT_PRICE", "2500.0"))
 
 
@@ -120,7 +120,7 @@ def precio_base_para_clase(clase, periodo, tipo):
     """Monto total a cobrar sin inscripción en BD (pantalla previa al pago)."""
     from apps.classes.services import ocurrencias_clase_en_periodo
 
-    unitario = precio_disciplina_periodo(clase.disciplina, periodo)
+    unitario = precio_clase_periodo(clase, periodo)
     if tipo == Inscripcion.Tipo.MENSUAL:
         cantidad = ocurrencias_clase_en_periodo(
             clase, periodo, desde_fecha=_desde_fecha_cobro(periodo, tipo)
@@ -132,8 +132,8 @@ def precio_base_para_clase(clase, periodo, tipo):
 def precio_base_inscripcion(inscripcion):
     from apps.classes.services import ocurrencias_clase_en_periodo
 
-    unitario = precio_disciplina_periodo(
-        inscripcion.clase.disciplina, inscripcion.periodo
+    unitario = precio_clase_periodo(
+        inscripcion.clase, inscripcion.periodo
     )
     if inscripcion.tipo == Inscripcion.Tipo.MENSUAL:
         cantidad = ocurrencias_clase_en_periodo(
@@ -151,7 +151,7 @@ def resumen_abono_mensual(clase, periodo, desde_fecha=None, tipo=None):
 
     if desde_fecha is None and tipo is not None:
         desde_fecha = _desde_fecha_cobro(periodo, tipo)
-    unitario = precio_disciplina_periodo(clase.disciplina, periodo)
+    unitario = precio_clase_periodo(clase, periodo)
     cantidad = ocurrencias_clase_en_periodo(clase, periodo, desde_fecha)
     total = (unitario * cantidad).quantize(Decimal("0.01"))
     return {

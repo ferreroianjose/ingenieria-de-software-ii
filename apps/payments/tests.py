@@ -8,7 +8,7 @@ from datetime import timedelta, date, time
 from unittest.mock import patch
 
 from apps.classes.models import Sede, Sala, Teacher, Disciplina, Class, Inscripcion
-from apps.payments.models import PeriodoCobro, PrecioDisciplina, Pago, PagoInscripcion
+from apps.payments.models import PeriodoCobro, PrecioClase, Pago, PagoInscripcion
 
 User = get_user_model()
 
@@ -73,7 +73,7 @@ class PaymentLogicTests(TestCase):
 
     @patch('apps.payments.views.mercadopago_service.create_preference')
     def test_pagar_inscripcion_fallback_price(self, mock_create_preference):
-        # Sin PrecioDisciplina, cobra CLASE_DEFAULT_PRICE y redirige a MP.
+        # Sin PrecioClase, cobra CLASE_DEFAULT_PRICE y redirige a MP.
         mock_create_preference.return_value = "http://mercadopago.mock/init"
         
         response = self._post_pagar(self.inscripcion.id, "TOTAL")
@@ -92,12 +92,12 @@ class PaymentLogicTests(TestCase):
         self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.PENDIENTE_PAGO)
 
     @patch('apps.payments.views.mercadopago_service.create_preference')
-    def test_pagar_inscripcion_with_precio_disciplina(self, mock_create_preference):
-        # Usa el monto de PrecioDisciplina para el período y la disciplina.
+    def test_pagar_inscripcion_with_precio_clase(self, mock_create_preference):
+        # Usa el monto de PrecioClase para el período y la disciplina.
         mock_create_preference.return_value = "http://mercadopago.mock/init"
         
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal('5000.00')
         )
@@ -112,8 +112,8 @@ class PaymentLogicTests(TestCase):
         # No abonado con modalidad=SENA paga la seña (50%).
         mock_create_preference.return_value = "http://mercadopago.mock/init"
 
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal('4000.00')
         )
@@ -131,8 +131,8 @@ class PaymentLogicTests(TestCase):
         # Abonado: precio por clase × clases restantes del horario en el período.
         mock_create_preference.return_value = "http://mercadopago.mock/init"
         
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal('6000.00')
         )
@@ -155,8 +155,8 @@ class PaymentLogicTests(TestCase):
     @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
     def test_success_callback_full_payment(self, mock_fetch):
         # API MP approved + pago total: inscripción queda RESERVADA.
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal('4000.00')
         )
@@ -186,8 +186,8 @@ class PaymentLogicTests(TestCase):
     @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
     def test_success_callback_sena_payment(self, mock_fetch):
         # API MP approved pero solo se pagó seña: inscripción sigue PENDIENTE_PAGO.
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal('4000.00')
         )
@@ -214,8 +214,8 @@ class PaymentLogicTests(TestCase):
 
     @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
     def test_success_callback_saldo_completes_reservation(self, mock_fetch):
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal("4000.00"),
         )
@@ -255,8 +255,8 @@ class PaymentLogicTests(TestCase):
     @patch("apps.payments.views.mercadopago_service.create_preference")
     def test_pagar_saldo_cobra_solo_restante(self, mock_create_preference):
         mock_create_preference.return_value = "http://mercadopago.mock/init"
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal("4000.00"),
         )
@@ -282,8 +282,8 @@ class PaymentLogicTests(TestCase):
     @patch("apps.payments.views.mercadopago_service.create_preference")
     def test_pagar_reutiliza_pago_pendiente_mismo_monto(self, mock_create_preference):
         mock_create_preference.return_value = "http://mercadopago.mock/init"
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal("5000.00"),
         )
@@ -299,8 +299,8 @@ class PaymentLogicTests(TestCase):
     @patch("apps.payments.views.mercadopago_service.create_preference")
     def test_pagar_nuevo_pago_si_monto_distinto_anula_pendiente_anterior(self, mock_create_preference):
         mock_create_preference.return_value = "http://mercadopago.mock/init"
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal("4000.00"),
         )
@@ -328,8 +328,8 @@ class PaymentLogicTests(TestCase):
     def test_pagar_inscripcion_creates_pago_inscripcion(self, mock_create_preference):
         # Al pagar, crea Pago + PagoInscripcion con el monto aplicado correcto.
         mock_create_preference.return_value = "http://mercadopago.mock/init"
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal('5000.00'),
         )
@@ -372,8 +372,8 @@ class PaymentLogicTests(TestCase):
         )
 
     def test_seleccion_pago_muestra_opciones(self):
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal("4000.00"),
         )
@@ -385,8 +385,8 @@ class PaymentLogicTests(TestCase):
         self.assertContains(response, "Seña")
 
     def test_seleccion_pago_sin_sena_cuando_hay_credito(self):
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal("4000.00"),
         )
@@ -471,8 +471,8 @@ class PaymentLogicTests(TestCase):
     @patch("apps.payments.services.MercadoPagoService._fetch_mp_payment")
     def test_success_callback_multiple_inscriptions(self, mock_fetch):
         # Un pago mensual con varias clases: todas quedan RESERVADA al aprobar.
-        PrecioDisciplina.objects.create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.create(
+            clase=self.clase,
             periodo=self.periodo,
             monto=Decimal('4000.00'),
         )
@@ -594,8 +594,8 @@ class PaymentLogicTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def _create_pending_pago(self, monto):
-        PrecioDisciplina.objects.get_or_create(
-            disciplina=self.disciplina,
+        PrecioClase.objects.get_or_create(
+            clase=self.clase,
             periodo=self.periodo,
             defaults={'monto': monto},
         )

@@ -59,11 +59,16 @@ def creditos_disponibles_por_disciplina(usuario, periodo, disciplina):
 
 def valor_credito_disponible(usuario, periodo, disciplina):
     """Monto que cubre un crédito disponible (precio unitario de la disciplina)."""
-    from apps.payments.inscripcion_pago import precio_disciplina_periodo
+    from apps.payments.inscripcion_pago import precio_clase_periodo
+    from apps.classes.models import Class
 
     if not tiene_credito_disponible(usuario, periodo, disciplina):
         return Decimal("0")
-    return precio_disciplina_periodo(disciplina, periodo)
+    
+    clase_representativa = Class.objects.filter(disciplina=disciplina).first()
+    if clase_representativa:
+        return precio_clase_periodo(clase_representativa, periodo)
+    return Decimal("0")
 
 
 def consumir_credito(usuario, periodo, disciplina):

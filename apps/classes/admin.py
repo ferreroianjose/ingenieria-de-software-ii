@@ -12,13 +12,6 @@ class SedeAdmin(admin.ModelAdmin):
 class DisciplinaAdmin(admin.ModelAdmin):
     list_display = ('nombre', 'descripcion', 'created_at')
     search_fields = ('nombre',)
-    
-    class PrecioDisciplinaInline(admin.TabularInline):
-        from apps.payments.models import PrecioDisciplina
-        model = PrecioDisciplina
-        extra = 1
-        
-    inlines = [PrecioDisciplinaInline]
 
 
 @admin.register(Sala)
@@ -33,6 +26,13 @@ class ClassAdmin(admin.ModelAdmin):
     list_display = ('disciplina', 'sala', 'profesor', 'dia_semana', 'hora_inicio', 'duracion', 'cupo_maximo', 'estado')
     list_filter = ('estado', 'dia_semana', 'disciplina', 'sala__sede')
     search_fields = ('disciplina__nombre', 'profesor__nombre', 'profesor__apellido', 'sala__nombre')
+    
+    class PrecioClaseInline(admin.TabularInline):
+        from apps.payments.models import PrecioClase
+        model = PrecioClase
+        extra = 1
+        
+    inlines = [PrecioClaseInline]
 
 
 @admin.register(Teacher)
