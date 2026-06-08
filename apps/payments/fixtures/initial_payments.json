@@ -18,13 +18,34 @@
     }
   ],
   "precios_disciplina": [
-    {"disciplina": "Yoga", "monto": "5200.00"},
-    {"disciplina": "Pilates", "monto": "5800.00"},
-    {"disciplina": "Funcional", "monto": "4800.00"},
-    {"disciplina": "Spinning", "monto": "5000.00"},
-    {"disciplina": "HIIT", "monto": "5500.00"},
-    {"disciplina": "Boxeo", "monto": "6000.00"},
-    {"disciplina": "Stretching", "monto": "4200.00"}
+    {
+      "disciplina": "Yoga",
+      "monto": "5200.00"
+    },
+    {
+      "disciplina": "Pilates",
+      "monto": "5800.00"
+    },
+    {
+      "disciplina": "Funcional",
+      "monto": "4800.00"
+    },
+    {
+      "disciplina": "Spinning",
+      "monto": "5000.00"
+    },
+    {
+      "disciplina": "HIIT",
+      "monto": "5500.00"
+    },
+    {
+      "disciplina": "Boxeo",
+      "monto": "6000.00"
+    },
+    {
+      "disciplina": "Stretching",
+      "monto": "4200.00"
+    }
   ],
   "inscripciones": [
     {
@@ -70,6 +91,248 @@
       "hora": "08:00",
       "tipo": "CLASE_SUELTA",
       "estado": "PENDIENTE_PAGO"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "juan.perez@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "diego.torres@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "MENSUAL",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "sofia.ramirez@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "PENDIENTE_PAGO"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "enrique@email.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "guadalupe@email.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "martin.lopez@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "valentina.morales@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "lucas.fernandez@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "camila.sosa@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "tomas.acosta@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "florencia.ruiz@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "mariana.gomez@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "nicolas.herrera@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "agustina.molina@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "facundo.castro@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "paula.vega@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "santiago.ibarra@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "romina.silva@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "german.ortiz@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "carla.medina@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "leandro.romero@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
+    },
+    {
+      "periodo": "Junio 2026",
+      "usuario_email": "belen.navarro@mail.com",
+      "disciplina": "HIIT",
+      "sede": "Sede Palermo",
+      "sala": "Sala Power",
+      "dia_semana": 0,
+      "hora": "19:00",
+      "tipo": "CLASE_SUELTA",
+      "estado": "RESERVADA"
     }
   ],
   "pagos": [
