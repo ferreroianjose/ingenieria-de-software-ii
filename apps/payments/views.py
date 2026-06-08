@@ -70,7 +70,7 @@ def mis_pagos(request):
             inscripcion = detalle.inscripcion
             es_mensual = inscripcion.tipo == Inscripcion.Tipo.MENSUAL
             unitario = precio_clase_periodo(
-                inscripcion.clase.disciplina,
+                inscripcion.clase,
                 inscripcion.periodo,
             )
 
