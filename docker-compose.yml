@@ -56,7 +56,7 @@ services:
     environment:
       POSTGRES_HOST: db
       DJANGO_DEBUG: "True"
-      RUN_MIGRATIONS: "True"
+      RUN_MIGRATIONS: "False"
       SKIP_INITIAL_DATA: "True"
     command: uv run python manage.py qcluster
     depends_on:
