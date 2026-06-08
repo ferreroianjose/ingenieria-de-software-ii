@@ -1,0 +1,40 @@
+{% if clases_con_precio %}
+    {% for item in clases_con_precio %}
+    <tr class="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+        <td class="px-6 py-4">
+            <div class="font-medium text-gray-900">{{ item.clase.disciplina.nombre }}</div>
+        </td>
+        <td class="px-6 py-4 text-gray-600">{{ item.clase.sala.nombre }}</td>
+        <td class="px-6 py-4 text-gray-600">{{ item.clase.profesor }}</td>
+        <td class="px-6 py-4">
+            <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
+                {{ item.clase.get_dia_semana_display }} {{ item.clase.hora_inicio|time:"H:i" }}
+            </span>
+        </td>
+        <td class="px-6 py-4">
+            <div class="font-medium text-gray-700">
+                {% if item.precio %}
+                    ${{ item.precio|floatformat:'0' }}
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+{% else %}
+    {% if not periodo_id %}
+        {% include 'partials/admin/_table_placeholder.html' with colspan=5 message="Seleccione un mes a afectar para cargar las clases." %}
+    {% elif not searched %}
+        {% include 'partials/admin/_table_placeholder.html' with colspan=5 message="No hay clases registradas." %}
+    {% else %}
+        {% include 'partials/admin/_table_placeholder.html' with colspan=5 message="No se encontraron clases para el filtro especificado." %}
+    {% endif %}
+{% endif %}
+
+<select id="periodo-select" name="periodo_id" class="form-input form-select w-full lg:w-[200px] !py-2 !px-4 text-sm" hx-swap-oob="outerHTML:#periodo-select">
+    <option value="">Seleccionar mes...</option>
+    {% for p in periodos_futuros %}
+        <option value="{{ p.id }}" {% if periodo and p.id == periodo.id %}selected{% endif %}>{{ p.nombre }}</option>
+    {% endfor %}
+</select>

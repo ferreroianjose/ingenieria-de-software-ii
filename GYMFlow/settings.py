@@ -213,6 +213,8 @@ VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS = int(
 
 # Cantidad de días previos al inicio del período en que se habilita
 # la preinscripción de abonados para el mes siguiente.
+# Nota: La creación automática de períodos (tareas programadas) se ejecutará
+# con un margen de seguridad de 5 días ANTES de este valor.
 DIAS_PREINSCRIPCION_ABONADOS = int(os.environ.get("DIAS_PREINSCRIPCION_ABONADOS", "10"))
 
 # Si está en True, no abonados pueden anotarse en pre-cola para clases

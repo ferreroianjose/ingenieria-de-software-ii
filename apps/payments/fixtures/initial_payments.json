@@ -15,14 +15,6 @@
       "fecha_fin_periodo": "2026-06-30",
       "apertura_abonados": "2026-05-20",
       "apertura_general": "2026-06-01"
-    },
-    {
-      "nombre": "Julio 2026",
-      "estado": "proximo",
-      "fecha_inicio_periodo": "2026-07-01",
-      "fecha_fin_periodo": "2026-07-31",
-      "apertura_abonados": "2026-06-15",
-      "apertura_general": "2026-07-01"
     }
   ],
   "precios_disciplina": [
@@ -135,12 +127,6 @@
   "creditos": [
     {
       "periodo": "Junio 2026",
-      "usuario_email": "enrique@email.com",
-      "disciplina": "Yoga",
-      "estado": "DISPONIBLE"
-    },
-    {
-      "periodo": "Julio 2026",
       "usuario_email": "enrique@email.com",
       "disciplina": "Yoga",
       "estado": "DISPONIBLE"

@@ -372,12 +372,15 @@ document.body.addEventListener("htmx:beforeRequest", function () {
 });
 
 document.body.addEventListener("htmx:afterRequest", function (evt) {
+	applyHtmxTriggers(evt.detail?.xhr);
+});
+
+document.body.addEventListener("htmx:afterSettle", function (evt) {
 	const spinner = document.getElementById("global-spinner");
 	if (spinner) {
 		spinner.classList.remove("opacity-100");
 		spinner.classList.add("opacity-0");
 	}
-	applyHtmxTriggers(evt.detail?.xhr);
 });
 
 /** POST via HTMX (pause/delete) without a full page navigation. */

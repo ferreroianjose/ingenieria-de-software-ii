@@ -1,11 +1,12 @@
 <form
-    id="class-filters-form"
+    id="{{ custom_id|default:'class-filters-form' }}"
     class="flex flex-col gap-4"
     hx-get="{{ filter_url }}"
-    hx-target="#class-rows-tbody"
+    hx-target="{{ target|default:'#class-rows-tbody' }}"
     hx-swap="innerHTML"
-    hx-trigger="submit"
+    hx-trigger="submit{% if extra_trigger %}, {{ extra_trigger }}{% endif %}"
     hx-on::after-request="if (event.detail.successful) this.setAttribute('data-searched', '1')"
+    {% if extra_include %}hx-include="{{ extra_include }}"{% endif %}
 >
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 [&>div]:grid [&>div]:grid-cols-1 [&>div]:justify-between [&>div]:gap-0">
         <div>
@@ -67,7 +68,7 @@
         </div>
     </div>
     <div class="flex flex-wrap gap-2 justify-end">
-        {% include 'partials/ui/buttons/_secondary_button.html' with label='Limpiar' type='button' class='btn-auto shrink-0 py-2 px-5 text-sm whitespace-nowrap' hx_get=filter_url|add:'?cleared=1' hx_target='#class-rows-tbody' hx_swap='innerHTML' onclick="const f=document.getElementById('class-filters-form'); f.reset(); f.removeAttribute('data-searched');" %}
+        {% include 'partials/ui/buttons/_secondary_button.html' with label='Limpiar' type='button' class='btn-auto shrink-0 py-2 px-5 text-sm whitespace-nowrap' hx_get=filter_url|add:'?cleared=1' hx_target=target|default:'#class-rows-tbody' hx_swap='innerHTML' onclick="const f=this.closest('form'); if(f){ f.reset(); f.removeAttribute('data-searched'); }" %}
         <button
             type="submit"
             class="btn-auto shrink-0 bg-primary-400 hover:bg-primary-600 text-white py-2 px-6 rounded-full font-bold text-sm transition-colors"

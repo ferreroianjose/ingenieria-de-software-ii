@@ -184,16 +184,16 @@ class Command(BaseCommand):
         created = 0
         for row in precios_data:
             disciplina = Disciplina.objects.get(nombre=row["disciplina"])
-            clase_representativa = apps.get_model("classes", "Class").objects.filter(disciplina=disciplina).first()
-            if not clase_representativa:
-                continue
-            _, was_created = PrecioClase.objects.update_or_create(
-                clase=clase_representativa,
-                periodo=periodo,
-                defaults={"monto": Decimal(row["monto"])},
-            )
-            if was_created:
-                created += 1
+            clases = apps.get_model("classes", "Class").objects.filter(disciplina=disciplina)
+            
+            for clase in clases:
+                _, was_created = PrecioClase.objects.update_or_create(
+                    clase=clase,
+                    periodo=periodo,
+                    defaults={"monto": Decimal(row["monto"])},
+                )
+                if was_created:
+                    created += 1
         return created
 
     def _parse_hora(self, hora_str):

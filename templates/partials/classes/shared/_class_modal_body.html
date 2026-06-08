@@ -50,4 +50,22 @@
             {{ modal_form.duracion_minutos }}
         {% endif %}
     </div>
+
+    <div class="space-y-4">
+        <h3>Precio</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-6">
+            <div>
+                <label>{{ modal_form.precio.label }}</label>
+                {{ modal_form.precio }}
+            </div>
+            {% if not modal_form.mes_a_aplicar.is_hidden %}
+            <div>
+                <label>{{ modal_form.mes_a_aplicar.label }}</label>
+                {{ modal_form.mes_a_aplicar }}
+            </div>
+            {% else %}
+                {{ modal_form.mes_a_aplicar }}
+            {% endif %}
+        </div>
+    </div>
 </div>

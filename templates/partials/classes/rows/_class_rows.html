@@ -19,6 +19,7 @@
     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }}</td>
     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.duracion_minutos }} min</td>
     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ clase.cupo_maximo }}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium text-gray-700">{% if clase.precio_actual %}${{ clase.precio_actual|floatformat:'0' }}{% else %}-{% endif %}</td>
     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if clase.estado == 'disponible' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
             {{ clase.get_estado_display }}

@@ -149,6 +149,18 @@ class ClassForm(BaseStyledForm):
         widget=forms.NumberInput(attrs={'placeholder': 'Ej. 20'})
     )
 
+    precio = forms.DecimalField(
+        min_value=0, decimal_places=2, max_digits=10, label='Precio',
+        widget=forms.NumberInput(attrs={'step': '100', 'placeholder': 'Ej. 2500'})
+    )
+
+    mes_a_aplicar = forms.ModelChoiceField(
+        queryset=None, # Set in __init__
+        label='Aplicar desde el mes',
+        required=False,
+        empty_label=None
+    )
+
     class Meta:
         model = Class
         fields = ['disciplina', 'sala', 'profesor', 'dia_semana', 'cupo_maximo']
@@ -175,6 +187,36 @@ class ClassForm(BaseStyledForm):
                 self.fields['sede'].initial = sede_id
         else:
             self.fields['sala'].queryset = Sala.objects.none()
+
+        from apps.payments.models import PeriodoCobro, PrecioClase
+        from django.utils import timezone
+        
+        hoy = timezone.localdate()
+        periodos_futuros = PeriodoCobro.objects.filter(
+            fecha_fin_periodo__gte=hoy
+        ).order_by('fecha_inicio_periodo')
+        
+        self.fields['mes_a_aplicar'].queryset = periodos_futuros
+        
+        if self.instance.pk:
+            self.fields['precio'].label = 'Precio de la clase'
+            from django.urls import reverse
+            self.fields['mes_a_aplicar'].widget.attrs.update({
+                'hx-get': reverse('classes:class_price_for_period', args=[self.instance.pk]),
+                'hx-target': '#id_precio',
+                'hx-swap': 'outerHTML',
+            })
+            if periodos_futuros.exists():
+                primer_futuro = periodos_futuros.first()
+                self.fields['mes_a_aplicar'].initial = primer_futuro.id
+                
+                if not self.data:
+                    precio_obj = PrecioClase.objects.filter(clase=self.instance, periodo=primer_futuro).first()
+                    if precio_obj:
+                        self.fields['precio'].initial = precio_obj.monto
+        else:
+            self.fields['precio'].label = 'Precio inicial'
+            self.fields['mes_a_aplicar'].widget = forms.HiddenInput()
 
         if self.instance.pk and self.instance.duracion and not self.data:
             self.fields['duracion_minutos'].initial = self.instance.duracion_minutos
@@ -309,6 +351,7 @@ class ClassForm(BaseStyledForm):
         return cleaned_data
 
     def save(self, commit=True):
+        is_new = self.instance.pk is None
         instance = super().save(commit=False)
         instance.hora_inicio = self.cleaned_data.get('hora_inicio')
 
@@ -320,6 +363,31 @@ class ClassForm(BaseStyledForm):
 
         if commit:
             instance.save()
+            
+            precio = self.cleaned_data.get('precio')
+            if precio is not None:
+                from apps.payments.models import PeriodoCobro, PrecioClase
+                from django.utils import timezone
+                
+                mes_a_aplicar = self.cleaned_data.get('mes_a_aplicar')
+                
+                if not is_new and mes_a_aplicar:
+                    periodos_a_afectar = PeriodoCobro.objects.filter(
+                        fecha_inicio_periodo__gte=mes_a_aplicar.fecha_inicio_periodo
+                    )
+                else:
+                    hoy = timezone.localdate()
+                    periodos_a_afectar = PeriodoCobro.objects.filter(
+                        fecha_fin_periodo__gte=hoy
+                    )
+                
+                for periodo in periodos_a_afectar:
+                    PrecioClase.objects.update_or_create(
+                        clase=instance,
+                        periodo=periodo,
+                        defaults={'monto': precio}
+                    )
+
         return instance
 
 

@@ -58,6 +58,7 @@ def _hx_ok_or_redirect(
     refresh=None,
     redirect_url=None,
     locations_reload=None,
+    trigger=None,
 ):
     if request.headers.get("HX-Request"):
         return hx_ok(
@@ -68,11 +69,11 @@ def _hx_ok_or_redirect(
             refresh=refresh,
             redirect_url=redirect_url,
             locations_reload=locations_reload,
+            trigger=trigger,
         )
-    if level == "success":
-        messages.success(request, message)
-    else:
-        messages.error(request, message)
+    messages.add_message(
+        request, messages.SUCCESS if level == "success" else messages.ERROR, message
+    )
     return redirect(redirect_to)
 
 
@@ -386,18 +387,41 @@ def _class_rows_context(request):
             "q": "",
         }
     qs = _filter_class_queryset(request)
+    
+    from apps.payments.models import PeriodoCobro, PrecioClase
+    from django.utils import timezone
+    hoy = timezone.localdate()
+    periodo = PeriodoCobro.objects.filter(fecha_fin_periodo__gte=hoy).order_by('fecha_inicio_periodo').first()
+    precios = {p.clase_id: p.monto for p in PrecioClase.objects.filter(periodo=periodo)} if periodo else {}
+    
+    clases = list(qs)
+    for c in clases:
+        c.precio_actual = precios.get(c.id)
+        
     return {
-        "classes": qs,
+        "classes": clases,
         "searched": True,
         "q": request.GET.get("q", ""),
     }
 
 
 def _all_class_rows_context():
+    qs = Class.objects.select_related(
+        "disciplina", "sala", "sala__sede", "profesor"
+    ).order_by("dia_semana", "hora_inicio")
+    
+    from apps.payments.models import PeriodoCobro, PrecioClase
+    from django.utils import timezone
+    hoy = timezone.localdate()
+    periodo = PeriodoCobro.objects.filter(fecha_fin_periodo__gte=hoy).order_by('fecha_inicio_periodo').first()
+    precios = {p.clase_id: p.monto for p in PrecioClase.objects.filter(periodo=periodo)} if periodo else {}
+    
+    clases = list(qs)
+    for c in clases:
+        c.precio_actual = precios.get(c.id)
+        
     return {
-        "classes": Class.objects.select_related(
-            "disciplina", "sala", "sala__sede", "profesor"
-        ).order_by("dia_semana", "hora_inicio"),
+        "classes": clases,
         "searched": True,
         "q": "",
     }
@@ -405,7 +429,7 @@ def _all_class_rows_context():
 
 CLASS_LIST_VIEW_TABS = [
     {"id": "lista", "label": "Listado"},
-    {"id": "cronograma", "label": "Cronograma"},
+    {"id": "precios", "label": "Precios"},
 ]
 
 CATALOG_VIEW_TABS = [
@@ -434,6 +458,174 @@ def class_list(request):
             "class_rows_searched": False,
         },
     )
+
+@admin_required
+def precios_rows(request):
+    from apps.payments.models import PeriodoCobro, PrecioClase
+    from django.utils import timezone
+    hoy = timezone.localdate()
+    
+    periodos_futuros = PeriodoCobro.objects.filter(fecha_fin_periodo__gte=hoy).order_by('fecha_inicio_periodo')
+    periodo_id = request.GET.get('periodo_id')
+    
+    clases_con_precio = []
+    periodo = None
+    
+    if periodo_id:
+        periodo = PeriodoCobro.objects.filter(pk=periodo_id).first()
+        
+    # Check if this is a filter submission or active search
+    is_search = request.headers.get("HX-Trigger") == "precios-filters-form" or any(request.GET.get(k) for k in ['q', 'disciplina', 'sede', 'profesor', 'dia_semana', 'estado'])
+    
+    if periodo or is_search:
+        clases = _filter_class_queryset(request)
+        precios = {p.clase_id: p.monto for p in PrecioClase.objects.filter(periodo=periodo)} if periodo else {}
+        for c in clases:
+            clases_con_precio.append({
+                'clase': c,
+                'precio': precios.get(c.id, '')
+            })
+            
+    return render(
+        request,
+        "partials/classes/rows/_precios_rows.html",
+        {
+            "clases_con_precio": clases_con_precio,
+            "periodo": periodo,
+            "periodos_futuros": periodos_futuros,
+            "periodo_id": periodo_id,
+            "searched": bool(periodo) or is_search,
+        }
+    )
+
+@admin_required
+def apply_mass_price_increase(request):
+    if request.method != "POST":
+        return redirect("classes:class_list")
+        
+    from apps.payments.models import PeriodoCobro, PrecioClase
+    from decimal import Decimal
+    
+    periodo_id = request.POST.get('periodo_id')
+    tipo_aumento = request.POST.get('tipo_aumento', 'porcentaje')
+    porcentaje = request.POST.get('porcentaje')
+    monto_fijo = request.POST.get('monto_fijo')
+    
+    if tipo_aumento == 'porcentaje':
+        monto_fijo = None
+    else:
+        porcentaje = None
+    
+    if not periodo_id or (not porcentaje and not monto_fijo):
+        return _hx_ok_or_redirect(request, message="Faltan parámetros", level="error", redirect_to="classes:class_list")
+        
+    try:
+        porcentaje_val = Decimal(porcentaje) if porcentaje else None
+        monto_fijo_val = Decimal(monto_fijo) if monto_fijo else None
+    except Exception:
+        return _hx_ok_or_redirect(request, message="Valor numérico inválido", level="error", redirect_to="classes:class_list")
+        
+    periodo = PeriodoCobro.objects.filter(pk=periodo_id).first()
+    if not periodo:
+        return _hx_ok_or_redirect(request, message="Período no encontrado", level="error", redirect_to="classes:class_list")
+        
+    # Get affected classes from filters using POST directly since HTMX sends them there
+    clases = _filter_class_queryset(request)
+    clases_ids = list(clases.values_list('id', flat=True))
+    
+    if not clases_ids:
+        return _hx_ok_or_redirect(request, message="No hay clases afectadas por los filtros.", level="info", redirect_to="classes:class_list")
+        
+    actualizados = 0
+    creados = 0
+    precios_existentes = {p.clase_id: p for p in PrecioClase.objects.filter(periodo=periodo, clase_id__in=clases_ids)}
+    
+    for clase_id in clases_ids:
+        p = precios_existentes.get(clase_id)
+        if p:
+            if porcentaje_val:
+                nuevo_monto = p.monto * (Decimal('1') + (porcentaje_val / Decimal('100')))
+                p.monto = round(nuevo_monto)
+                p.save()
+                actualizados += 1
+            elif monto_fijo_val:
+                p.monto = p.monto + monto_fijo_val
+                p.save()
+                actualizados += 1
+        else:
+            # We must create it
+            if monto_fijo_val:
+                # Si es un monto fijo y no tenia precio, simplemente lo creamos si era positivo
+                # O si quieren crear un precio con monto fijo puro.
+                PrecioClase.objects.create(clase_id=clase_id, periodo=periodo, monto=max(Decimal('0'), monto_fijo_val))
+                creados += 1
+            elif porcentaje_val:
+                # Buscamos el precio mas reciente
+                ultimo_precio = PrecioClase.objects.filter(clase_id=clase_id, periodo__fecha_inicio_periodo__lt=periodo.fecha_inicio_periodo).order_by('-periodo__fecha_inicio_periodo').first()
+                base = ultimo_precio.monto if ultimo_precio else Decimal('0')
+                if base > 0:
+                    nuevo_monto = base * (Decimal('1') + (porcentaje_val / Decimal('100')))
+                    PrecioClase.objects.create(clase_id=clase_id, periodo=periodo, monto=max(Decimal('0'), round(nuevo_monto)))
+                    creados += 1
+        
+    if creados > 0:
+        msg = f"Precios actualizados: {actualizados} modificados y {creados} creados para el período {periodo.nombre}."
+    else:
+        msg = f"Precios actualizados: {actualizados} modificados para el período {periodo.nombre}."
+
+    return _hx_ok_or_redirect(
+        request,
+        message=msg,
+        trigger="reloadPrecios",
+        redirect_to="classes:class_list"
+    )
+
+@admin_required
+def save_class_price(request, class_id):
+    from apps.payments.models import PeriodoCobro, PrecioClase
+    
+    periodo_id = request.POST.get('periodo_id')
+    monto = request.POST.get('monto')
+    
+    if not periodo_id or not monto:
+        return HttpResponseBadRequest("Faltan parámetros")
+        
+    periodo = PeriodoCobro.objects.filter(pk=periodo_id).first()
+    clase = Class.objects.filter(pk=class_id).first()
+    
+    if not periodo or not clase:
+        return HttpResponseBadRequest("Clase o período inválido")
+        
+    PrecioClase.objects.update_or_create(
+        clase=clase,
+        periodo=periodo,
+        defaults={'monto': monto}
+    )
+    
+    return HttpResponse(monto) # Return the updated amount to be swapped by HTMX
+
+
+@admin_required
+def class_price_for_period(request, class_id):
+    from apps.payments.models import PeriodoCobro, PrecioClase
+    from .forms import ClassForm
+    from django.http import HttpResponse
+    
+    periodo_id = request.GET.get('mes_a_aplicar')
+    if not periodo_id:
+        return HttpResponse("")
+        
+    periodo = PeriodoCobro.objects.filter(pk=periodo_id).first()
+    clase = Class.objects.filter(pk=class_id).first()
+    
+    precio = None
+    if periodo and clase:
+        precio_obj = PrecioClase.objects.filter(clase=clase, periodo=periodo).first()
+        if precio_obj:
+            precio = precio_obj.monto
+            
+    form = ClassForm(instance=clase, initial={'precio': precio})
+    return HttpResponse(str(form['precio']))
 
 
 @admin_required

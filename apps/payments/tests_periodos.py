@@ -127,3 +127,66 @@ class OcurrenciasClaseSueltaTests(TestCase):
         fechas = [timezone.localdate(dt) for dt, _ in ocurrencias]
         self.assertTrue(all(f >= hoy for f in fechas))
         self.assertTrue(all(f <= hoy + timedelta(days=21) for f in fechas))
+
+
+class CrearSiguientePeriodoTaskTests(TestCase):
+    def setUp(self):
+        from apps.classes.models import Disciplina, Sala, Sede, Teacher, Class
+        from apps.payments.models import PrecioClase
+        
+        self.disciplina = Disciplina.objects.create(nombre="Yoga")
+        self.sede = Sede.objects.create(nombre="Sede 1", direccion="Direccion 1")
+        self.sala = Sala.objects.create(nombre="Sala 1", capacidad=20, sede=self.sede)
+        self.teacher = Teacher.objects.create(nombre="Profe", apellido="Uno")
+        self.clase = Class.objects.create(
+            disciplina=self.disciplina,
+            sala=self.sala,
+            profesor=self.teacher,
+            dia_semana=1,
+            hora_inicio=time(10, 0),
+            duracion=timedelta(hours=1),
+            cupo_maximo=10,
+        )
+        
+        self.periodo_mayo = PeriodoCobro.objects.create(
+            nombre="Mayo 2026",
+            fecha_inicio_periodo=date(2026, 5, 1),
+            fecha_fin_periodo=date(2026, 5, 31),
+            apertura_abonados=date(2026, 4, 20),
+            apertura_general=date(2026, 5, 1),
+        )
+        PrecioClase.objects.create(
+            clase=self.clase,
+            periodo=self.periodo_mayo,
+            monto=1000
+        )
+
+    @patch("django.utils.timezone.localdate")
+    def test_crea_siguiente_periodo_dentro_del_margen(self, mock_localdate):
+        from apps.payments.tasks import crear_siguiente_periodo_si_es_necesario
+        from apps.payments.models import PrecioClase
+        
+        # 15 days before June 1 is May 17. 
+        # If today is May 17, it should create June.
+        mock_localdate.return_value = date(2026, 5, 17)
+        crear_siguiente_periodo_si_es_necesario()
+        
+        self.assertTrue(PeriodoCobro.objects.filter(nombre="Junio 2026").exists())
+        periodo_junio = PeriodoCobro.objects.get(nombre="Junio 2026")
+        
+        self.assertEqual(periodo_junio.fecha_inicio_periodo, date(2026, 6, 1))
+        
+        # Check prices are copied
+        precio_junio = PrecioClase.objects.filter(periodo=periodo_junio, clase=self.clase).first()
+        self.assertIsNotNone(precio_junio)
+        self.assertEqual(precio_junio.monto, 1000)
+
+    @patch("django.utils.timezone.localdate")
+    def test_no_crea_periodo_antes_del_margen(self, mock_localdate):
+        from apps.payments.tasks import crear_siguiente_periodo_si_es_necesario
+        
+        # 16 days before June 1 is May 16. Should not create.
+        mock_localdate.return_value = date(2026, 5, 16)
+        crear_siguiente_periodo_si_es_necesario()
+        
+        self.assertFalse(PeriodoCobro.objects.filter(nombre="Junio 2026").exists())

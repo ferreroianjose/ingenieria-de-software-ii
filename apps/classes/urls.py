@@ -14,6 +14,12 @@ urlpatterns = [
     path("list/<int:class_id>/editar/", views.update_class, name="update_class"),
     path("list/<int:class_id>/delete/", views.delete_class, name="delete_class"),
     path("list/<int:class_id>/toggle-pause/", views.toggle_class_pause, name="toggle_class_pause"),
+    # Precios (admin)
+    path("list/precios/rows/", views.precios_rows, name="precios_rows"),
+    path("list/precios/mass-increase/", views.apply_mass_price_increase, name="apply_mass_price_increase"),
+    path("list/precios/<int:class_id>/save/", views.save_class_price, name="save_class_price"),
+    path("list/precios/<int:class_id>/for-period/", views.class_price_for_period, name="class_price_for_period"),
+
     # Ubicaciones (sedes/salas)
     path("locations/", views.locations_list, name="locations_list"),
     path("locations/salas/rows/", views.sala_rows, name="sala_rows"),

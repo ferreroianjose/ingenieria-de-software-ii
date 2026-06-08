@@ -12,18 +12,25 @@ def hx_ok(
     refresh=None,
     redirect_url=None,
     locations_reload=None,
+    trigger=None,
 ):
     """HTMX success: 204, close modal, show flash via JS, optional list refresh."""
     response = HttpResponse(status=204)
     response['HX-Reswap'] = 'none'
-    trigger = {'adminFlash': {'message': message, 'level': level}}
+    triggers = {'adminFlash': {'message': message, 'level': level}}
     if close_modal:
-        trigger['closeAdminModal'] = close_modal
+        triggers['closeAdminModal'] = close_modal
     if refresh:
-        trigger['adminRefreshList'] = refresh
+        triggers['adminRefreshList'] = refresh
     if locations_reload:
-        trigger['adminLocationsReload'] = locations_reload
-    response['HX-Trigger'] = json.dumps(trigger)
+        triggers['adminLocationsReload'] = locations_reload
+    if trigger:
+        if isinstance(trigger, str):
+            triggers[trigger] = True
+        else:
+            triggers.update(trigger)
+            
+    response['HX-Trigger'] = json.dumps(triggers)
     if redirect_url:
         response['HX-Redirect'] = redirect_url
     return response
