@@ -107,6 +107,14 @@ class CustomUserCreationForm(UserCreationForm):
                 )
         return fecha
 
+    def clean_telefono_emergencia(self):
+        telefono = self.cleaned_data.get("telefono_emergencia")
+        if telefono:
+            import re
+            if not re.match(r'^[\d\+\-\s\(\)]*$', telefono):
+                raise forms.ValidationError("El teléfono no puede contener letras, solo números y los símbolos + o -.")
+        return telefono
+
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -117,6 +125,14 @@ class ProfileUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         apply_required_error_messages(self)
+
+    def clean_telefono_emergencia(self):
+        telefono = self.cleaned_data.get("telefono_emergencia")
+        if telefono:
+            import re
+            if not re.match(r'^[\d\+\-\s\(\)]*$', telefono):
+                raise forms.ValidationError("El teléfono no puede contener letras, solo números y los símbolos + o -.")
+        return telefono
 
 
 class TwoFactorForm(forms.Form):

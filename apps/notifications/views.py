@@ -48,8 +48,8 @@ class TestNotificationView(UserPassesTestMixin, View):
         adapter_slug = request.POST.get('adapter_slug')
         
         if not recipient:
-            messages.error(request, "Recipient is required")
-            return self.get(request)
+            from apps.classes.htmx import hx_ok
+            return hx_ok(request, message="Se requiere un destinatario", level="error")
 
         # Obtenemos resultados del servicio
         raw_results = notification_service.notify(

@@ -1,13 +1,4 @@
 <div id="notification-test-container" class="w-full">
-{% if messages %}
-    <div class="w-full space-y-2 mb-4">
-        {% for message in messages %}
-            <div class="p-4 rounded-xl bg-gray-100 text-sm font-bold">
-                {{ message }}
-            </div>
-        {% endfor %}
-    </div>
-{% endif %}
 
 <form hx-post="{% url 'test-notifications' %}" 
       hx-target="#notification-test-container" 

@@ -44,7 +44,10 @@ def update_profile(request):
             form.save()
             messages.success(request, "Teléfono de emergencia actualizado.")
         else:
-            messages.error(request, "Error al actualizar el teléfono de emergencia.")
+            error_msg = "Error al actualizar el teléfono de emergencia."
+            if form.errors:
+                error_msg = list(form.errors.values())[0][0]
+            messages.error(request, error_msg)
     return redirect("settings")
 
 
