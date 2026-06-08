@@ -258,7 +258,7 @@ class Command(BaseCommand):
             ):
                 continue
 
-            Inscripcion.objects.create(
+            insc = Inscripcion.objects.create(
                 usuario=usuario,
                 clase=clase,
                 periodo=periodo,
@@ -266,6 +266,21 @@ class Command(BaseCommand):
                 estado=row.get("estado", Inscripcion.Estado.PENDIENTE_PAGO),
             )
             created += 1
+
+            # Auto-generate occurrences for the fixture
+            if insc.tipo == Inscripcion.Tipo.MENSUAL:
+                from apps.classes.ocurrencias import generar_ocurrencias_mensual
+                generar_ocurrencias_mensual(insc)
+            elif insc.tipo == Inscripcion.Tipo.CLASE_SUELTA:
+                from apps.classes.ocurrencias import crear_ocurrencia_suelta
+                from apps.classes.services import ocurrencias_clase_en_ventana
+                fechas_v = ocurrencias_clase_en_ventana(clase)
+                fechas = [dt for dt, p in fechas_v if p.id == periodo.id]
+                if not fechas:
+                    fechas = [dt for dt, p in fechas_v]
+                if fechas:
+                    # Target the first valid future date
+                    crear_ocurrencia_suelta(insc, fechas[0])
         return created
 
     def _load_pagos(

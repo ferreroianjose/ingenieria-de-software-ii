@@ -111,7 +111,7 @@
       "sala": "Sala Power",
       "dia_semana": 0,
       "hora": "19:00",
-      "tipo": "MENSUAL",
+      "tipo": "CLASE_SUELTA",
       "estado": "RESERVADA"
     },
     {
@@ -123,7 +123,7 @@
       "dia_semana": 0,
       "hora": "19:00",
       "tipo": "CLASE_SUELTA",
-      "estado": "PENDIENTE_PAGO"
+      "estado": "RESERVADA"
     },
     {
       "periodo": "Junio 2026",
