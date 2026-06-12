@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "postinstall": "node scripts/copy-vendors.js",
     "tw:build": "npx @tailwindcss/cli -i ./styles/input.css -o ./static/css/tailwind.css --minify",
     "tw:watch": "npx @tailwindcss/cli -i ./styles/input.css -o ./static/css/tailwind.css --watch"
   },
@@ -8,6 +9,8 @@
     "tailwindcss": "^4.3.0"
   },
   "dependencies": {
+    "air-datepicker": "^3.5.0",
+    "bootstrap-icons": "^1.11.3",
     "chart.js": "^4.5.1"
   }
 }
