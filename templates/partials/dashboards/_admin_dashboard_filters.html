@@ -1,0 +1,55 @@
+<div
+    role="tablist"
+    class="admin-segmented relative z-0"
+    aria-label="Filtro temporal"
+    x-data="{
+        isResizing: false,
+        resizeTimer: null,
+        moveSlider(btn) {
+            if (!btn) return;
+            this.$refs.slider.style.transform = 'translateX(' + btn.offsetLeft + 'px)';
+            this.$refs.slider.style.width = btn.offsetWidth + 'px';
+        },
+        handleResize() {
+            this.isResizing = true;
+            this.moveSlider(this.$el.querySelector('[aria-selected=true]'));
+            clearTimeout(this.resizeTimer);
+            this.resizeTimer = setTimeout(() => { this.isResizing = false; }, 150);
+        }
+    }"
+    x-init="$nextTick(() => {
+        const active = $el.querySelector('[aria-selected=true]') || $el.querySelector('button');
+        moveSlider(active);
+    })"
+    @resize.window="handleResize()"
+>
+    <div
+        x-ref="slider"
+        class="absolute top-1 bottom-1 left-0 z-0 flex flex-col justify-end overflow-hidden rounded-full bg-black shadow-[inset_0_0_4px_rgba(255,255,255,1),0_0_12px_rgba(255,0,255,0.5)] ring-1 ring-inset ring-white/7"
+        :class="isResizing ? 'transition-none' : 'transition-all duration-300 ease-out'"
+    ></div>
+
+    <button type="button" role="tab"
+        @click="setRango('este_mes'); moveSlider($event.currentTarget)"
+        :aria-selected="rango === 'este_mes'"
+        :class="rango === 'este_mes' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+        class="relative z-10 bg-transparent">Este mes</button>
+
+    <button type="button" role="tab"
+        @click="setRango('ultimos_30'); moveSlider($event.currentTarget)"
+        :aria-selected="rango === 'ultimos_30'"
+        :class="rango === 'ultimos_30' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+        class="relative z-10 bg-transparent">Últ. 30 días</button>
+
+    <button type="button" role="tab"
+        @click="setRango('este_anio'); moveSlider($event.currentTarget)"
+        :aria-selected="rango === 'este_anio'"
+        :class="rango === 'este_anio' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+        class="relative z-10 bg-transparent">Este año</button>
+
+    <button type="button" role="tab"
+        @click="setRango('todo'); moveSlider($event.currentTarget)"
+        :aria-selected="rango === 'todo'"
+        :class="rango === 'todo' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+        class="relative z-10 bg-transparent">Todo</button>
+</div>

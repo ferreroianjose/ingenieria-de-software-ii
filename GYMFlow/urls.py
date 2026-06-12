@@ -40,4 +40,7 @@ urlpatterns = [
 
     # Módulo de clases
     path("classes/", include("apps.classes.urls")),
+
+    # Módulo de reportes/métricas
+    path("reports/", include("apps.reports.urls")),
 ]

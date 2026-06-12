@@ -1,26 +1,311 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Panel de Administración{% endblock %}
+{% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<div class="internal-page">
-  <div class="internal-page__content flex flex-col items-center justify-center min-h-[70vh] gap-8 text-center">
+<div class="internal-page" x-data="adminDashboard()">
 
-    <div class="flex flex-col items-center gap-4">
-      <div class="size-20 rounded-full bg-black border border-primary-700/40 flex items-center justify-center shadow-fair-lg">
-        <svg class="size-10 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z" />
-        </svg>
-      </div>
+    <!-- Tooltip global: fuera de admin-panel (overflow:hidden). Usa :style puro para evitar conflicto entre x-show y style inline. -->
+    <div
+        :style="`display:${tip.show?'block':'none'};position:fixed;left:${tip.x}px;top:${tip.y}px;transform:translate(-50%,calc(-100% - 10px));z-index:9999;max-width:14rem;padding:8px 12px;font-size:0.75rem;line-height:1.6;color:#fff;background:rgba(17,24,39,.93);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);pointer-events:none;`"
+        x-text="tip.text"
+    ></div>
 
-      <div>
-        <p class="text-xs font-black uppercase tracking-widest text-primary-400/80 mb-2">Panel de Administración</p>
-        <h1 class="text-4xl lg:text-5xl font-black uppercase tracking-tighter text-secondary-900">
-          En construcción
-        </h1>
-      </div>
+    <div class="internal-page__content flex flex-col gap-6">
+
+        {% include 'partials/admin/_admin_page_header.html' with title="Dashboard" subtitle="Métricas generales del gimnasio." actions_template="partials/dashboards/_admin_dashboard_filters.html" %}
+
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        {# PANEL 1 — INGRESOS                                                  #}
+        {# KPIs: Total del período · Promedio por sesión                        #}
+        {# Gráfico: línea de evolución mensual                                  #}
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        <section>
+            <div class="admin-panel">
+
+                <div class="admin-panel__toolbar">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Ingresos del período</p>
+                    <div class="grid grid-cols-2 gap-4">
+
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.total_ingresos">—</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400">total del período</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Suma de todos los pagos completados en el período seleccionado." %}
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.ingreso_promedio">—</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400">promedio / sesión</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Ingresos promedio recaudados por cada sesión de clase dictada en el período." %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div class="h-72 w-full">
+                        <canvas id="chartIngresos"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        {# PANEL 2 — CONCURRENCIA (dos paneles en grilla)                      #}
+        {# Gráfico A: Clases más concurridas (barras horizontales)              #}
+        {# Gráfico B: Horarios más concurridos (barras verticales + selector)   #}
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Clases más concurridas</p>
+                </div>
+                <div class="p-6">
+                    <div class="h-64 w-full">
+                        <canvas id="chartClases"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-panel">
+                {# flex-wrap solo en mobile; en sm+ siempre en una línea #}
+                <div class="admin-panel__toolbar flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 shrink-0">Horarios más concurridos</p>
+                    <select x-model="agruparHorario" @change="fetchData()"
+                            class="form-input form-select py-1! px-3! text-xs rounded-lg! w-full sm:w-auto">
+                        <option value="hora">Por Hora</option>
+                        <option value="dia_hora">Por Día y Hora</option>
+                    </select>
+                </div>
+                <div class="p-6">
+                    <div class="h-64 w-full">
+                        <canvas id="chartHorarios"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        {# PANEL 3 — ASISTENCIA                                                #}
+        {# KPIs: Asistencias activas · Ocupación promedio · Cancelaciones       #}
+        {# Gráfico: dona activas vs. canceladas                                 #}
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        <section>
+            <div class="admin-panel">
+
+                <div class="admin-panel__toolbar">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Asistencia</p>
+                    <div class="grid grid-cols-3 gap-4">
+
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.total_activas">—</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400">activas</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Inscripciones activas (no canceladas) registradas en el período." %}
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.ocupacion_promedio">—</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400">ocupación</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Porcentaje de lugares ocupados sobre el cupo máximo de las clases dictadas." %}
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.total_cancelaciones">—</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400">canceladas</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Inscripciones canceladas por el usuario o el administrador en el período." %}
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="p-6 flex justify-center">
+                    <div class="h-72 w-full max-w-sm">
+                        <canvas id="chartCancelaciones"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
     </div>
-
-  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendors/chart.js/chart.umd.js' %}"></script>
+<script>
+    // Instancias de Chart.js fuera del scope reactivo de Alpine para evitar
+    // que el Proxy de Alpine las envuelva y cause un stack overflow.
+    const _charts = {};
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('adminDashboard', () => ({
+            rango: 'este_mes',
+            agruparHorario: 'hora',
+            summary: {
+                total_ingresos:      '—',
+                ingreso_promedio:    '—',
+                total_activas:       '—',
+                ocupacion_promedio:  '—',
+                total_cancelaciones: '—',
+            },
+
+            // ── Tooltip global ──────────────────────────────────────────────
+            // Renderizado fuera de admin-panel (que tiene overflow:hidden),
+            // por lo que no puede ser cortado por ningún contenedor.
+            tip: { show: false, text: '', x: 0, y: 0 },
+
+            showTip(el, text) {
+                const r = el.getBoundingClientRect();
+                this.tip.x    = r.left + r.width / 2;
+                this.tip.y    = r.top;
+                this.tip.text = text;
+                this.tip.show = true;
+            },
+            hideTip() {
+                this.tip.show = false;
+            },
+            toggleTip(el, text) {
+                if (this.tip.show && this.tip.text === text) {
+                    this.tip.show = false;
+                } else {
+                    this.showTip(el, text);
+                }
+            },
+            // ───────────────────────────────────────────────────────────────
+
+            init() {
+                this._initCharts();
+                this.fetchData();
+            },
+
+            setRango(r) {
+                this.rango = r;
+                this.fetchData();
+            },
+
+            async fetchData() {
+                try {
+                    const res = await fetch(`/reports/api/metrics/?rango=${this.rango}&agrupar_horario=${this.agruparHorario}`);
+                    if (!res.ok) return;
+                    const d = await res.json();
+                    this.summary = d.summary;
+                    this._update('chartIngresos',      d.dinero_ganado);
+                    this._update('chartClases',         d.clases_concurridas);
+                    this._update('chartHorarios',       d.horarios_concurridos);
+                    this._update('chartCancelaciones',  d.cancelaciones);
+                } catch (e) { console.error('Error al cargar métricas:', e); }
+            },
+
+            _update(id, data) {
+                const c = _charts[id];
+                if (!c) return;
+                c.data.labels           = data.labels || [];
+                c.data.datasets[0].data = data.data   || [];
+                c.update();
+            },
+
+            _initCharts() {
+                Chart.defaults.font.family                      = 'Inter, ui-sans-serif, system-ui, sans-serif';
+                Chart.defaults.color                            = '#9ca3af';
+                Chart.defaults.plugins.legend.labels.boxWidth  = 12;
+                Chart.defaults.plugins.legend.labels.padding   = 16;
+                Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(17,24,39,.92)';
+                Chart.defaults.plugins.tooltip.titleColor      = '#fff';
+                Chart.defaults.plugins.tooltip.bodyColor       = '#d1d5db';
+                Chart.defaults.plugins.tooltip.padding         = 10;
+                Chart.defaults.plugins.tooltip.cornerRadius    = 8;
+                Chart.defaults.plugins.tooltip.displayColors   = false;
+
+                const GRID   = '#f3f4f6';
+                const BORDER = '#e5e7eb';
+                const base   = { responsive: true, maintainAspectRatio: false };
+                const scaleX = { grid: { color: GRID }, border: { color: BORDER } };
+                const scaleY = { grid: { color: GRID }, border: { color: BORDER } };
+                const noGrid = { grid: { display: false }, border: { display: false } };
+
+                // ── Ingresos: línea ───────────────────────────────────────────
+                _charts['chartIngresos'] = new Chart(
+                    document.getElementById('chartIngresos').getContext('2d'), {
+                    type: 'line',
+                    data: { labels: [], datasets: [{
+                        label: 'Ingresos', data: [],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99,102,241,.08)',
+                        fill: true, tension: 0.4,
+                        pointRadius: 3, pointHoverRadius: 5,
+                        borderWidth: 2,
+                    }]},
+                    options: { ...base,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { ...noGrid }, y: { ...scaleX } },
+                    },
+                });
+
+                // ── Clases: barras horizontales ───────────────────────────────
+                _charts['chartClases'] = new Chart(
+                    document.getElementById('chartClases').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: [], datasets: [{
+                        label: 'Asistencias', data: [],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 4, borderSkipped: false,
+                    }]},
+                    options: { ...base, indexAxis: 'y',
+                        plugins: { legend: { display: false } },
+                        scales: { x: { ...scaleX }, y: { ...noGrid } },
+                    },
+                });
+
+                // ── Horarios: barras verticales ───────────────────────────────
+                _charts['chartHorarios'] = new Chart(
+                    document.getElementById('chartHorarios').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: [], datasets: [{
+                        label: 'Asistencias', data: [],
+                        backgroundColor: '#10b981',
+                        borderRadius: 4, borderSkipped: false,
+                    }]},
+                    options: { ...base,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ...noGrid, ticks: { autoSkip: true, maxRotation: 45 } },
+                            y: { ...scaleY },
+                        },
+                    },
+                });
+
+                // ── Cancelaciones: dona ───────────────────────────────────────
+                _charts['chartCancelaciones'] = new Chart(
+                    document.getElementById('chartCancelaciones').getContext('2d'), {
+                    type: 'doughnut',
+                    data: { labels: [], datasets: [{
+                        data: [],
+                        backgroundColor: ['#6366f1', '#f43f5e'],
+                        borderWidth: 0,
+                        hoverOffset: 6,
+                    }]},
+                    options: { ...base, cutout: '72%',
+                        plugins: { legend: { position: 'bottom',
+                            labels: { padding: 20, usePointStyle: true } } },
+                    },
+                });
+            },
+        }));
+    });
+</script>
 {% endblock %}
