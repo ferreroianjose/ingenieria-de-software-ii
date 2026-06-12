@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from GYMFlow.access import staff_required
+from apps.core.access import staff_required
 
 
 @login_required

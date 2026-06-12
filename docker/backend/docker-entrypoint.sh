@@ -9,14 +9,8 @@ if [ "$RUN_MIGRATIONS" = "True" ]; then
         && [ "$SKIP_INITIAL_DATA" != "True" ] && [ "$SKIP_INITIAL_DATA" != "true" ]; then
         echo "Development mode detected (DJANGO_DEBUG=True). Loading initial data..."
         
-        echo "Loading initial data for users module..."
-        uv run python manage.py load_initial_users
-
-        echo "Loading initial data for classes module..."
-        uv run python manage.py load_initial_classes
-
-        echo "Loading initial data for payments module..."
-        uv run python manage.py load_initial_payments
+        echo "Seeding development data..."
+        uv run python manage.py seed
     else
         echo "Skipping initial data load."
     fi

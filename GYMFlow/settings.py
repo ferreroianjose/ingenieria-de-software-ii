@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Nuestras Apps
     "corsheaders",  # https://github.com/adamchainz/django-cors-headers
+    "apps.core",  # Utilidades transversales y vistas globales
     "apps.users",  # Módulo de autenticación y gestión de usuarios
     "apps.classes",  # Módulo de gestión de clases e inscripciones
     "apps.payments",  # Módulo de gestion de cobros
@@ -83,7 +84,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.payments.context_processors.cliente_creditos",
-                "GYMFlow.context_processors.page_chrome",
+                "apps.core.context_processors.page_chrome",
             ],
         },
     },

@@ -12,8 +12,8 @@ from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
 
 from apps.notifications.services import notification_service
-from GYMFlow.access import admin_required, staff_required
-from GYMFlow.page_chrome import PAGE_CHROME_LIGHT, merge_page_chrome
+from apps.core.access import admin_required, staff_required
+from apps.core.page_chrome import PAGE_CHROME_LIGHT, merge_page_chrome
 from .forms import (
     CustomUserCreationForm,
     GymAuthenticationForm,

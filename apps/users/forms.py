@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-from GYMFlow.forms import apply_required_error_messages
+from apps.core.forms import apply_required_error_messages
 
 from .validators import NameValidator
 
