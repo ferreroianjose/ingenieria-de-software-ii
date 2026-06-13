@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.db import models
 
-from GYMFlow.forms import apply_required_error_messages
+from apps.core.forms import apply_required_error_messages
 
 from .models import Class, Teacher, Sede, Sala, Disciplina
 

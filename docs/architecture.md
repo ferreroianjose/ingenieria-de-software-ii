@@ -22,6 +22,7 @@
 
 Los módulos (Django Apps) se encuentran en el directorio `apps/`:
 
+- `core/`: Módulo de configuraciones transversales y código global del sistema. Alberga vistas estáticas, formularios genéricos, decoradores de autenticación y scripts como la inicialización de la base de datos.
 - `users/`: Módulo de autenticación y gestión de usuarios. Registros, asignación de roles y desarrollo del MFA para administradores.
 - `classes/`: Módulo de gestión de clases e inscripciones. Configuración de las disciplinas, con sus horarios, profesores y lista de espera. Control de apertura/cierre de inscripciones según el calendario. Sesiones concretas en `InscripcionOcurrencia`.
 - `payments/`: Módulo de gestion de cobros. Integración con MercadoPago para cobros. Gestión de los créditos por cancelaciones anticipadas, reembolsos de seña (clase suelta) y registro de pagos en efectivo en recepción.

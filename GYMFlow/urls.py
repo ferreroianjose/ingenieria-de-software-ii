@@ -18,13 +18,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from . import views
+from apps.core import views as core_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", views.root, name="root"),
-    path("dashboard/", views.dashboard, name="dashboard"),
-    path("faq/", views.faq, name="faq"),
+    path("", core_views.root, name="root"),
+    path("dashboard/", core_views.dashboard, name="dashboard"),
+    path("faq/", core_views.faq, name="faq"),
 
     # Módulo de usuarios
     path("users/", include("apps.users.urls")),
@@ -40,4 +40,7 @@ urlpatterns = [
 
     # Módulo de clases
     path("classes/", include("apps.classes.urls")),
+
+    # Módulo de reportes/métricas
+    path("reports/", include("apps.reports.urls")),
 ]

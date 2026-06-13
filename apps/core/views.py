@@ -4,9 +4,10 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from GYMFlow.page_chrome import (
+from apps.core.page_chrome import (
     PAGE_CHROME_DASHBOARD_CLIENTE,
     PAGE_CHROME_LIGHT,
+    PAGE_CHROME_DARK,
     merge_page_chrome,
 )
 from apps.classes.models import Disciplina, Inscripcion

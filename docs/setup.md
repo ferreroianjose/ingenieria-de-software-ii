@@ -95,27 +95,25 @@ El prefijo `uv run` es necesario para ejecutar los comandos dentro del entorno v
 
 ## Carga de datos iniciales
 
-Los datos iniciales (como usuarios por defecto) se cargan mediante *fixtures* en el directorio `fixtures/` de cada módulo (Django App). Por ejemplo, en `apps/users/fixtures/initial_users.json`.
+Los datos de prueba para desarrollo y se cargan mediante 'seed.py', antes solía hacerse utilizando fixtures de django, pero decidímos centralizar la lógica.
 
-E.g. en el módulo `users`: El comando `load_initial_users` carga usuarios desde el fixture. El comando se ejecuta automáticamente después de las migraciones en `docker/backend/docker-entrypoint.sh`, tras verificar si `DJANGO_DEBUG` está activado.
+El comando se ejecuta automáticamente después de las migraciones en `docker/backend/docker-entrypoint.sh`, tras verificar si `DJANGO_DEBUG` está activado.
 
-Si no usas docker para correrlo, después de `uv run python manage.py migrate`, ejecutá manualmente (en este orden):
+Si no usas docker para correrlo, después de `uv run python manage.py migrate`, ejecutá manualmente:
 
 ```bash
-uv run python manage.py load_initial_users
-uv run python manage.py load_initial_classes
-uv run python manage.py load_initial_payments
+uv run python manage.py seed
 ```
 
-El módulo `payments` carga el período de cobro vigente, precios por disciplina, inscripciones de ejemplo y pagos de demostración.
+El comando generará usuarios, sedes, disciplinas, clases, períodos de cobro (relativos al mes actual), inscripciones, y pagos de demostración de manera idempotente (si los datos ya existen, se omiten).
 
-Para agregar datos iniciales en otro módulo (ej. `classes`):
+Para **reiniciar la base de datos** y volver a cargar los datos desde cero, podés usar el flag `--reset`:
 
-1. Creá un fixture en `apps/classes/fixtures/initial_classes.json`.
-2. Creá un comando en `apps/classes/management/commands/load_initial_classes.py` (copiá el patrón de `users`, adaptando para tus modelos y campos únicos).
-3. Agregá una línea en `docker/backend/docker-entrypoint.sh` (después de las dependencias que necesite tu módulo).
+```bash
+uv run python manage.py seed --reset
+```
 
-De esta forma cada módulo maneja la carga de sus propios datos iniciales de forma idempotente (verifica si ya existen antes de crear, para no duplicar). Así, ese script solo correría durante el desarrollo, y evitamos problemas de migraciones 🥴.
+El código responsable de esta carga se encuentra en `apps/users/management/commands/seed.py`. Si querés modificar o agregar nuevos datos a la demostración, ese es el archivo que debés editar.
 
 ## Pagos de prueba (Mercado Pago)
 

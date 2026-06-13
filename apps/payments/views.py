@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from GYMFlow.access import staff_required
+from apps.core.access import staff_required
 
 from apps.classes import services as class_services
 from apps.classes.flow import build_flow_stepper_context

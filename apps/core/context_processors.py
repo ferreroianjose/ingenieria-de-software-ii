@@ -1,4 +1,4 @@
-from GYMFlow.page_chrome import PAGE_CHROME_ADMIN, PAGE_CHROME_DARK
+from apps.core.page_chrome import PAGE_CHROME_ADMIN, PAGE_CHROME_DARK
 
 
 def page_chrome(request):
