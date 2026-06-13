@@ -28,17 +28,17 @@
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Ingresos del período</p>
                     <div class="grid grid-cols-2 gap-4">
 
-                        <div class="flex flex-col gap-0.5">
+                        <div class="flex flex-col items-center gap-0.5">
                             <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.total_ingresos">—</span>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center justify-center gap-1">
                                 <span class="text-xs text-gray-400">total del período</span>
                                 {% include 'partials/dashboards/_dash_tooltip.html' with tip="Suma de todos los pagos completados en el período seleccionado." %}
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-0.5">
+                        <div class="flex flex-col items-center gap-0.5">
                             <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.ingreso_promedio">—</span>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center justify-center gap-1">
                                 <span class="text-xs text-gray-400">promedio / sesión</span>
                                 {% include 'partials/dashboards/_dash_tooltip.html' with tip="Ingresos promedio recaudados por cada sesión de clase dictada en el período." %}
                             </div>
@@ -107,25 +107,25 @@
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-3">Asistencia</p>
                     <div class="grid grid-cols-3 gap-4">
 
-                        <div class="flex flex-col gap-0.5">
+                        <div class="flex flex-col items-center gap-0.5">
                             <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.total_activas">—</span>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center justify-center gap-1">
                                 <span class="text-xs text-gray-400">activas</span>
                                 {% include 'partials/dashboards/_dash_tooltip.html' with tip="Inscripciones activas (no canceladas) registradas en el período." %}
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-0.5">
+                        <div class="flex flex-col items-center gap-0.5">
                             <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.ocupacion_promedio">—</span>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center justify-center gap-1">
                                 <span class="text-xs text-gray-400">ocupación</span>
                                 {% include 'partials/dashboards/_dash_tooltip.html' with tip="Porcentaje de lugares ocupados sobre el cupo máximo de las clases dictadas." %}
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-0.5">
+                        <div class="flex flex-col items-center gap-0.5">
                             <span class="text-xl font-bold text-gray-900 tabular-nums leading-tight" x-text="summary.total_cancelaciones">—</span>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center justify-center gap-1">
                                 <span class="text-xs text-gray-400">canceladas</span>
                                 {% include 'partials/dashboards/_dash_tooltip.html' with tip="Inscripciones canceladas por el usuario o el administrador en el período." %}
                             </div>
