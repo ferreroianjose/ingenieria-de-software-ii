@@ -16,6 +16,8 @@ def es_admin(user):
 def metrics_api(request):
     rango = request.GET.get('rango', 'este_mes') # este_mes, ultimos_30, este_anio, todo
     agrupar_horario = request.GET.get('agrupar_horario', 'hora') # hora, dia_hora
+    orden_clases = request.GET.get('orden_clases', 'desc')
+    orden_horarios = request.GET.get('orden_horarios', 'desc')
 
     hoy = timezone.now().date()
     from apps.payments.models import PeriodoCobro
@@ -36,11 +38,12 @@ def metrics_api(request):
     pagos = Pago.objects.filter(estado=Pago.Estado.COMPLETADO, periodo_id__in=periodos_ids)
 
     # 1. Clases más concurridas (Top 5)
+    orden_clases_prefix = '' if orden_clases == 'asc' else '-'
     concurridas_qs = (
         ocurrencias.filter(estado=InscripcionOcurrencia.Estado.ACTIVA)
         .values(nombre_disciplina=F('inscripcion__clase__disciplina__nombre'))
         .annotate(total=Count('id'))
-        .order_by('-total')[:5]
+        .order_by(f"{orden_clases_prefix}total")[:5]
     )
     clases_concurridas = {
         "labels": [c['nombre_disciplina'] or 'Sin Disciplina' for c in concurridas_qs],
@@ -52,12 +55,13 @@ def metrics_api(request):
     WEEKDAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
 
     if agrupar_horario == 'dia_hora':
+        orden_horarios_prefix = '' if orden_horarios == 'asc' else '-'
         horarios_qs = (
             horarios_activas
             .annotate(hora=ExtractHour('fecha_clase'), dia=ExtractWeekDay('fecha_clase'))
             .values('dia', 'hora')
             .annotate(total=Count('id'))
-            .order_by('-total')[:10]
+            .order_by(f"{orden_horarios_prefix}total")[:10]
         )
         horarios_labels = []
         horarios_data = []
@@ -68,12 +72,13 @@ def metrics_api(request):
             horarios_labels.append(f"{dia_str} {hora_str}")
             horarios_data.append(h['total'])
     else:
+        orden_horarios_prefix = '' if orden_horarios == 'asc' else '-'
         horarios_qs = (
             horarios_activas
             .annotate(hora=ExtractHour('fecha_clase'))
             .values('hora')
             .annotate(total=Count('id'))
-            .order_by('hora')
+            .order_by(f"{orden_horarios_prefix}total")
         )
         horarios_labels = [f"{h['hora']:02d}:00" for h in horarios_qs if h['hora'] is not None]
         horarios_data = [h['total'] for h in horarios_qs if h['hora'] is not None]

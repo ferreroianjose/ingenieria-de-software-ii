@@ -66,8 +66,25 @@
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
             <div class="admin-panel">
-                <div class="admin-panel__toolbar">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Clases más concurridas</p>
+                <div class="admin-panel__toolbar flex flex-wrap items-center justify-end gap-3">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 min-w-0 mr-auto"
+                       x-text="ordenClases === 'desc' ? 'Clases más concurridas' : 'Clases menos concurridas'"></p>
+                    <div role="tablist" class="admin-segmented relative z-0 p-0.5! inline-flex w-auto self-start sm:self-auto shrink-0 rounded-2xl! sm:rounded-lg!"
+                         x-data="{
+                             isResizing: false, resizeTimer: null,
+                             moveSlider(btn) { if(!btn) return; this.$refs.slider.style.transform = `translateX(${btn.offsetLeft}px)`; this.$refs.slider.style.width = `${btn.offsetWidth}px`; },
+                             handleResize() { this.isResizing = true; this.moveSlider(this.$el.querySelector('[aria-selected=true]')); clearTimeout(this.resizeTimer); this.resizeTimer = setTimeout(() => { this.isResizing = false; }, 150); }
+                         }"
+                         x-init="$nextTick(() => moveSlider($el.querySelector('[aria-selected=true]')))"
+                         @resize.window="handleResize()">
+                        <div x-ref="slider" class="absolute top-0.5 bottom-0.5 left-0 z-0 bg-black shadow-[inset_0_0_4px_rgba(255,255,255,1),0_0_12px_rgba(255,0,255,0.5)] ring-1 ring-inset ring-white/7 rounded-[14px]! sm:rounded-md!" :class="isResizing ? 'transition-none' : 'transition-all duration-300 ease-out'"></div>
+                        <button type="button" role="tab" @click="ordenClases = 'desc'; moveSlider($event.currentTarget); fetchData()" :aria-selected="ordenClases === 'desc'"
+                                :class="ordenClases === 'desc' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+                                class="relative z-10 bg-transparent py-1! px-3! md:p-1! md:px-3! text-xs! md:text-xs! min-w-0! md:min-w-0! rounded-[14px]! sm:rounded-md!">Más</button>
+                        <button type="button" role="tab" @click="ordenClases = 'asc'; moveSlider($event.currentTarget); fetchData()" :aria-selected="ordenClases === 'asc'"
+                                :class="ordenClases === 'asc' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+                                class="relative z-10 bg-transparent py-1! px-3! md:p-1! md:px-3! text-xs! md:text-xs! min-w-0! md:min-w-0! rounded-[14px]! sm:rounded-md!">Menos</button>
+                    </div>
                 </div>
                 <div class="p-6">
                     <div class="h-64 w-full">
@@ -78,13 +95,30 @@
 
             <div class="admin-panel">
                 {# flex-wrap solo en mobile; en sm+ siempre en una línea #}
-                <div class="admin-panel__toolbar flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 shrink-0">Horarios más concurridos</p>
+                <div class="admin-panel__toolbar flex flex-wrap items-center justify-end gap-3">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 min-w-0 mr-auto"
+                       x-text="ordenHorarios === 'desc' ? 'Horarios más concurridos' : 'Horarios menos concurridos'"></p>
                     <select x-model="agruparHorario" @change="fetchData()"
-                            class="form-input form-select py-1! px-3! text-xs rounded-lg! w-full sm:w-auto">
+                            class="form-input form-select py-1! pl-2.5! pr-6! bg-[position:right_0.25rem_center]! text-xs rounded-2xl! sm:rounded-lg! w-auto shrink-0 min-w-0">
                         <option value="hora">Por Hora</option>
                         <option value="dia_hora">Por Día y Hora</option>
                     </select>
+                    <div role="tablist" class="admin-segmented relative z-0 p-0.5! inline-flex w-auto shrink-0 rounded-2xl! sm:rounded-lg!"
+                             x-data="{
+                                 isResizing: false, resizeTimer: null,
+                                 moveSlider(btn) { if(!btn) return; this.$refs.slider.style.transform = `translateX(${btn.offsetLeft}px)`; this.$refs.slider.style.width = `${btn.offsetWidth}px`; },
+                                 handleResize() { this.isResizing = true; this.moveSlider(this.$el.querySelector('[aria-selected=true]')); clearTimeout(this.resizeTimer); this.resizeTimer = setTimeout(() => { this.isResizing = false; }, 150); }
+                             }"
+                             x-init="$nextTick(() => moveSlider($el.querySelector('[aria-selected=true]')))"
+                             @resize.window="handleResize()">
+                            <div x-ref="slider" class="absolute top-0.5 bottom-0.5 left-0 z-0 bg-black shadow-[inset_0_0_4px_rgba(255,255,255,1),0_0_12px_rgba(255,0,255,0.5)] ring-1 ring-inset ring-white/7 rounded-[14px]! sm:rounded-md!" :class="isResizing ? 'transition-none' : 'transition-all duration-300 ease-out'"></div>
+                            <button type="button" role="tab" @click="ordenHorarios = 'desc'; moveSlider($event.currentTarget); fetchData()" :aria-selected="ordenHorarios === 'desc'"
+                                    :class="ordenHorarios === 'desc' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+                                    class="relative z-10 bg-transparent py-1! px-3! md:p-1! md:px-3! text-xs! md:text-xs! min-w-0! md:min-w-0! rounded-[14px]! sm:rounded-md!">Más</button>
+                            <button type="button" role="tab" @click="ordenHorarios = 'asc'; moveSlider($event.currentTarget); fetchData()" :aria-selected="ordenHorarios === 'asc'"
+                                    :class="ordenHorarios === 'asc' ? 'text-primary-400' : 'text-gray-600 hover:text-gray-900'"
+                                    class="relative z-10 bg-transparent py-1! px-3! md:p-1! md:px-3! text-xs! md:text-xs! min-w-0! md:min-w-0! rounded-[14px]! sm:rounded-md!">Menos</button>
+                        </div>
                 </div>
                 <div class="p-6">
                     <div class="h-64 w-full">
@@ -158,6 +192,8 @@
         Alpine.data('adminDashboard', () => ({
             rango: 'este_mes',
             agruparHorario: 'hora',
+            ordenClases: 'desc',
+            ordenHorarios: 'desc',
             summary: {
                 total_ingresos:      '—',
                 ingreso_promedio:    '—',
@@ -202,7 +238,7 @@
 
             async fetchData() {
                 try {
-                    const res = await fetch(`/reports/api/metrics/?rango=${this.rango}&agrupar_horario=${this.agruparHorario}`);
+                    const res = await fetch(`/reports/api/metrics/?rango=${this.rango}&agrupar_horario=${this.agruparHorario}&orden_clases=${this.ordenClases}&orden_horarios=${this.ordenHorarios}`);
                     if (!res.ok) return;
                     const d = await res.json();
                     this.summary = d.summary;
