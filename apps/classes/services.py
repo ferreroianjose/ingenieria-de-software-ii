@@ -10,6 +10,7 @@ from .exceptions import (
     CancelacionMensualNoPermitida,
     ClaseNoDisponible,
     ClaseNoEncontrada,
+    ConflictoHorario,
     InscripcionDuplicada,
     InscripcionNoEncontrada,
     InscripcionYaCancelada,
@@ -260,6 +261,39 @@ def cupo_disponible(clase, fecha=None, periodo=None):
     return max(_cupo_en_fecha(dt) for dt in fechas_ventana)
 
 
+def _horario_objetivo(clase, fecha_clase=None):
+    """(día de semana, hora de inicio) del horario que se busca reservar."""
+    if fecha_clase:
+        local = timezone.localtime(fecha_clase)
+        return local.weekday(), local.time()
+    return clase.dia_semana, clase.hora_inicio
+
+
+def usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=None):
+    """True si el usuario ya tiene una clase activa (de cualquier disciplina) en ese día y horario."""
+    inscripciones = (
+        Inscripcion.objects.filter(usuario=usuario)
+        .exclude(estado=Inscripcion.Estado.CANCELADA)
+        .select_related("clase")
+        .prefetch_related("ocurrencias")
+    )
+    for inscripcion in inscripciones:
+        clase = inscripcion.clase
+        if excluir_clase_id and clase.id == excluir_clase_id:
+            continue
+        if inscripcion.tipo == Inscripcion.Tipo.MENSUAL:
+            if clase.dia_semana == dia_semana and clase.hora_inicio == hora_inicio:
+                return True
+        else:
+            for ocurrencia in inscripcion.ocurrencias.all():
+                if ocurrencia.estado != InscripcionOcurrencia.Estado.ACTIVA:
+                    continue
+                local = timezone.localtime(ocurrencia.fecha_clase)
+                if local.weekday() == dia_semana and local.time() == hora_inicio:
+                    return True
+    return False
+
+
 def validar_intencion_inscripcion(
     usuario, clase_id, periodo, tipo, fecha_clase=None, permitir_sin_cupo=False
 ):
@@ -283,6 +317,9 @@ def validar_intencion_inscripcion(
             raise ReservaError("Elegí la fecha de la clase para continuar.")
         if not fecha_clase_elegible(clase, fecha_clase):
             raise ReservaError("La fecha elegida no está disponible para inscripción.")
+        dia_semana, hora_inicio = _horario_objetivo(clase, fecha_clase)
+        if usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=clase.id):
+            raise ConflictoHorario()
         from apps.payments.periodos import periodo_conteniendo_fecha
 
         periodo_fecha = periodo_conteniendo_fecha(timezone.localdate(fecha_clase))
@@ -322,6 +359,9 @@ def validar_intencion_inscripcion(
             raise ReservaError(
                 "No quedan clases de este horario en el mes elegido."
             )
+        dia_semana, hora_inicio = _horario_objetivo(clase)
+        if usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=clase.id):
+            raise ConflictoHorario()
         existing = (
             Inscripcion.objects.filter(
                 usuario=usuario, clase=clase, periodo=periodo, tipo=tipo
@@ -393,6 +433,9 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
                 if existing:
                     raise InscripcionDuplicada(existing)
         else:
+            dia_semana, hora_inicio = _horario_objetivo(clase)
+            if usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=clase.id):
+                raise ConflictoHorario()
             dup_filter = dict(usuario=usuario, clase=clase, periodo=periodo, tipo=tipo)
             existing = (
                 Inscripcion.objects.filter(**dup_filter)
