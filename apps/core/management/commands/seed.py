@@ -820,19 +820,34 @@ class Command(BaseCommand):
                 tipo=tipo,
                 estado=estado,
             )
-            # Genera ocurrencias automáticamente
+            # Override auto_now_add
+            fecha_ins = timezone.now().replace(
+                year=periodo.fecha_inicio_periodo.year,
+                month=periodo.fecha_inicio_periodo.month,
+                day=1, hour=9, minute=0, second=0
+            )
+            Inscripcion.objects.filter(pk=insc.pk).update(fecha_inscripcion=fecha_ins)
+            # Genera ocurrencias automáticamente (ignorando limitación temporal del sistema)
+            from apps.classes.models import InscripcionOcurrencia
             if tipo == Inscripcion.Tipo.MENSUAL:
-                from apps.classes.ocurrencias import generar_ocurrencias_mensual
-                generar_ocurrencias_mensual(insc)
+                from apps.classes.services import ocurrencias_detalle_en_periodo
+                fechas = ocurrencias_detalle_en_periodo(clase, periodo, desde_fecha=periodo.fecha_inicio_periodo)
+                InscripcionOcurrencia.objects.bulk_create([
+                    InscripcionOcurrencia(
+                        inscripcion=insc,
+                        fecha_clase=fecha,
+                        estado=InscripcionOcurrencia.Estado.ACTIVA,
+                    ) for fecha in fechas
+                ])
             elif tipo == Inscripcion.Tipo.CLASE_SUELTA:
-                from apps.classes.ocurrencias import crear_ocurrencia_suelta
-                from apps.classes.services import ocurrencias_clase_en_ventana
-                fechas_v = ocurrencias_clase_en_ventana(clase)
-                fechas = [dt for dt, p in fechas_v if p.id == periodo.id]
-                if not fechas:
-                    fechas = [dt for dt, p in fechas_v]
+                from apps.classes.services import ocurrencias_detalle_en_periodo
+                fechas = ocurrencias_detalle_en_periodo(clase, periodo, desde_fecha=periodo.fecha_inicio_periodo)
                 if fechas:
-                    crear_ocurrencia_suelta(insc, fechas[0])
+                    InscripcionOcurrencia.objects.create(
+                        inscripcion=insc,
+                        fecha_clase=fechas[0],
+                        estado=InscripcionOcurrencia.Estado.ACTIVA,
+                    )
             return insc
 
         def crear_pago(usuario, periodo, monto, metodo, estado, inscripciones_montos=None):
@@ -848,6 +863,13 @@ class Command(BaseCommand):
                 usuario=usuario, periodo=periodo,
                 monto=monto, metodo=metodo, estado=estado,
             )
+            # Override auto_now_add
+            fecha_pg = timezone.now().replace(
+                year=periodo.fecha_inicio_periodo.year,
+                month=periodo.fecha_inicio_periodo.month,
+                day=5, hour=10, minute=0, second=0
+            )
+            Pago.objects.filter(pk=pago.pk).update(fecha_pago=fecha_pg)
             if inscripciones_montos:
                 for insc, monto_aplicado in inscripciones_montos:
                     PagoInscripcion.objects.get_or_create(

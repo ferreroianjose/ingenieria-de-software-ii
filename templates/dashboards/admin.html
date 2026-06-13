@@ -47,9 +47,11 @@
                     </div>
                 </div>
 
-                <div class="p-6">
-                    <div class="h-72 w-full">
-                        <canvas id="chartIngresos"></canvas>
+                <div x-show="rango !== 'este_mes'" x-collapse.duration.600ms>
+                    <div class="p-6">
+                        <div class="h-72 w-full">
+                            <canvas id="chartIngresos"></canvas>
+                        </div>
                     </div>
                 </div>
 

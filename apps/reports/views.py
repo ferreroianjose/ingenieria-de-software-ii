@@ -17,26 +17,25 @@ def metrics_api(request):
     rango = request.GET.get('rango', 'este_mes') # este_mes, ultimos_30, este_anio, todo
     agrupar_horario = request.GET.get('agrupar_horario', 'hora') # hora, dia_hora
 
-    hoy = timezone.now()
-    fecha_inicio = None
+    hoy = timezone.now().date()
+    from apps.payments.models import PeriodoCobro
+    periodos = PeriodoCobro.objects.all()
 
     if rango == 'este_mes':
-        fecha_inicio = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        periodos = periodos.filter(fecha_inicio_periodo__lte=hoy, fecha_fin_periodo__gte=hoy)
     elif rango == 'ultimos_30':
-        fecha_inicio = hoy - timedelta(days=30)
+        hace_30 = hoy - timedelta(days=30)
+        periodos = periodos.filter(fecha_fin_periodo__gte=hace_30, fecha_inicio_periodo__lte=hoy)
     elif rango == 'este_anio':
-        fecha_inicio = hoy.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        periodos = periodos.filter(fecha_inicio_periodo__year=hoy.year)
+
+    periodos_ids = list(periodos.values_list('id', flat=True))
 
     # Base queries
-    ocurrencias = InscripcionOcurrencia.objects.all()
-    pagos = Pago.objects.filter(estado=Pago.Estado.COMPLETADO)
-
-    if fecha_inicio:
-        ocurrencias = ocurrencias.filter(fecha_clase__gte=fecha_inicio, fecha_clase__lte=hoy)
-        pagos = pagos.filter(fecha_pago__gte=fecha_inicio, fecha_pago__lte=hoy)
+    ocurrencias = InscripcionOcurrencia.objects.filter(inscripcion__periodo_id__in=periodos_ids)
+    pagos = Pago.objects.filter(estado=Pago.Estado.COMPLETADO, periodo_id__in=periodos_ids)
 
     # 1. Clases más concurridas (Top 5)
-    # Consideramos las asistencias 'ACTIVAS'
     concurridas_qs = (
         ocurrencias.filter(estado=InscripcionOcurrencia.Estado.ACTIVA)
         .values(nombre_disciplina=F('inscripcion__clase__disciplina__nombre'))
@@ -50,17 +49,15 @@ def metrics_api(request):
 
     # 2. Horarios más concurridos
     horarios_activas = ocurrencias.filter(estado=InscripcionOcurrencia.Estado.ACTIVA)
-    
     WEEKDAYS_ES = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]
 
     if agrupar_horario == 'dia_hora':
-        # En Django, ExtractWeekDay retorna 1 (Domingo) a 7 (Sábado)
         horarios_qs = (
             horarios_activas
             .annotate(hora=ExtractHour('fecha_clase'), dia=ExtractWeekDay('fecha_clase'))
             .values('dia', 'hora')
             .annotate(total=Count('id'))
-            .order_by('-total')[:10]  # Top 10 para no saturar si hay muchos
+            .order_by('-total')[:10]
         )
         horarios_labels = []
         horarios_data = []
@@ -87,19 +84,15 @@ def metrics_api(request):
     }
 
     # 3. Dinero ganado
-    # Agrupamos por mes
     pagos_qs = (
         pagos
-        .annotate(mes=TruncMonth('fecha_pago'))
-        .values('mes')
+        .values('periodo__nombre', 'periodo__fecha_inicio_periodo')
         .annotate(total=Sum('monto'))
-        .order_by('mes')
+        .order_by('periodo__fecha_inicio_periodo')
     )
-    MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
-    
     dinero_ganado = {
-        "labels": [f"{MESES_ES[p['mes'].month - 1]} {p['mes'].year}" for p in pagos_qs if p['mes']],
-        "data": [float(p['total'] or 0) for p in pagos_qs if p['mes']]
+        "labels": [p['periodo__nombre'] for p in pagos_qs],
+        "data": [float(p['total'] or 0) for p in pagos_qs]
     }
 
     # 4. Cancelaciones
@@ -114,9 +107,7 @@ def metrics_api(request):
 
     # Summary Stats
     total_ingresos = pagos.aggregate(total=Sum('monto'))['total'] or 0
-    total_asistencias_activas = total_activas
 
-    # Ocupación Promedio e Ingreso Promedio
     sesiones = (
         ocurrencias.filter(estado=InscripcionOcurrencia.Estado.ACTIVA)
         .values('inscripcion__clase', 'fecha_clase')
