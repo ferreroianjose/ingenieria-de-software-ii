@@ -489,57 +489,50 @@ def _ultimo_dia(año, mes):
 
 def _periodos_relativos_a_hoy():
     """
-    Devuelve dos períodos de cobro relativos a la fecha actual:
-      - 'pasado': el mes calendario anterior al de hoy
-      - 'actual': el mes calendario de hoy
-
-    De esta forma el seed nunca queda desactualizado.
+    Devuelve varios períodos de cobro relativos a la fecha actual:
+      - 'cerrado_X': meses pasados
+      - 'activo': el mes calendario de hoy
+      - 'proximo': el próximo mes
     """
     today = timezone.now().date()
-    año_actual, mes_actual = today.year, today.month
-
-    if mes_actual == 1:
-        año_pasado, mes_pasado = año_actual - 1, 12
-    else:
-        año_pasado, mes_pasado = año_actual, mes_actual - 1
-
-    if mes_actual == 12:
-        año_futuro, mes_futuro = año_actual + 1, 1
-    else:
-        año_futuro, mes_futuro = año_actual, mes_actual + 1
-
-    meses = {
+    meses_nombre = {
         1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
         5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
         9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre",
     }
-
-    return [
-        {
-            "nombre": f"{meses[mes_pasado]} {año_pasado}",
-            "estado": "cerrado",
-            "fecha_inicio_periodo": _primer_dia(año_pasado, mes_pasado),
-            "fecha_fin_periodo": _ultimo_dia(año_pasado, mes_pasado),
-            "apertura_abonados": _primer_dia(año_pasado, mes_pasado) - timedelta(days=15),
-            "apertura_general": _primer_dia(año_pasado, mes_pasado),
-        },
-        {
-            "nombre": f"{meses[mes_actual]} {año_actual}",
-            "estado": "activo",
-            "fecha_inicio_periodo": _primer_dia(año_actual, mes_actual),
-            "fecha_fin_periodo": _ultimo_dia(año_actual, mes_actual),
-            "apertura_abonados": _primer_dia(año_actual, mes_actual) - timedelta(days=15),
-            "apertura_general": _primer_dia(año_actual, mes_actual),
-        },
-        {
-            "nombre": f"{meses[mes_futuro]} {año_futuro}",
-            "estado": "proximo",
-            "fecha_inicio_periodo": _primer_dia(año_futuro, mes_futuro),
-            "fecha_fin_periodo": _ultimo_dia(año_futuro, mes_futuro),
-            "apertura_abonados": _primer_dia(año_futuro, mes_futuro) - timedelta(days=15),
-            "apertura_general": _primer_dia(año_futuro, mes_futuro),
-        },
-    ]
+    
+    periodos = []
+    
+    for delta in range(-4, 2):
+        mes = today.month + delta
+        año = today.year
+        while mes < 1:
+            mes += 12
+            año -= 1
+        while mes > 12:
+            mes -= 12
+            año += 1
+            
+        if delta < 0:
+            estado = f"cerrado_{abs(delta)}"
+        elif delta > 0:
+            estado = "proximo"
+        else:
+            estado = "activo"
+            
+        if delta == -1:
+            estado = "cerrado"
+            
+        periodos.append({
+            "nombre": f"{meses_nombre[mes]} {año}",
+            "estado": estado,
+            "fecha_inicio_periodo": _primer_dia(año, mes),
+            "fecha_fin_periodo": _ultimo_dia(año, mes),
+            "apertura_abonados": _primer_dia(año, mes) - timedelta(days=15),
+            "apertura_general": _primer_dia(año, mes),
+        })
+        
+    return periodos
 
 
 # ---------------------------------------------------------------------------
@@ -882,195 +875,72 @@ class Command(BaseCommand):
         pagos_creados = 0
         creditos_creados = 0
 
-        # ── Período pasado ──
-        if periodo_pasado:
-            juan = get_user("juan.perez@mail.com")
-            clase_funcional_lun = get_clase("Funcional", "Sede Palermo", "Sala Power", 0, time(10, 0))
-            if clase_funcional_lun:
-                insc = crear_inscripcion(
-                    juan, clase_funcional_lun, periodo_pasado,
-                    Inscripcion.Tipo.CLASE_SUELTA, Inscripcion.Estado.RESERVADA,
-                )
-                if insc:
-                    inscripciones_creadas += 1
-                    pago = crear_pago(
-                        juan, periodo_pasado,
-                        PRECIOS_DISCIPLINA["Funcional"] / 2,
-                        Pago.Metodo.MERCADOPAGO, Pago.Estado.COMPLETADO,
-                        [(insc, PRECIOS_DISCIPLINA["Funcional"] / 2)],
-                    )
-                    if pago:
-                        pagos_creados += 1
+        import random
+        random.seed(42)  # Determinismo para el seed
 
-            diego = get_user("diego.torres@mail.com")
-            clase_spinning_dom = get_clase("Spinning", "Sede Belgrano", "Sala Spin", 6, time(11, 0))
-            if clase_spinning_dom:
-                insc_diego = crear_inscripcion(
-                    diego, clase_spinning_dom, periodo_pasado,
-                    Inscripcion.Tipo.MENSUAL, Inscripcion.Estado.RESERVADA,
-                )
-                if insc_diego:
-                    inscripciones_creadas += 1
-                    pago = crear_pago(
-                        diego, periodo_pasado,
-                        PRECIOS_DISCIPLINA["Spinning"],
-                        Pago.Metodo.MERCADOPAGO, Pago.Estado.COMPLETADO,
-                        [(insc_diego, PRECIOS_DISCIPLINA["Spinning"])],
-                    )
-                    if pago:
-                        pagos_creados += 1
+        todos_usuarios = list(User.objects.filter(rol="CLIENTE"))
+        todas_clases = list(Class.objects.select_related('disciplina'))
 
-        # ── Período actual ──
-        if periodo_actual:
-            martin = get_user("martin.lopez@mail.com")
-            clase_yoga_lun = get_clase("Yoga", "Sede Palermo", "Sala Zen", 0, time(7, 0))
-            if clase_yoga_lun:
-                insc = crear_inscripcion(
-                    martin, clase_yoga_lun, periodo_actual,
-                    Inscripcion.Tipo.CLASE_SUELTA, Inscripcion.Estado.PENDIENTE_PAGO,
-                )
-                if insc:
-                    inscripciones_creadas += 1
-
-            sofia = get_user("sofia.ramirez@mail.com")
-            clase_pilates_lun = get_clase("Pilates", "Sede Belgrano", "Sala Flow", 0, time(8, 0))
-            if clase_pilates_lun:
-                insc = crear_inscripcion(
-                    sofia, clase_pilates_lun, periodo_actual,
-                    Inscripcion.Tipo.CLASE_SUELTA, Inscripcion.Estado.PENDIENTE_PAGO,
-                )
-                if insc:
-                    inscripciones_creadas += 1
-                    monto_parcial = PRECIOS_DISCIPLINA["Pilates"] / 2
-                    pago = crear_pago(
-                        sofia, periodo_actual, monto_parcial,
-                        Pago.Metodo.MERCADOPAGO, Pago.Estado.COMPLETADO,
-                        [(insc, monto_parcial)],
-                    )
-                    if pago:
-                        pagos_creados += 1
-
-            # Guadalupe: Múltiples inscripciones en el mismo período, pagadas juntas
-            guadalupe = get_user("guadalupe@email.com")
-            clase_funcional_mar = get_clase("Funcional", "Sede Palermo", "Sala Power", 1, time(10, 0))
-            clase_stretching_mar = get_clase("Stretching", "Sede Belgrano", "Sala Flow", 1, time(20, 0))
-            
-            if clase_funcional_mar and clase_stretching_mar:
-                insc1 = crear_inscripcion(
-                    guadalupe, clase_funcional_mar, periodo_actual,
-                    Inscripcion.Tipo.MENSUAL, Inscripcion.Estado.RESERVADA,
-                )
-                insc2 = crear_inscripcion(
-                    guadalupe, clase_stretching_mar, periodo_actual,
-                    Inscripcion.Tipo.MENSUAL, Inscripcion.Estado.RESERVADA,
-                )
-                if insc1 and insc2:
-                    inscripciones_creadas += 2
-                    monto_total = PRECIOS_DISCIPLINA["Funcional"] + PRECIOS_DISCIPLINA["Stretching"]
-                    pago = crear_pago(
-                        guadalupe, periodo_actual, monto_total,
-                        Pago.Metodo.MERCADOPAGO, Pago.Estado.COMPLETADO,
-                        [(insc1, PRECIOS_DISCIPLINA["Funcional"]), (insc2, PRECIOS_DISCIPLINA["Stretching"])],
-                    )
-                    if pago:
-                        pagos_creados += 1
-
-            # Enrique: Inscrito mensualmente y pagó con saldo a favor / crédito
-            enrique = get_user("enrique@email.com")
-            clase_boxeo_lun = get_clase("Boxeo", "Sede Belgrano", "Sala Box", 0, time(20, 0))
-            if clase_boxeo_lun:
-                insc_enrique = crear_inscripcion(
-                    enrique, clase_boxeo_lun, periodo_actual,
-                    Inscripcion.Tipo.MENSUAL, Inscripcion.Estado.RESERVADA,
-                )
-                if insc_enrique:
-                    inscripciones_creadas += 1
-                    pago = crear_pago(
-                        enrique, periodo_actual, PRECIOS_DISCIPLINA["Boxeo"],
-                        Pago.Metodo.CREDITO, Pago.Estado.COMPLETADO,
-                        [(insc_enrique, PRECIOS_DISCIPLINA["Boxeo"])],
-                    )
-                    if pago:
-                        pagos_creados += 1
-
-            # HIIT lunes 19:00 — llenamos hasta el cupo y más allá (lista de espera)
-            clase_hiit_lun = get_clase("HIIT", "Sede Palermo", "Sala Power", 0, time(19, 0))
-            if clase_hiit_lun:
-                cupo = clase_hiit_lun.cupo_maximo # es 22
-                clientes_hiit = [
-                    "juan.perez@mail.com", "diego.torres@mail.com",
-                    "sofia.ramirez@mail.com", "enrique@email.com",
-                    "guadalupe@email.com", "martin.lopez@mail.com",
-                    "valentina.morales@mail.com", "lucas.fernandez@mail.com",
-                    "camila.sosa@mail.com", "tomas.acosta@mail.com",
-                    "florencia.ruiz@mail.com", "mariana.gomez@mail.com",
-                    "nicolas.herrera@mail.com", "agustina.molina@mail.com",
-                    "facundo.castro@mail.com", "paula.vega@mail.com",
-                    "santiago.ibarra@mail.com", "romina.silva@mail.com",
-                    "german.ortiz@mail.com", "carla.medina@mail.com",
-                    "leandro.romero@mail.com", "belen.navarro@mail.com",
-                    # Extras para lista de espera:
-                    "franco.mendez@mail.com", "juliana.campos@mail.com",
-                    "maximiliano.suarez@mail.com", "melina.rios@mail.com"
-                ]
-                for i, email in enumerate(clientes_hiit):
-                    estado = (
-                        Inscripcion.Estado.RESERVADA
-                        if i < cupo
-                        else Inscripcion.Estado.ESPERA
-                    )
-                    tipo = Inscripcion.Tipo.MENSUAL if i % 3 == 0 else Inscripcion.Tipo.CLASE_SUELTA
-                    insc = crear_inscripcion(
-                        get_user(email), clase_hiit_lun, periodo_actual,
-                        tipo, estado,
-                    )
+        for estado, periodo in periodos_obj.items():
+            if estado == "proximo":
+                # Menos usuarios pre-inscriptos para el mes futuro
+                usuarios_activos = random.sample(todos_usuarios, k=min(8, len(todos_usuarios)))
+                for usuario in usuarios_activos:
+                    clase = random.choice(todas_clases)
+                    insc = crear_inscripcion(usuario, clase, periodo, Inscripcion.Tipo.MENSUAL, Inscripcion.Estado.RESERVADA)
                     if insc:
                         inscripciones_creadas += 1
-                        # Los que reservaron y son mensuales o sueltos, pagaron
-                        if estado == Inscripcion.Estado.RESERVADA:
-                            monto = PRECIOS_DISCIPLINA["HIIT"] if tipo == Inscripcion.Tipo.MENSUAL else PRECIOS_DISCIPLINA["HIIT"] / 2
+            else:
+                # Períodos pasados y actuales
+                usuarios_activos = random.sample(todos_usuarios, k=min(22, len(todos_usuarios)))
+                for usuario in usuarios_activos:
+                    num_clases = random.choice([1, 2])
+                    clases_elegidas = random.sample(todas_clases, k=num_clases)
+                    for clase in clases_elegidas:
+                        tipo = random.choices([Inscripcion.Tipo.MENSUAL, Inscripcion.Tipo.CLASE_SUELTA], weights=[0.8, 0.2])[0]
+                        insc = crear_inscripcion(usuario, clase, periodo, tipo, Inscripcion.Estado.RESERVADA)
+                        if insc:
+                            inscripciones_creadas += 1
+                            monto = PRECIOS_DISCIPLINA.get(clase.disciplina.nombre, 3000)
+                            if tipo == Inscripcion.Tipo.CLASE_SUELTA:
+                                monto = monto / 2
+                                
+                            # Simular cancelaciones en algunas ocurrencias (solo en pasado/actual)
+                            from apps.classes.models import InscripcionOcurrencia
+                            for oc in insc.ocurrencias.all():
+                                if random.random() < 0.15:  # 15% chance of cancellation
+                                    oc.estado = InscripcionOcurrencia.Estado.CANCELADA
+                                    # 50% de las veces otorga crédito si canceló a tiempo
+                                    if random.random() < 0.5:
+                                        c = Credito.objects.create(
+                                            usuario=usuario,
+                                            periodo=periodo,
+                                            disciplina=clase.disciplina,
+                                            estado=Credito.Estado.DISPONIBLE
+                                        )
+                                        oc.otorga_credito = True
+                                        oc.credito = c
+                                        creditos_creados += 1
+                                    oc.save()
+
+                            # Check if user has an available credit for this discipline
+                            credito_disponible = Credito.objects.filter(
+                                usuario=usuario,
+                                disciplina=clase.disciplina,
+                                estado=Credito.Estado.DISPONIBLE
+                            ).first()
+
+                            metodo_pago = Pago.Metodo.MERCADOPAGO
+                            if credito_disponible:
+                                credito_disponible.estado = Credito.Estado.UTILIZADO
+                                credito_disponible.save()
+                                metodo_pago = Pago.Metodo.CREDITO
+
                             pago = crear_pago(
-                                get_user(email), periodo_actual, monto,
-                                Pago.Metodo.MERCADOPAGO, Pago.Estado.COMPLETADO,
-                                [(insc, monto)],
+                                usuario, periodo, monto, metodo_pago, Pago.Estado.COMPLETADO, [(insc, monto)]
                             )
                             if pago:
                                 pagos_creados += 1
-
-            # Crédito disponible para Enrique en otra disciplina
-            yoga_disciplina = Disciplina.objects.get(nombre="Yoga")
-            _, was_created = Credito.objects.get_or_create(
-                usuario=enrique,
-                periodo=periodo_actual,
-                disciplina=yoga_disciplina,
-                defaults={"estado": Credito.Estado.DISPONIBLE},
-            )
-            if was_created:
-                creditos_creados += 1
-
-        # ── Período futuro: Reservas mensuales con prioridad y lista de espera de sueltos ──
-        if periodo_futuro:
-            # Los abonados pueden reservar antes
-            juan = get_user("juan.perez@mail.com")
-            clase_funcional_jue = get_clase("Funcional", "Sede Palermo", "Sala Power", 3, time(9, 0))
-            if clase_funcional_jue:
-                # Abonado mensual -> RESERVADA
-                insc = crear_inscripcion(
-                    juan, clase_funcional_jue, periodo_futuro,
-                    Inscripcion.Tipo.MENSUAL, Inscripcion.Estado.RESERVADA,
-                )
-                if insc:
-                    inscripciones_creadas += 1
-
-            martin = get_user("martin.lopez@mail.com")
-            if clase_funcional_jue:
-                # Clase suelta antes de la apertura general -> ESPERA
-                insc = crear_inscripcion(
-                    martin, clase_funcional_jue, periodo_futuro,
-                    Inscripcion.Tipo.CLASE_SUELTA, Inscripcion.Estado.ESPERA,
-                )
-                if insc:
-                    inscripciones_creadas += 1
 
         self.stdout.write(
             f"  Inscripciones: {inscripciones_creadas} creadas, "
