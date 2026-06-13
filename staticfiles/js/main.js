@@ -363,6 +363,20 @@ document.body.addEventListener("htmx:responseError", function (evt) {
 	}
 });
 
+window.addEventListener("submit", function (evt) {
+	const target = evt.target;
+	if (target && target.tagName === "FORM" && target.getAttribute("target") !== "_blank") {
+		setTimeout(() => {
+			if (evt.defaultPrevented) return;
+			const spinner = document.getElementById("global-spinner");
+			if (spinner) {
+				spinner.classList.remove("opacity-0");
+				spinner.classList.add("opacity-100");
+			}
+		}, 0);
+	}
+});
+
 document.body.addEventListener("htmx:beforeRequest", function () {
 	const spinner = document.getElementById("global-spinner");
 	if (spinner) {
@@ -373,15 +387,13 @@ document.body.addEventListener("htmx:beforeRequest", function () {
 
 document.body.addEventListener("htmx:afterRequest", function (evt) {
 	applyHtmxTriggers(evt.detail?.xhr);
-});
-
-document.body.addEventListener("htmx:afterSettle", function (evt) {
 	const spinner = document.getElementById("global-spinner");
 	if (spinner) {
 		spinner.classList.remove("opacity-100");
 		spinner.classList.add("opacity-0");
 	}
 });
+
 
 /** POST via HTMX (pause/delete) without a full page navigation. */
 window.adminHtmxPost = function (formEl) {

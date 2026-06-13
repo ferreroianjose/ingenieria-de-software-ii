@@ -1,5 +1,5 @@
 <tr class="admin-table-empty">
     <td colspan="{{ colspan }}" class="p-3">
-        <div class="admin-empty-dashed !m-0 min-h-[11rem] w-full">{{ message }}</div>
+        {% include 'partials/admin/_empty_state.html' with icon=icon|default:'search' message=message extra_classes='!m-0 min-h-[11rem] w-full' %}
     </td>
 </tr>

@@ -111,7 +111,7 @@
                         {% endfor %}
                     </ul>
                     {% else %}
-                    <div class="admin-empty-dashed min-h-[11rem]">No hay sedes cargadas. Agregá la primera sede.</div>
+                    {% include 'partials/admin/_empty_state.html' with icon='location' message='No hay sedes cargadas. Agregá la primera sede.' extra_classes='min-h-[11rem]' %}
                     {% endif %}
                 </div>
             </aside>
@@ -146,9 +146,9 @@
                             {% endif %}
                         >
                             {% if selected_sede_id %}
-                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Cargando salas…' %}
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 icon='location' message='Cargando salas…' %}
                             {% else %}
-                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 message='Agregá una sede para comenzar.' %}
+                            {% include 'partials/admin/_table_placeholder.html' with colspan=3 icon='location' message='Agregá una sede para comenzar.' %}
                             {% endif %}
                         </tbody>
                     </table>

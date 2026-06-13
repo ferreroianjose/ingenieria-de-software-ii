@@ -508,6 +508,9 @@
   .left-0 {
     left: 0;
   }
+  .left-3 {
+    left: calc(var(--spacing) * 3);
+  }
   .left-3\.5 {
     left: calc(var(--spacing) * 3.5);
   }
@@ -729,6 +732,9 @@
   }
   .ml-4 {
     margin-left: calc(var(--spacing) * 4);
+  }
+  .ml-6 {
+    margin-left: calc(var(--spacing) * 6);
   }
   .ml-6\.5 {
     margin-left: calc(var(--spacing) * 6.5);
@@ -3927,6 +3933,14 @@
       --tw-ring-color: color-mix(in srgb, oklch(0.702 0.322 328.37) 40%, transparent);
       @supports (color: color-mix(in lab, red, red)) {
         --tw-ring-color: color-mix(in oklab, var(--color-primary-400) 40%, transparent);
+      }
+    }
+  }
+  .focus\:ring-red-500\/35 {
+    &:focus {
+      --tw-ring-color: color-mix(in srgb, oklch(63.7% 0.237 25.331) 35%, transparent);
+      @supports (color: color-mix(in lab, red, red)) {
+        --tw-ring-color: color-mix(in oklab, var(--color-red-500) 35%, transparent);
       }
     }
   }

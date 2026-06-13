@@ -1,7 +1,7 @@
 {% if not searched %}
-{% include 'partials/admin/_table_placeholder.html' with colspan=8 message="Presioná «Aplicar filtros» para ver clases." %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=8 icon='classes' message="Presioná «Aplicar filtros» para ver clases." %}
 {% elif not classes %}
-{% include 'partials/admin/_table_placeholder.html' with colspan=8 message="No se encontraron clases con ese criterio." %}
+{% include 'partials/admin/_table_placeholder.html' with colspan=8 icon='search' message="No se encontraron clases con ese criterio." %}
 {% else %}
 {% for clase in classes %}
 <tr

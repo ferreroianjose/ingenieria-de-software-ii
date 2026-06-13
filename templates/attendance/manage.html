@@ -113,13 +113,7 @@
             <div id="main-content-container" x-show="!scanning" class="flex-1 w-full flex flex-col">
                 <!-- Empty State Wrapper -->
                 <div class="flex-1 flex flex-col p-3">
-                    <div class="admin-empty-dashed !m-0 !rounded-[20px] min-h-[11rem] w-full">
-                        <svg class="w-16 h-16 text-gray-400/80 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
-                        <h3 class="text-lg font-bold text-gray-800 uppercase tracking-wide">Listo para recibir</h3>
-                        <p class="text-sm text-gray-500 mt-2 max-w-md font-normal">
-                        Buscá a un cliente manualmente en la barra superior o activá la cámara para escanear un código QR.
-                        </p>
-                    </div>
+                    {% include 'partials/admin/_empty_state.html' with icon='qr' message='Buscá a un cliente manualmente en la barra superior o activá la cámara para escanear un código QR.' extra_classes='!m-0 !rounded-[20px] min-h-[11rem] w-full' %}
                 </div>
             </div>
         </div>
@@ -163,13 +157,7 @@
 
             <div id="planilla-grid-container" class="w-full overflow-x-auto min-h-[200px] flex flex-col">
                 <div class="flex-1 flex flex-col p-3">
-                    <div class="admin-empty-dashed !m-0 !rounded-[20px] min-h-[11rem] w-full">
-                        <svg class="w-16 h-16 text-gray-400/80 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        <h3 class="text-lg font-bold text-gray-800 uppercase tracking-wide">Planilla de asistencia</h3>
-                        <p class="text-sm text-gray-500 mt-2 max-w-md font-normal">
-                            Seleccioná una clase en el menú superior para ver y poder imprimir el diagrama de asistencias del mes.
-                        </p>
-                    </div>
+                    {% include 'partials/admin/_empty_state.html' with icon='sheet' message='Seleccioná una clase en el menú superior para ver y poder imprimir el diagrama de asistencias del mes.' extra_classes='!m-0 !rounded-[20px] min-h-[11rem] w-full' %}
                 </div>
             </div>
         </div>

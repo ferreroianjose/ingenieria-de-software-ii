@@ -19,7 +19,6 @@ class User(AbstractUser):
     dni = models.CharField(max_length=20, unique=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     telefono_emergencia = models.CharField(max_length=20, blank=True)
-    constancia_tutor = models.FileField(upload_to="constancias/", null=True, blank=True)
     estado_constancia = models.CharField(
         max_length=20, choices=ESTADOS, default="PENDIENTE"
     )

@@ -2,8 +2,8 @@
 	{% if can_manage %}
 	<form
 		method="post"
-		action="{% url 'change_user_role' user.id %}"
-		hx-post="{% url 'change_user_role' user.id %}"
+		action="{% url 'update_user_admin' user.id %}"
+		hx-post="{% url 'update_user_admin' user.id %}"
 		hx-target="#user-drawer-container"
 		hx-swap="innerHTML"
 		class="flex min-h-0 flex-1 flex-col overflow-hidden"
@@ -15,7 +15,7 @@
 				<h1 class="title-impact">{{ user.get_full_name }}</h1>
 				<p class="text-sm font-normal text-gray-600">{{ user.email }}</p>
 				{% if role_updated %}
-				<p class="text-sm font-semibold text-green-600" role="status">Rol actualizado.</p>
+				<p class="text-sm font-semibold text-green-600" role="status">Cambios guardados exitosamente.</p>
 				{% endif %}
 			</div>
 			<button
@@ -31,69 +31,91 @@
 		</header>
 
 		<div class="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8 [&_label]:mb-2 [&_label]:block [&_label]:text-sm [&_label]:font-bold [&_label]:text-gray-700">
-			<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-				<div>
-					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">DNI</dt>
-					<dd class="mt-1 text-sm font-medium text-gray-900">{{ user.dni }}</dd>
-				</div>
-				<div>
-					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Fecha de nacimiento</dt>
-					<dd class="mt-1 text-sm text-gray-900">{{ user.fecha_nacimiento|date:'d/m/Y'|default:'—' }}</dd>
-				</div>
-				<div>
-					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Teléfono de emergencia</dt>
-					<dd class="mt-1 text-sm text-gray-900">{{ user.telefono_emergencia|default:'—' }}</dd>
-				</div>
-				{% if user.rol == 'CLIENTE' %}
-				<div>
-					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Constancia (menor)</dt>
-					<dd class="mt-1">
-						<span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold
-							{% if user.estado_constancia == 'APROBADA' %}bg-green-100 text-green-800
-							{% elif user.estado_constancia == 'RECHAZADA' %}bg-red-100 text-red-800
-							{% else %}bg-amber-100 text-amber-800{% endif %}">
-							{{ user.get_estado_constancia_display }}
-						</span>
-					</dd>
-				</div>
-				<div class="sm:col-span-2">
-					<dt class="text-xs font-bold uppercase tracking-wide text-gray-500">Archivo de constancia</dt>
-					<dd class="mt-1 text-sm">
-						{% if user.constancia_tutor %}
-						<a href="{{ user.constancia_tutor.url }}" class="font-semibold text-primary-500 hover:underline" target="_blank" rel="noopener">Ver constancia</a>
-						{% else %}
-						<span class="text-gray-500">Sin archivo cargado</span>
-						{% endif %}
-					</dd>
-				</div>
-				{% endif %}
-			</dl>
+            {% if form.errors %}
+            <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+                <strong class="block mb-1 font-bold">Corrija los siguientes errores:</strong>
+                {{ form.errors }}
+            </div>
+            {% endif %}
 
-			<div class="mt-8 max-w-md">
-				<label for="user-rol-select">Rol</label>
-				<select
-					id="user-rol-select"
-					name="rol"
-					class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20"
-				>
-					{% for value, label in roles %}
-					<option value="{{ value }}" {% if user.rol == value %}selected{% endif %}>{{ label }}</option>
-					{% endfor %}
-				</select>
+			<div class="space-y-8 [&>div>h3]:text-lg [&>div>h3]:font-black [&>div>h3]:uppercase [&>div>h3]:tracking-wide [&>div>h3]:text-primary-400 [&>div>h3]:pl-0 [&>div>h3]:p-1 [&>div>h3]:bg-gradient-to-l [&>div>h3]:to-transparent [&>div>h3]:via-25% [&>div>h3]:via-secondary-300/50 [&>div>h3]:rounded-sm">
+                
+                <div class="space-y-4">
+                    <h3>Información Personal</h3>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="first_name">Nombre</label>
+                            <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+                        </div>
+                        <div>
+                            <label for="last_name">Apellido</label>
+                            <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+                        </div>
+                        <div>
+                            <label for="dni">DNI</label>
+                            <input type="text" id="dni" name="dni" value="{{ user.dni }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+                        </div>
+                        <div>
+                            <label for="fecha_nacimiento">Fecha de nacimiento</label>
+                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ user.fecha_nacimiento|date:'Y-m-d' }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h3>Contacto</h3>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" value="{{ user.email }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+                        </div>
+                        <div>
+                            <label for="telefono_emergencia">Teléfono de emergencia</label>
+                            <input type="text" id="telefono_emergencia" name="telefono_emergencia" value="{{ user.telefono_emergencia }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <h3>Administración</h3>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <label for="estado_constancia">Estado Constancia</label>
+                            <select id="estado_constancia" name="estado_constancia" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+                                <option value="PENDIENTE" {% if user.estado_constancia == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
+                                <option value="APROBADA" {% if user.estado_constancia == 'APROBADA' %}selected{% endif %}>Aprobada</option>
+                                <option value="RECHAZADA" {% if user.estado_constancia == 'RECHAZADA' %}selected{% endif %}>Rechazada</option>
+                            </select>
+                        </div>
+                        
+                        {% if request.user.rol == 'ADMIN' %}
+                        <div>
+                            <label for="user-rol-select">Rol</label>
+                            <select id="user-rol-select" name="rol" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+                                {% for value, label in roles %}
+                                <option value="{{ value }}" {% if user.rol == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% else %}
+                        <input type="hidden" name="rol" value="{{ user.rol }}">
+                        <div>
+                            <label>Rol</label>
+                            <div class="w-full rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-500 cursor-not-allowed">
+                                {{ user.get_rol_display }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
 			</div>
 		</div>
 
 		<footer class="modal-footer relative flex shrink-0 flex-col items-center sm:items-start justify-end gap-4 overflow-hidden bg-gradient-to-b from-secondary-900 via-secondary-950 via-50% to-black p-6 sm:p-8 isolate [transform:translateZ(0)]">
 			{% include 'partials/ui/modals/_modal_footer_glows.html' %}
 			<div class="relative z-10 flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-				<button
-					type="submit"
-					class="btn-auto bg-primary-400 px-8 py-2.5 font-bold text-white hover:bg-primary-600"
-				>Guardar rol</button>
-				<a
-					href="{% url 'delete_user' user.id %}"
-					class="no-underline btn-auto rounded-full bg-red-500 px-8 py-2.5 text-center text-sm font-bold text-white hover:bg-red-600"
-				>Eliminar usuario</a>
+				{% include 'partials/ui/buttons/_primary_button.html' with label='Guardar cambios' class='btn-auto px-8 py-2.5 font-bold' %}
 			</div>
 		</footer>
 	</form>

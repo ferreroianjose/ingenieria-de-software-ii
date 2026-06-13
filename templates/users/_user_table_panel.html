@@ -1,8 +1,9 @@
-{% with table_colspan=4 %}
+{% with table_colspan=5 %}
 <div class="admin-panel__table">
     <table class="min-w-full table-auto admin-selectable-table">
         <thead>
             <tr>
+                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
                 <th class="px-6 py-3 text-left">Nombre</th>
                 <th class="px-6 py-3 text-left">Email</th>
                 <th class="px-6 py-3 text-left">DNI</th>
@@ -11,15 +12,19 @@
         </thead>
         <tbody>
             {% if not searched %}
-            {% include 'partials/admin/_table_placeholder.html' with colspan=table_colspan message=empty_search_message|default:'Presioná «Buscar» para listar clientes.' %}
+            {% include 'partials/admin/_table_placeholder.html' with colspan=table_colspan icon='users' message=empty_search_message|default:'Presioná «Buscar» para listar clientes.' %}
             {% elif not page_obj or not page_obj.object_list %}
-            {% include 'partials/admin/_table_placeholder.html' with colspan=table_colspan message='No se encontraron resultados.' %}
+            {% include 'partials/admin/_table_placeholder.html' with colspan=table_colspan icon='search' message='No se encontraron resultados.' %}
             {% else %}
             {% for user in page_obj %}
             <tr
-                class="cursor-pointer transition-colors hover:bg-primary-50/40"
-                @click="openUserRow({{ user.id }})"
+                class="admin-selectable-row"
+                :class="selectedUserId === {{ user.id }} ? 'is-selected' : ''"
+                @click="selectedUserId = selectedUserId === {{ user.id }} ? null : {{ user.id }}; selectedUserLabel = '{{ user.get_full_name|escapejs }}'"
             >
+                <td class="w-11 px-3 py-4">
+                    {% include 'partials/admin/_admin_select_indicator.html' with item_id=user.id selected_expr='selectedUserId' %}
+                </td>
                 <td class="px-6 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">
                     {{ user.get_full_name }}
                 </td>

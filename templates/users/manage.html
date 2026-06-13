@@ -8,11 +8,16 @@
     x-data="{
         userDrawerOpen: false,
         userDrawerUrlPattern: '{% url 'user_detail_drawer' 0 %}',
+        selectedUserId: null,
+        selectedUserLabel: '',
         openUserRow(id) {
             const url = adminActionUrl(this.userDrawerUrlPattern, id);
             if (url) openUserDrawer(url);
         }
     }"
+    x-init="initAdminSelectionClears.call(this, [
+        { idKey: 'selectedUserId', labelKey: 'selectedUserLabel', targets: ['users-table-panel'] }
+    ])"
     @admin-modal-close.window="if ($event.detail === 'userDrawerOpen') userDrawerOpen = false"
     @user-drawer-open.window="userDrawerOpen = true"
 >
@@ -25,6 +30,7 @@
                     {% url 'user_rows' as user_rows_url %}
                     {% include 'partials/admin/_list_search_form.html' with form_id='users-search-form' search_url=user_rows_url target_id='#users-table-panel' placeholder=search_placeholder %}
                 </div>
+                {% include 'partials/users/_user_selection_toolbar.html' %}
                 <div id="users-table-panel">
                     {% include 'users/_user_table_panel.html' with searched=False can_manage=can_manage empty_search_message=empty_search_message %}
                 </div>

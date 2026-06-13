@@ -19,6 +19,7 @@ from .forms import (
     GymAuthenticationForm,
     ProfileUpdateForm,
     TwoFactorForm,
+    UserAdminUpdateForm,
 )
 from .search import USER_PAGE_SIZE, filter_users_queryset
 
@@ -179,9 +180,12 @@ def _user_rows_context(request):
 
 
 def _user_drawer_context(request, user, *, role_updated=False):
+    is_admin = request.user.rol == "ADMIN"
+    is_empleado = request.user.rol == "EMPLEADO"
+    can_manage = is_admin or (is_empleado and user.rol == "CLIENTE")
     return {
         "user": user,
-        "can_manage": request.user.rol == "ADMIN",
+        "can_manage": can_manage,
         "roles": User.ROLES,
         "role_updated": role_updated,
     }
@@ -197,9 +201,9 @@ def staff_clientes(request):
             "can_manage": is_admin,
             "page_title": "Usuarios" if is_admin else "Clientes",
             "page_subtitle": (
-                "Buscá usuarios, abrí la ficha, modificá sus roles o eliminalos."
+                "Buscá usuarios, seleccionalos para editar su ficha, modificar sus roles o eliminarlos."
                 if is_admin
-                else "Buscá clientes y abrí la ficha para ver sus datos y modificar su estado de constancia (#TODO)."
+                else "Buscá clientes y seleccionalos para ver sus datos y modificar su estado de constancia."
             ),
             "search_placeholder": ("Nombre, email o DNI…"),
             "empty_search_message": (
@@ -226,32 +230,73 @@ def user_detail_drawer(request, user_id):
     )
 
 
-@admin_required
-def change_user_role(request, user_id):
-    user = get_object_or_404(User, pk=user_id)
+@staff_required
+def update_user_admin(request, user_id):
+    user = get_staff_user(request, user_id)
+    is_admin = request.user.rol == "ADMIN"
 
     if request.method == "POST":
-        new_role = request.POST.get("rol")
-        if new_role and new_role in dict(User.ROLES):
-            user.rol = new_role
-            user.save()
+        original_role = user.rol
+        form = UserAdminUpdateForm(request.POST, instance=user)
 
-        if request.headers.get("HX-Request"):
-            return render(
-                request,
-                "users/_user_detail_drawer_panel.html",
-                _user_drawer_context(request, user, role_updated=True),
-            )
+        if form.is_valid():
+            # Security check: Only admins can change the role
+            if not is_admin and form.cleaned_data.get("rol") != original_role:
+                form.instance.rol = original_role
 
-        return redirect("manage")
+            form.save()
+
+            if request.headers.get("HX-Request"):
+                return render(
+                    request,
+                    "users/_user_detail_drawer_panel.html",
+                    _user_drawer_context(request, user, role_updated=True),
+                )
+            return redirect("manage")
+        else:
+            # If form has errors, we re-render the drawer with errors
+            context = _user_drawer_context(request, user)
+            context["form"] = form
+            if request.headers.get("HX-Request"):
+                return render(
+                    request,
+                    "users/_user_detail_drawer_panel.html",
+                    context,
+                )
+            return redirect("manage")
 
     return redirect("manage")
 
+
+from django.db.models import ProtectedError
+from apps.classes.htmx import hx_ok
 
 @admin_required
 def delete_user(request, user_id):
     user = get_object_or_404(User, pk=user_id)
     if request.method == "POST":
-        user.delete()
-        return redirect("manage")
+        try:
+            nombre = user.get_full_name()
+            user.delete()
+            messages.success(request, f"El usuario {nombre} ha sido eliminado.")
+            if request.headers.get("HX-Request"):
+                return hx_ok(
+                    request,
+                    message=f"El usuario {nombre} ha sido eliminado.",
+                    refresh={
+                        "url": reverse("user_rows"),
+                        "target": "#users-table-panel",
+                    },
+                )
+            return redirect("manage")
+        except ProtectedError:
+            if request.headers.get("HX-Request"):
+                return hx_ok(
+                    request,
+                    message="No se puede eliminar el usuario porque tiene historial en el sistema (pagos, inscripciones, etc).",
+                    level="error",
+                )
+            messages.error(request, "No se puede eliminar el usuario porque tiene historial en el sistema.")
+            return redirect("manage")
     return render(request, "users/delete_user.html", {"user": user})
+

@@ -1,0 +1,23 @@
+{% url 'delete_user' 0 as user_delete_url %}
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary"
+	:disabled="!selectedUserId"
+	@click="openUserDrawer(adminActionUrl('{% url 'user_detail_drawer' 0 %}', selectedUserId))"
+>
+	Editar
+</button>
+
+<form x-ref="deleteUserForm" method="post" class="hidden" :action="selectedUserId ? adminActionUrl('{{ user_delete_url }}', selectedUserId) : ''">
+	{% csrf_token %}
+</form>
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
+	:disabled="!selectedUserId"
+	@click="selectedUserId && window.gymflowConfirm('¿Seguro que querés eliminar a «' + selectedUserLabel + '»?', { variant: 'danger', title: 'Eliminar usuario', confirmLabel: 'Sí, eliminar' }).then(ok => { if (ok) adminHtmxPost($refs.deleteUserForm) })"
+>
+	Eliminar
+</button>

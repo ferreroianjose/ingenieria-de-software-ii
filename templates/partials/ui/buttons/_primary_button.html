@@ -1,5 +1,5 @@
 <button
-	class="btn-full {% if variant == 'secondary' %}bg-secondary-400 hover:bg-secondary-600 focus:ring-secondary-400/35{% else %}bg-primary-400 hover:bg-primary-600 focus:ring-primary-400/35{% endif %} hover:scale-102 active:scale-95 duration-500 text-white transition-[scale,transform,background-color,filter] disabled:saturate-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:scale-100 {{ class }}"
+	class="btn-full {% if variant == 'secondary' %}bg-secondary-400 hover:bg-secondary-600 focus:ring-secondary-400/35{% elif variant == 'danger' %}bg-red-500 hover:bg-red-600 focus:ring-red-500/35{% else %}bg-primary-400 hover:bg-primary-600 focus:ring-primary-400/35{% endif %} hover:scale-102 active:scale-95 duration-500 text-white transition-[scale,transform,background-color,filter] disabled:saturate-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:hover:scale-100 {{ class }}"
 	type="{{ type|default:'submit' }}"
 	{% if x_show %}x-show="{{ x_show }}" x-cloak{% endif %}
 	{% if click and hx_get %}@click="{{ click }}"{% elif click %}@click.prevent="{{ click }}"{% endif %}

@@ -63,7 +63,7 @@ def buscar_cliente(request):
     """Endpoint HTMX para buscar clientes por nombre, apellido, DNI o email."""
     query = request.GET.get("q", "").strip()
     if not query:
-        return HttpResponse("")
+        return render(request, "partials/attendance/_client_ready_state.html")
 
     clientes = User.objects.filter(
         rol="CLIENTE"

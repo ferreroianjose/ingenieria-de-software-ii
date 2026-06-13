@@ -150,3 +150,27 @@ class TwoFactorForm(forms.Form):
         if code != self.expected_code:
             raise forms.ValidationError("El código ingresado es incorrecto.")
         return code
+
+class UserAdminUpdateForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "dni",
+            "fecha_nacimiento",
+            "telefono_emergencia",
+            "rol",
+            "estado_constancia"
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        apply_required_error_messages(self)
+
+    def clean_first_name(self):
+        return name_validator(self.cleaned_data.get("first_name"))
+
+    def clean_last_name(self):
+        return name_validator(self.cleaned_data.get("last_name"))

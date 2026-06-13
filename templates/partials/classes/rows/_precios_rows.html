@@ -24,11 +24,11 @@
     {% endfor %}
 {% else %}
     {% if not periodo_id %}
-        {% include 'partials/admin/_table_placeholder.html' with colspan=5 message="Seleccione un mes a afectar para cargar las clases." %}
+        {% include 'partials/admin/_table_placeholder.html' with colspan=5 icon='prices' message="Seleccione un mes a afectar para cargar las clases." %}
     {% elif not searched %}
-        {% include 'partials/admin/_table_placeholder.html' with colspan=5 message="No hay clases registradas." %}
+        {% include 'partials/admin/_table_placeholder.html' with colspan=5 icon='classes' message="No hay clases registradas." %}
     {% else %}
-        {% include 'partials/admin/_table_placeholder.html' with colspan=5 message="No se encontraron clases para el filtro especificado." %}
+        {% include 'partials/admin/_table_placeholder.html' with colspan=5 icon='search' message="No se encontraron clases para el filtro especificado." %}
     {% endif %}
 {% endif %}
 

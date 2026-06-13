@@ -1,8 +1,8 @@
-<div class="flex flex-col h-full w-full">
+<div class="flex flex-col flex-1 w-full">
     <!-- Navegación -->
     <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/50 shrink-0 flex items-center">
         <button type="button" 
-                onclick="const input = document.getElementById('search-input'); if(input && input.value.trim() !== '') { htmx.trigger('#search-form', 'submit'); } else { document.getElementById('main-content-container').innerHTML = `<div class='flex-1 p-12 flex flex-col items-center justify-center text-center'><svg class='w-16 h-16 text-gray-200 mb-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z'></path></svg><h3 class='text-lg font-bold text-gray-800 uppercase tracking-wide'>Listo para recibir</h3><p class='text-sm text-gray-500 mt-2 max-w-md font-normal'>Buscá a un cliente manualmente en la barra superior o activá la cámara para escanear un código QR.</p></div>`; }"
+                onclick="const input = document.getElementById('search-input'); if(input && input.value.trim() !== '') { htmx.trigger('#search-form', 'submit'); } else { htmx.ajax('GET', '{% url 'attendance:search' %}', {target: '#main-content-container'}); }"
                 class="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Volver a la búsqueda
