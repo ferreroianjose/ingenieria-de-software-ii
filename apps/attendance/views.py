@@ -39,8 +39,22 @@ def generate_qr(request):
 @staff_required
 def staff_asistencia(request):
     """Página principal del panel de administración/empleado para gestionar asistencia."""
+    ATTENDANCE_VIEW_TABS = [
+        {"id": "ingreso", "label": "Ingreso rápido"},
+        {"id": "planillas", "label": "Planillas por clase"},
+    ]
+
+    from apps.classes.models import Class
+    from apps.payments.models import PeriodoCobro
+    from datetime import date
+    clases_disponibles = Class.objects.filter(estado='disponible').select_related('disciplina', 'profesor')
+    periodos = PeriodoCobro.objects.filter(fecha_inicio_periodo__lte=date.today()).order_by('-fecha_inicio_periodo')[:12]
+
     return render(request, "attendance/manage.html", {
-        "page_section": "Control de Asistencia"
+        "page_section": "Control de Asistencia",
+        "view_tabs": ATTENDANCE_VIEW_TABS,
+        "clases_disponibles": clases_disponibles,
+        "periodos": periodos,
     })
 
 
@@ -267,3 +281,77 @@ def aprobar_constancia_recepcion(request):
     mutable_get["user_id"] = cliente.id
     request.GET = mutable_get
     return detalle_cliente_asistencia(request)
+
+from datetime import timedelta
+
+def _get_planilla_context(class_id, periodo_id):
+    from apps.classes.models import Class, Inscripcion
+    from apps.payments.models import PeriodoCobro
+    from apps.attendance.models import Asistencia
+
+    if not class_id or not periodo_id:
+        return None
+
+    clase = get_object_or_404(Class, id=class_id)
+    periodo = get_object_or_404(PeriodoCobro, id=periodo_id)
+
+    # Calculate dates of the class in this period
+    d = periodo.fecha_inicio_periodo
+    end_date = periodo.fecha_fin_periodo
+    class_dates = []
+    
+    # clase.dia_semana: 0=Lunes, ..., 6=Domingo
+    while d <= end_date:
+        if d.weekday() == clase.dia_semana:
+            class_dates.append(d)
+        d += timedelta(days=1)
+
+    # Get active inscriptions for this class and period
+    inscripciones = Inscripcion.objects.filter(
+        clase=clase, 
+        periodo=periodo,
+        estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+    ).select_related('usuario').order_by('usuario__last_name', 'usuario__first_name')
+
+    # Get attendance
+    asistencias = Asistencia.objects.filter(
+        inscripcion__in=inscripciones,
+        fecha_hora_ingreso__date__gte=periodo.fecha_inicio_periodo,
+        fecha_hora_ingreso__date__lte=periodo.fecha_fin_periodo
+    ).values_list('inscripcion_id', 'fecha_hora_ingreso__date')
+    
+    asistencias_set = {(a[0], a[1]) for a in asistencias}
+
+    matrix = []
+    for insc in inscripciones:
+        row = {
+            'alumno': insc.usuario,
+            'fechas': []
+        }
+        for dt in class_dates:
+            row['fechas'].append({
+                'date': dt,
+                'asistio': (insc.id, dt) in asistencias_set,
+            })
+        matrix.append(row)
+
+    return {
+        "clase": clase,
+        "periodo": periodo,
+        "class_dates": class_dates,
+        "matrix": matrix,
+    }
+
+@staff_required
+def planilla_asistencia_grid(request):
+    context = _get_planilla_context(request.GET.get('class_id'), request.GET.get('periodo_id'))
+    if not context:
+        return HttpResponse("Clase y período son requeridos.", status=400)
+    return render(request, "partials/attendance/_planilla_grid.html", context)
+
+@staff_required
+def planilla_asistencia_print(request):
+    context = _get_planilla_context(request.GET.get('class_id'), request.GET.get('periodo_id'))
+    if not context:
+        return HttpResponse("Clase y período son requeridos.", status=400)
+    return render(request, "attendance/planilla_print.html", context)

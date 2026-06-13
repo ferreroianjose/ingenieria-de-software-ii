@@ -4,14 +4,15 @@
 {% block title %}Asistencia — GYMFlow{% endblock %}
 
 {% block content %}
-<div class="internal-page" x-data="{ scanning: false, scanner: null }">
+<div class="internal-page" x-data="{ tab: 'ingreso', scanning: false, scanner: null }">
   <!-- Script de lectura de códigos QR de HTML5 -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
   <div class="internal-page__content flex flex-col gap-6">
-    {% include 'partials/admin/_admin_page_header.html' with title='Control de asistencia' subtitle='Registrá el ingreso de clientes mediante código QR o búsqueda manual.' %}
+    {% include 'partials/admin/_admin_page_header.html' with title='Control de asistencia' subtitle='Registrá el ingreso de clientes mediante código QR o búsqueda manual.' view_tabs=view_tabs aria_label='Asistencia' %}
 
-    <div class="admin-panel flex flex-col min-w-0">
+    <section x-show="tab === 'ingreso'" x-cloak class="flex flex-col gap-6">
+      <div class="admin-panel flex flex-col min-w-0">
         <!-- Toolbar Horizontal -->
         <div class="admin-panel__toolbar flex flex-col md:flex-row items-center gap-4 justify-between">
             <!-- Búsqueda -->
@@ -33,7 +34,7 @@
                         autocomplete="off"
                     />
                 </div>
-                <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary btn-auto text-sm px-5 py-2">
+                <button type="submit" class="admin-selection-toolbar-btn bg-primary-400 text-white hover:bg-primary-600 btn-auto text-sm px-5 py-2">
                     Buscar
                 </button>
             </form>
@@ -43,8 +44,8 @@
             <!-- Botón Lector QR -->
             <button 
                 type="button"
-                class="btn-auto py-2 px-5 rounded-full font-bold text-sm transition-all duration-300 text-white shadow-sm flex items-center justify-center gap-2 w-full md:w-auto"
-                :class="scanning ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-600'"
+                class="btn-auto py-2 px-5 rounded-full font-bold text-sm transition-[scale,transform,background-color,filter,box-shadow] duration-500 hover:scale-102 active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto"
+                :class="scanning ? 'bg-transparent text-red-600 ring-2 ring-inset ring-red-500 hover:bg-red-500 hover:text-white hover:ring-red-500' : 'bg-transparent text-primary-600 ring-2 ring-inset ring-primary-500 hover:bg-primary-500 hover:text-white hover:ring-primary-500'"
                 @click="
                     if (!scanning) {
                         scanning = true;
@@ -118,7 +119,57 @@
             </div>
         </div>
 
-    </div>
+    </section>
+
+    <!-- Pestaña 2: Planillas por Clase -->
+    <section x-show="tab === 'planillas'" x-cloak class="flex flex-col gap-6">
+        <div class="admin-panel flex flex-col min-w-0">
+            <!-- Toolbar -->
+            <div class="admin-panel__toolbar flex flex-col md:flex-row gap-4 items-end justify-between">
+                <!-- Selector de Clase y Mes form -->
+                <form id="planilla-form" hx-get="{% url 'attendance:planilla_grid' %}" hx-target="#planilla-grid-container" class="flex flex-col md:flex-row gap-4 w-full flex-1">
+                    <div class="w-full md:w-64">
+                        <label for="class_id" class="block text-sm font-bold text-gray-700 mb-1">Clase</label>
+                        <select name="class_id" id="class_id" class="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400 bg-white" required>
+                            <option value="">Seleccioná una clase...</option>
+                            {% for clase in clases_disponibles %}
+                                <option value="{{ clase.id }}">{{ clase.disciplina.nombre }} — {{ clase.profesor }} ({{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="w-full md:w-48">
+                        <label for="periodo_id" class="block text-sm font-bold text-gray-700 mb-1">Período (Mes)</label>
+                        <select name="periodo_id" id="periodo_id" class="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400 bg-white" required>
+                            <option value="">Seleccioná un mes...</option>
+                            {% for p in periodos %}
+                                <option value="{{ p.id }}">{{ p.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="flex items-end">
+                        <button type="submit" class="admin-selection-toolbar-btn bg-primary-400 text-white hover:bg-primary-600 btn-auto text-sm px-6 py-2 w-full md:w-auto">
+                            Ver Planilla
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="planilla-grid-container" class="w-full overflow-x-auto min-h-[200px] flex flex-col">
+                <div class="flex-1 flex flex-col p-3">
+                    <div class="admin-empty-dashed !m-0 !rounded-[20px] min-h-[11rem] w-full">
+                        <svg class="w-16 h-16 text-gray-400/80 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <h3 class="text-lg font-bold text-gray-800 uppercase tracking-wide">Planilla de asistencia</h3>
+                        <p class="text-sm text-gray-500 mt-2 max-w-md font-normal">
+                            Seleccioná una clase en el menú superior para ver y poder imprimir el diagrama de asistencias del mes.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
   </div>
 </div>
 {% endblock %}

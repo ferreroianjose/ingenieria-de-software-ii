@@ -22,6 +22,7 @@ Orden de carga (respeta dependencias entre modelos):
     8. Créditos de ejemplo
 """
 
+import random
 from datetime import date, time, timedelta
 from decimal import Decimal
 
@@ -620,7 +621,6 @@ class Command(BaseCommand):
                 continue
 
             raw_password = data.pop("raw_password")
-            # telefono_emergencia es opcional; si no está, derivarlo del DNI
             if data.get("rol") == "CLIENTE" and not data.get("telefono_emergencia"):
                 data["telefono_emergencia"] = f"35155{str(data['dni'])[-6:]}"
 
@@ -628,6 +628,33 @@ class Command(BaseCommand):
                 username=data["email"],
                 password=make_password(raw_password),
                 **data,
+            )
+            created += 1
+
+        # Generar 150 usuarios aleatorios extra para mayor realismo en las planillas
+        nombres = ["Juan", "Pedro", "Maria", "Ana", "Luis", "Carlos", "Sofia", "Lucia", "Martina", "Matias", "Facundo", "Tomas", "Camila", "Valentina", "Florencia", "Agustin", "Ignacio", "Nicolas"]
+        apellidos = ["Gomez", "Perez", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Gonzalez", "Garcia", "Silva", "Romero", "Sosa", "Torres", "Ruiz", "Diaz"]
+        
+        for i in range(150):
+            dni = f"{random.randint(30000000, 45000000)}"
+            email = f"cliente_rnd_{i}_{dni}@mail.com"
+            if User.objects.filter(email=email).exists():
+                continue
+                
+            fn = random.choice(nombres)
+            ln = random.choice(apellidos)
+            
+            User.objects.create(
+                username=email,
+                email=email,
+                password=make_password("cliente123"),
+                first_name=fn,
+                last_name=ln,
+                rol="CLIENTE",
+                dni=dni,
+                fecha_nacimiento=date(random.randint(1980, 2005), random.randint(1, 12), random.randint(1, 28)),
+                estado_constancia=random.choices(["APROBADA", "PENDIENTE", "RECHAZADA", "NO_ENTREGADA"], weights=[0.7, 0.1, 0.05, 0.15])[0],
+                telefono_emergencia=f"35155{dni[-6:]}"
             )
             created += 1
 
@@ -874,6 +901,7 @@ class Command(BaseCommand):
         inscripciones_creadas = 0
         pagos_creados = 0
         creditos_creados = 0
+        asistencias_creadas = 0
 
         import random
         random.seed(42)  # Determinismo para el seed
@@ -892,9 +920,9 @@ class Command(BaseCommand):
                         inscripciones_creadas += 1
             else:
                 # Períodos pasados y actuales
-                usuarios_activos = random.sample(todos_usuarios, k=min(22, len(todos_usuarios)))
+                usuarios_activos = random.sample(todos_usuarios, k=min(32, len(todos_usuarios)))
                 for usuario in usuarios_activos:
-                    num_clases = random.choice([1, 2])
+                    num_clases = random.choice([2, 3, 4])
                     clases_elegidas = random.sample(todas_clases, k=num_clases)
                     for clase in clases_elegidas:
                         tipo = random.choices([Inscripcion.Tipo.MENSUAL, Inscripcion.Tipo.CLASE_SUELTA], weights=[0.8, 0.2])[0]
@@ -942,8 +970,26 @@ class Command(BaseCommand):
                             if pago:
                                 pagos_creados += 1
 
+                            # Simular asistencia para ocurrencias pasadas o actuales
+                            from apps.attendance.models import Asistencia
+                            import datetime
+                            
+                            now = timezone.now()
+                            for oc in insc.ocurrencias.all():
+                                if oc.estado == InscripcionOcurrencia.Estado.ACTIVA and oc.fecha_clase <= now:
+                                    # 95% de probabilidad de asistir
+                                    if random.random() < 0.95:
+                                        a = Asistencia.objects.create(
+                                            inscripcion=insc,
+                                            metodo=random.choice([Asistencia.Metodo.QR, Asistencia.Metodo.MANUAL])
+                                        )
+                                        arrival_time = oc.fecha_clase - datetime.timedelta(minutes=random.randint(2, 15))
+                                        Asistencia.objects.filter(pk=a.pk).update(fecha_hora_ingreso=arrival_time)
+                                        asistencias_creadas += 1
+
         self.stdout.write(
             f"  Inscripciones: {inscripciones_creadas} creadas, "
             f"Pagos: {pagos_creados} creados, "
-            f"Créditos: {creditos_creados} creados."
+            f"Créditos: {creditos_creados} creados, "
+            f"Asistencias: {asistencias_creadas} creadas."
         )

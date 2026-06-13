@@ -1002,6 +1002,9 @@
   .min-h-\[80px\] {
     min-height: 80px;
   }
+  .min-h-\[200px\] {
+    min-height: 200px;
+  }
   .min-h-\[300px\] {
     min-height: 300px;
   }
@@ -1454,6 +1457,11 @@
       border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
     }
   }
+  .divide-gray-200 {
+    :where(& > :not(:last-child)) {
+      border-color: var(--color-gray-200);
+    }
+  }
   .divide-white {
     :where(& > :not(:last-child)) {
       border-color: var(--color-white);
@@ -1486,6 +1494,9 @@
   }
   .overflow-visible {
     overflow: visible;
+  }
+  .overflow-x-auto {
+    overflow-x: auto;
   }
   .overflow-x-hidden {
     overflow-x: hidden;
@@ -1585,6 +1596,10 @@
     border-bottom-style: var(--tw-border-style);
     border-bottom-width: 1px;
   }
+  .border-b-2 {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 2px;
+  }
   .border-dashed {
     --tw-border-style: dashed;
     border-style: dashed;
@@ -1605,6 +1620,9 @@
       border-color: color-mix(in oklab, var(--color-amber-500) 30%, transparent);
     }
   }
+  .border-black {
+    border-color: var(--color-black);
+  }
   .border-gray-100 {
     border-color: var(--color-gray-100);
   }
@@ -1619,6 +1637,9 @@
   }
   .border-gray-700 {
     border-color: var(--color-gray-700);
+  }
+  .border-gray-800 {
+    border-color: var(--color-gray-800);
   }
   .border-green-200 {
     border-color: var(--color-green-200);
@@ -2574,6 +2595,9 @@
   .text-amber-800 {
     color: var(--color-amber-800);
   }
+  .text-black {
+    color: var(--color-black);
+  }
   .text-blue-800 {
     color: var(--color-blue-800);
   }
@@ -3021,6 +3045,9 @@
   }
   .ring-primary-500 {
     --tw-ring-color: var(--color-primary-500);
+  }
+  .ring-red-500 {
+    --tw-ring-color: var(--color-red-500);
   }
   .ring-white {
     --tw-ring-color: var(--color-white);
@@ -3615,6 +3642,13 @@
       }
     }
   }
+  .hover\:bg-red-500 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-red-500);
+      }
+    }
+  }
   .hover\:bg-red-500\/10 {
     &:hover {
       @media (hover: hover) {
@@ -3749,6 +3783,13 @@
       }
     }
   }
+  .hover\:no-underline {
+    &:hover {
+      @media (hover: hover) {
+        text-decoration-line: none;
+      }
+    }
+  }
   .hover\:underline {
     &:hover {
       @media (hover: hover) {
@@ -3799,6 +3840,13 @@
     &:hover {
       @media (hover: hover) {
         --tw-ring-color: var(--color-primary-500);
+      }
+    }
+  }
+  .hover\:ring-red-500 {
+    &:hover {
+      @media (hover: hover) {
+        --tw-ring-color: var(--color-red-500);
       }
     }
   }
@@ -4244,6 +4292,16 @@
   .md\:h-16 {
     @media (width >= 48rem) {
       height: calc(var(--spacing) * 16);
+    }
+  }
+  .md\:w-48 {
+    @media (width >= 48rem) {
+      width: calc(var(--spacing) * 48);
+    }
+  }
+  .md\:w-64 {
+    @media (width >= 48rem) {
+      width: calc(var(--spacing) * 64);
     }
   }
   .md\:w-\[400px\] {
@@ -4810,6 +4868,98 @@
   .\@xl\/pago\:grid-cols-4 {
     @container pago (width >= 36rem) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  .print\:block {
+    @media print {
+      display: block;
+    }
+  }
+  .print\:hidden {
+    @media print {
+      display: none;
+    }
+  }
+  .print\:inline {
+    @media print {
+      display: inline;
+    }
+  }
+  .print\:inline-block {
+    @media print {
+      display: inline-block;
+    }
+  }
+  .print\:w-full {
+    @media print {
+      width: 100%;
+    }
+  }
+  .print\:divide-gray-400 {
+    @media print {
+      :where(& > :not(:last-child)) {
+        border-color: var(--color-gray-400);
+      }
+    }
+  }
+  .print\:divide-gray-800 {
+    @media print {
+      :where(& > :not(:last-child)) {
+        border-color: var(--color-gray-800);
+      }
+    }
+  }
+  .print\:overflow-visible {
+    @media print {
+      overflow: visible;
+    }
+  }
+  .print\:rounded-none {
+    @media print {
+      border-radius: 0;
+    }
+  }
+  .print\:border-r {
+    @media print {
+      border-right-style: var(--tw-border-style);
+      border-right-width: 1px;
+    }
+  }
+  .print\:border-b {
+    @media print {
+      border-bottom-style: var(--tw-border-style);
+      border-bottom-width: 1px;
+    }
+  }
+  .print\:border-l {
+    @media print {
+      border-left-style: var(--tw-border-style);
+      border-left-width: 1px;
+    }
+  }
+  .print\:border-gray-400 {
+    @media print {
+      border-color: var(--color-gray-400);
+    }
+  }
+  .print\:border-gray-800 {
+    @media print {
+      border-color: var(--color-gray-800);
+    }
+  }
+  .print\:bg-transparent {
+    @media print {
+      background-color: transparent;
+    }
+  }
+  .print\:p-0 {
+    @media print {
+      padding: 0;
+    }
+  }
+  .print\:text-black {
+    @media print {
+      color: var(--color-black);
     }
   }
   .\[\&_\.btn-auto\]\:w-full {

@@ -12,4 +12,6 @@ urlpatterns = [
     path('undo-register/', views.anular_asistencia, name='undo_register'),
     path('pay-cash/', views.cobrar_efectivo_recepcion, name='pay_cash'),
     path('approve-tutor/', views.aprobar_constancia_recepcion, name='approve_tutor'),
+    path('planilla-grid/', views.planilla_asistencia_grid, name='planilla_grid'),
+    path('planilla-grid/print/', views.planilla_asistencia_print, name='planilla_print'),
 ]
