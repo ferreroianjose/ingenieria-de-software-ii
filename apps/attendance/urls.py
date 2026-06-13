@@ -6,4 +6,10 @@ app_name = 'attendance'
 urlpatterns = [
     path('generate-qr/', views.generate_qr, name='generate_qr'),
     path('manage/', views.staff_asistencia, name='manage'),
+    path('search/', views.buscar_cliente, name='search'),
+    path('detail/', views.detalle_cliente_asistencia, name='detail'),
+    path('register/', views.registrar_asistencia, name='register'),
+    path('undo-register/', views.anular_asistencia, name='undo_register'),
+    path('pay-cash/', views.cobrar_efectivo_recepcion, name='pay_cash'),
+    path('approve-tutor/', views.aprobar_constancia_recepcion, name='approve_tutor'),
 ]

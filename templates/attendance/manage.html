@@ -1,12 +1,124 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Asistencia{% endblock %}
+{% block title %}Asistencia — GYMFlow{% endblock %}
 
 {% block content %}
-<div class="internal-page" >
+<div class="internal-page" x-data="{ scanning: false, scanner: null }">
+  <!-- Script de lectura de códigos QR de HTML5 -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
   <div class="internal-page__content flex flex-col gap-6">
-    {% include 'partials/admin/_admin_page_header.html' with title='Asistencia' subtitle='Pasá asistncia manual cuando falle el código QR.' view_tabs=view_tabs aria_label='Catálogo' %}
-    {% include 'partials/admin/_table_placeholder.html' with message='Próximamente: registro manual de asistencia.' %}
+    {% include 'partials/admin/_admin_page_header.html' with title='Control de asistencia' subtitle='Registrá el ingreso de clientes mediante código QR o búsqueda manual.' %}
+
+    <div class="admin-panel flex flex-col min-w-0">
+        <!-- Toolbar Horizontal -->
+        <div class="admin-panel__toolbar flex flex-col md:flex-row items-center gap-4 justify-between">
+            <!-- Búsqueda -->
+            <form id="search-form"
+                  class="flex items-center gap-2 w-full max-w-lg"
+                  hx-get="{% url 'attendance:search' %}"
+                  hx-target="#main-content-container"
+                  @submit="if(scanning) { scanner.stop().then(()=> { scanner.clear(); scanning=false; scanner=null; }).catch(()=>{}); }">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input
+                        type="search"
+                        name="q"
+                        id="search-input"
+                        placeholder="Buscar por nombre, DNI o email..."
+                        class="w-full rounded-full border border-gray-300 pl-10 pr-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400"
+                        autocomplete="off"
+                    />
+                </div>
+                <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary btn-auto text-sm px-5 py-2">
+                    Buscar
+                </button>
+            </form>
+
+            <div class="hidden md:block w-px h-8 bg-gray-200"></div>
+
+            <!-- Botón Lector QR -->
+            <button 
+                type="button"
+                class="btn-auto py-2 px-5 rounded-full font-bold text-sm transition-all duration-300 text-white shadow-sm flex items-center justify-center gap-2 w-full md:w-auto"
+                :class="scanning ? 'bg-red-500 hover:bg-red-600' : 'bg-primary-500 hover:bg-primary-600'"
+                @click="
+                    if (!scanning) {
+                        scanning = true;
+                        document.querySelector('input[name=\'q\']').value = '';
+                        $nextTick(() => {
+                            scanner = new Html5Qrcode('qr-reader');
+                            scanner.start(
+                                { facingMode: 'environment' },
+                                { fps: 15, qrbox: (vw, vh) => { let s = Math.min(vw, vh) * 0.75; return { width: s, height: s }; }, aspectRatio: 1.0 },
+                                (decodedText) => {
+                                    htmx.ajax('GET', '{% url 'attendance:detail' %}?qr_token=' + encodeURIComponent(decodedText), {
+                                        target: '#main-content-container',
+                                        swap: 'innerHTML'
+                                    });
+                                    scanner.stop().then(() => {
+                                        scanner.clear();
+                                        scanner = null;
+                                        scanning = false;
+                                    });
+                                },
+                                (error) => { /* ignore frame errors */ }
+                            ).catch(err => {
+                                console.error(err);
+                                scanning = false;
+                                alert('No se pudo acceder a la cámara. Por favor verificá los permisos del navegador.');
+                            });
+                        });
+                    } else {
+                        if (scanner) {
+                            scanner.stop().then(() => {
+                                scanner.clear();
+                                scanner = null;
+                                scanning = false;
+                            }).catch(() => {
+                                scanner.clear();
+                                scanner = null;
+                                scanning = false;
+                            });
+                        } else {
+                            scanning = false;
+                        }
+                    }
+                "
+            >
+                <svg x-show="!scanning" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                <svg x-show="scanning" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <span x-text="scanning ? 'Cerrar cámara' : 'Activar lector QR'"></span>
+            </button>
+        </div>
+
+        <!-- Contenido Principal -->
+        <div class="relative flex-1 min-h-[400px] flex flex-col">
+            <!-- Lector QR Container (Visible when scanning) -->
+            <div x-show="scanning" x-cloak class="absolute inset-0 bg-white z-10 flex flex-col items-center justify-center p-4 md:p-8">
+                <p class="text-sm font-semibold text-gray-800 mb-6 uppercase tracking-wider text-center">Posicioná el código QR frente a la cámara</p>
+                <div id="qr-reader" class="w-full max-w-md rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-gray-50 aspect-square"></div>
+            </div>
+
+            <!-- Client Detail / Search Results Container -->
+            <div id="main-content-container" x-show="!scanning" class="flex-1 w-full flex flex-col">
+                <!-- Empty State Wrapper -->
+                <div class="flex-1 flex flex-col p-3">
+                    <div class="admin-empty-dashed !m-0 !rounded-[20px] min-h-[11rem] w-full">
+                        <svg class="w-16 h-16 text-gray-400/80 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        <h3 class="text-lg font-bold text-gray-800 uppercase tracking-wide">Listo para recibir</h3>
+                        <p class="text-sm text-gray-500 mt-2 max-w-md font-normal">
+                        Buscá a un cliente manualmente en la barra superior o activá la cámara para escanear un código QR.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
   </div>
 </div>
 {% endblock %}

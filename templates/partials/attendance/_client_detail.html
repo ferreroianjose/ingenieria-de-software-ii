@@ -1,0 +1,218 @@
+<div class="flex flex-col h-full w-full">
+    <!-- Navegación -->
+    <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/50 shrink-0 flex items-center">
+        <button type="button" 
+                onclick="const input = document.getElementById('search-input'); if(input && input.value.trim() !== '') { htmx.trigger('#search-form', 'submit'); } else { document.getElementById('main-content-container').innerHTML = `<div class='flex-1 p-12 flex flex-col items-center justify-center text-center'><svg class='w-16 h-16 text-gray-200 mb-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z'></path></svg><h3 class='text-lg font-bold text-gray-800 uppercase tracking-wide'>Listo para recibir</h3><p class='text-sm text-gray-500 mt-2 max-w-md font-normal'>Buscá a un cliente manualmente en la barra superior o activá la cámara para escanear un código QR.</p></div>`; }"
+                class="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Volver a la búsqueda
+        </button>
+    </div>
+
+    <!-- Ficha del Cliente Header -->
+    <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-start justify-between gap-4 bg-white shrink-0">
+        <div>
+            <div class="flex items-center gap-3 mb-1">
+                <h3 class="text-xl font-bold text-gray-900">{{ cliente.get_full_name }}</h3>
+            </div>
+            <p class="text-sm text-gray-500 font-normal">{{ cliente.email }}</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm text-gray-600">
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                    DNI: <strong class="text-gray-800 font-semibold">{{ cliente.dni }}</strong>
+                </span>
+                {% if cliente.fecha_nacimiento %}
+                <span class="text-gray-300">|</span>
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Nacimiento: <strong class="text-gray-800 font-semibold">{{ cliente.fecha_nacimiento|date:"d/m/Y" }}</strong> ({% if edad %}{{ edad }} años{% else %}--{% endif %})
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% if qr_used %}
+        <div class="flex flex-col items-start md:items-end justify-center shrink-0 mt-2 md:mt-0 pt-3 md:pt-0 border-t border-gray-100 md:border-0">
+            <span class="flex items-center text-green-600">
+                <span class="text-sm font-bold tracking-wide">Código QR verificado</span>
+            </span>
+            <span class="text-xs text-gray-500 mt-0.5 md:ml-0">Identidad confirmada</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Alertas de Seguridad / Políticas de Negocio -->
+    <div class="bg-gray-50/50 p-6 border-b border-gray-100 flex flex-col gap-4 shrink-0">
+        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Verificaciones</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Alerta Teléfono de Emergencia -->
+            <div class="p-4 rounded-lg border {% if tiene_telefono_emergencia %}border-gray-200 bg-white{% else %}border-red-200 bg-red-50{% endif %} flex flex-col gap-1 shadow-sm">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Contacto de Emergencia</span>
+                {% if tiene_telefono_emergencia %}
+                <p class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    {{ cliente.telefono_emergencia }}
+                </p>
+                {% else %}
+                <p class="text-sm font-bold text-red-700 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    FALTA TELÉFONO DE EMERGENCIA
+                </p>
+                <p class="text-xs text-red-600 font-semibold mt-1">El cliente debe cargarlo en su perfil para poder ingresar.</p>
+                {% endif %}
+            </div>
+
+            <!-- Alerta Menor de Edad y Tutor -->
+            {% if es_menor %}
+            <div class="p-4 rounded-lg border {% if cliente.estado_constancia == 'APROBADA' %}border-green-200 bg-green-50/50{% else %}border-amber-200 bg-amber-50/50{% endif %} flex flex-col gap-1 shadow-sm">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Menor de Edad (Autorización)</span>
+                    <span class="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase {% if cliente.estado_constancia == 'APROBADA' %}bg-green-100 text-green-800{% elif cliente.estado_constancia == 'RECHAZADA' %}bg-red-100 text-red-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                        {{ cliente.get_estado_constancia_display }}
+                    </span>
+                </div>
+                {% if cliente.estado_constancia == 'APROBADA' %}
+                <p class="text-xs text-green-700 font-semibold flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    Autorización del tutor aprobada y verificada.
+                </p>
+                {% else %}
+                <p class="text-xs text-amber-700 font-semibold flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Falta verificar constancia física firmada del tutor.
+                </p>
+                <form hx-post="{% url 'attendance:approve_tutor' %}" hx-target="#client-detail-container" hx-swap="innerHTML" class="mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ cliente.id }}" />
+                    <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] uppercase tracking-wide py-1.5 px-3 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Aprobar Constancia Ahora
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- Adulto, sin restricciones de tutor -->
+            <div class="p-4 rounded-lg border border-gray-200 bg-white flex flex-col gap-1 shadow-sm">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Validación de Edad</span>
+                <p class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Mayor de edad
+                </p>
+                <p class="text-xs text-gray-500 font-medium mt-1">No requiere constancia de tutor para el acceso.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Clases y Asistencia del Día -->
+    <div class="p-6 flex-1 overflow-y-auto bg-white">
+        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            Reservas para Hoy
+        </h4>
+        
+        <div class="space-y-4">
+            {% for item in ocurrencias_detalle %}
+            {% with oc=item.ocurrencia insc=item.inscripcion pag=item.resumen_pago %}
+            <div class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-gray-300">
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-3">
+                        <h5 class="text-base font-bold text-gray-900 uppercase tracking-wide">{{ insc.clase.disciplina.nombre }}</h5>
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase {% if insc.tipo == 'MENSUAL' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %} border border-transparent">
+                            {{ insc.get_tipo_display }}
+                        </span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+                        <!-- Time -->
+                        <div class="flex items-center gap-1.5 text-sm font-bold text-gray-900">
+                            <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span>{{ oc.fecha_clase|date:"H:i" }} hs</span>
+                        </div>
+
+                        <span class="text-gray-300">|</span>
+
+                        <!-- Room -->
+                        <div class="flex items-center gap-1.5 text-sm text-gray-600">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            <span>{{ insc.clase.sala.nombre }} ({{ insc.clase.sala.sede.nombre }})</span>
+                        </div>
+                        
+                        <span class="text-gray-300">|</span>
+
+                        <!-- Payment Badge -->
+                        {% if not pag.mostrar_pagar and not pag.mostrar_pagar_saldo %}
+                        <div class="flex items-center gap-1 text-xs font-bold text-green-600 uppercase tracking-wide">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Saldada
+                        </div>
+                        {% else %}
+                        <div class="flex items-center gap-1 text-xs font-bold uppercase tracking-wide {% if pag.mostrar_pagar %}text-red-600{% else %}text-amber-600{% endif %}">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {% if pag.mostrar_pagar %}Pendiente: ${{ pag.monto_a_pagar }}{% else %}Saldo: ${{ pag.saldo_pendiente }}{% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Right side: Actions -->
+                <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                    <!-- Pagar Button (Only if owed) -->
+                    {% if pag.mostrar_pagar or pag.mostrar_pagar_saldo %}
+                    <form hx-post="{% url 'attendance:quick_pay' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="w-full sm:w-auto">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ cliente.id }}" />
+                        <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
+                        <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary h-10 w-full sm:w-auto flex items-center justify-center gap-1.5">
+                            Pagar (Efectivo)
+                        </button>
+                    </form>
+                    {% endif %}
+
+                    <!-- Asistencia Button/State -->
+                    {% if item.ya_asistio %}
+                    <div class="flex items-center gap-2 w-full sm:w-auto h-10">
+                        <div class="h-full px-5 rounded-full border-2 border-green-200 bg-green-50 flex items-center justify-center gap-2 flex-1 sm:flex-none">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <span class="text-sm font-bold text-green-800">Presente</span>
+                            <span class="text-xs text-green-600 font-semibold ml-1">{{ item.hora_asistencia|date:"H:i" }} hs</span>
+                        </div>
+                        <form hx-post="{% url 'attendance:undo_register' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="h-full">
+                            {% csrf_token %}
+                            <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
+                            <button type="button" 
+                                    onclick="window.gymflowConfirm('¿Seguro que querés deshacer el registro de asistencia a esta clase?', { variant: 'danger', title: 'Deshacer asistencia', confirmLabel: 'Sí, deshacer' }).then(ok => { if (ok) htmx.trigger(this.parentElement, 'submit') })"
+                                    class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger h-full flex items-center justify-center"
+                                    title="Deshacer asistencia">
+                                Deshacer
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <form hx-post="{% url 'attendance:register' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="w-full sm:w-auto">
+                        {% csrf_token %}
+                        <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
+                        {% if pag.mostrar_pagar or pag.mostrar_pagar_saldo or es_menor and cliente.estado_constancia != 'APROBADA' or not tiene_telefono_emergencia %}
+                        <button type="button" disabled class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary h-10 w-full sm:w-auto flex items-center justify-center gap-1.5">
+                            Bloqueado
+                        </button>
+                        {% else %}
+                        <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary h-10 w-full sm:w-auto flex items-center justify-center gap-2 group">
+                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            Registrar presente
+                        </button>
+                        {% endif %}
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endwith %}
+            {% empty %}
+            <div class="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+                <svg class="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <p class="text-gray-500 text-sm font-medium">El cliente no tiene reservas confirmadas para el día de hoy.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
