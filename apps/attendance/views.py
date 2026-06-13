@@ -182,6 +182,22 @@ def registrar_asistencia(request):
     
     inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id)
 
+    # Validaciones estrictas de backend
+    client_user = inscripcion.usuario
+    edad = _calcular_edad(client_user.fecha_nacimiento)
+    es_menor = edad is not None and edad < 18
+    tiene_telefono_emergencia = bool(client_user.telefono_emergencia and client_user.telefono_emergencia.strip())
+
+    if es_menor and client_user.estado_constancia != 'APROBADA':
+        return HttpResponse("Asistencia bloqueada: El menor no tiene una constancia médica aprobada.", status=403)
+    
+    if not tiene_telefono_emergencia:
+        return HttpResponse("Asistencia bloqueada: No se ha registrado un teléfono de emergencia.", status=403)
+
+    resumen_pago = resumen_pago_inscripcion(inscripcion)
+    if resumen_pago["mostrar_pagar"] or resumen_pago["mostrar_pagar_saldo"]:
+        return HttpResponse("Asistencia bloqueada: El cliente registra deuda para esta inscripción.", status=403)
+
     # Evitar duplicados del mismo día
     today = timezone.localdate()
     ya_registrada = Asistencia.objects.filter(
@@ -277,6 +293,24 @@ def aprobar_constancia_recepcion(request):
 
     # Recargar el detalle del cliente
     # Recargar el detalle del cliente directamente
+    mutable_get = request.GET.copy()
+    mutable_get["user_id"] = cliente.id
+    request.GET = mutable_get
+    return detalle_cliente_asistencia(request)
+
+
+@staff_required
+def deshacer_constancia_recepcion(request):
+    """Marca la constancia de tutor del menor de edad como pendiente."""
+    if request.method != "POST":
+        return HttpResponse("Método no permitido", status=405)
+
+    user_id = request.POST.get("user_id")
+    cliente = get_object_or_404(User, id=user_id, rol="CLIENTE")
+    
+    cliente.estado_constancia = "PENDIENTE"
+    cliente.save(update_fields=["estado_constancia"])
+
     mutable_get = request.GET.copy()
     mutable_get["user_id"] = cliente.id
     request.GET = mutable_get

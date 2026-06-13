@@ -72,19 +72,27 @@
                 </div>
                 {% if cliente.estado_constancia == 'APROBADA' %}
                 <p class="text-xs text-green-700 font-semibold flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     Autorización del tutor aprobada y verificada.
                 </p>
+                <form hx-post="{% url 'attendance:undo_approve_tutor' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="user_id" value="{{ cliente.id }}" />
+                    <button type="button" 
+                            onclick="window.gymflowConfirm('¿Seguro que querés deshacer la aprobación de la constancia?', { variant: 'danger', title: 'Deshacer constancia', confirmLabel: 'Sí, deshacer' }).then(ok => { if (ok) htmx.trigger(this.parentElement, 'submit') })"
+                            class="w-full bg-white border border-gray-200 hover:bg-red-50 hover:border-red-200 text-gray-500 hover:text-red-600 font-bold text-[11px] uppercase tracking-wide py-1.5 px-3 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+                        Deshacer Aprobación
+                    </button>
+                </form>
                 {% else %}
                 <p class="text-xs text-amber-700 font-semibold flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                     Falta verificar constancia física firmada del tutor.
                 </p>
-                <form hx-post="{% url 'attendance:approve_tutor' %}" hx-target="#client-detail-container" hx-swap="innerHTML" class="mt-2">
+                <form hx-post="{% url 'attendance:approve_tutor' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="mt-2">
                     {% csrf_token %}
                     <input type="hidden" name="user_id" value="{{ cliente.id }}" />
                     <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] uppercase tracking-wide py-1.5 px-3 rounded-lg transition-colors shadow-sm flex items-center justify-center gap-1.5">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Aprobar Constancia Ahora
                     </button>
                 </form>
@@ -198,7 +206,6 @@
                         </button>
                         {% else %}
                         <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary h-10 w-full sm:w-auto flex items-center justify-center gap-2 group">
-                            <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                             Registrar presente
                         </button>
                         {% endif %}

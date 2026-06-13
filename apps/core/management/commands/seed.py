@@ -585,6 +585,8 @@ class Command(BaseCommand):
             clases_obj, periodos_obj,
         )
 
+        self._seed_demo_case(User, Class, Inscripcion, PeriodoCobro, Pago, PagoInscripcion, PrecioClase)
+
         self.stdout.write(self.style.SUCCESS("✓ Seed completado."))
 
     # -----------------------------------------------------------------------
@@ -653,7 +655,7 @@ class Command(BaseCommand):
                 rol="CLIENTE",
                 dni=dni,
                 fecha_nacimiento=date(random.randint(1980, 2005), random.randint(1, 12), random.randint(1, 28)),
-                estado_constancia=random.choices(["APROBADA", "PENDIENTE", "RECHAZADA", "NO_ENTREGADA"], weights=[0.7, 0.1, 0.05, 0.15])[0],
+                estado_constancia=random.choices(["APROBADA", "PENDIENTE", "RECHAZADA"], weights=[0.8, 0.15, 0.05])[0],
                 telefono_emergencia=f"35155{dni[-6:]}"
             )
             created += 1
@@ -993,3 +995,75 @@ class Command(BaseCommand):
             f"Créditos: {creditos_creados} creados, "
             f"Asistencias: {asistencias_creadas} creadas."
         )
+
+    # -----------------------------------------------------------------------
+    # Caso de Demo Específico (Seña y Pago)
+    # -----------------------------------------------------------------------
+
+    def _seed_demo_case(self, User, Class, Inscripcion, PeriodoCobro, Pago, PagoInscripcion, PrecioClase):
+        from apps.payments.periodos import obtener_periodo_activo_si_hay
+        from apps.classes.ocurrencias import generar_ocurrencias_mensual
+
+        today = timezone.localdate()
+        dia_semana = today.weekday()
+        
+        clases_hoy = list(Class.objects.filter(dia_semana=dia_semana)[:2])
+        if len(clases_hoy) < 2:
+            return
+
+        c1, c2 = clases_hoy
+
+        user, _ = User.objects.get_or_create(
+            email="demo@mail.com",
+            defaults={
+                "username": "demo@mail.com",
+                "password": make_password("cliente123"),
+                "first_name": "Demo",
+                "last_name": "Asistencia",
+                "dni": "99999999",
+                "rol": "CLIENTE",
+                "estado_constancia": "PENDIENTE",
+                "fecha_nacimiento": date(2011, 1, 1)
+            }
+        )
+
+        periodo = obtener_periodo_activo_si_hay()
+        if not periodo:
+            return
+
+        Inscripcion.objects.filter(usuario=user, periodo=periodo).delete()
+
+        i1 = Inscripcion.objects.create(
+            usuario=user, clase=c1, periodo=periodo,
+            tipo=Inscripcion.Tipo.MENSUAL, estado=Inscripcion.Estado.RESERVADA
+        )
+        
+        i2 = Inscripcion.objects.create(
+            usuario=user, clase=c2, periodo=periodo,
+            tipo=Inscripcion.Tipo.MENSUAL, estado=Inscripcion.Estado.RESERVADA
+        )
+
+        p1_obj = PrecioClase.objects.filter(clase=c1, periodo=periodo).first()
+        p2_obj = PrecioClase.objects.filter(clase=c2, periodo=periodo).first()
+        
+        monto_c1 = p1_obj.monto if p1_obj else Decimal("3000.00")
+        monto_c2 = p2_obj.monto if p2_obj else Decimal("3000.00")
+
+        # Pago Seña (mitad)
+        pago1 = Pago.objects.create(
+            usuario=user, periodo=periodo, monto=monto_c1 / 2,
+            metodo=Pago.Metodo.EFECTIVO, estado=Pago.Estado.COMPLETADO
+        )
+        PagoInscripcion.objects.create(pago=pago1, inscripcion=i1, monto_aplicado=monto_c1 / 2)
+
+        # Pago Total
+        pago2 = Pago.objects.create(
+            usuario=user, periodo=periodo, monto=monto_c2,
+            metodo=Pago.Metodo.EFECTIVO, estado=Pago.Estado.COMPLETADO
+        )
+        PagoInscripcion.objects.create(pago=pago2, inscripcion=i2, monto_aplicado=monto_c2)
+
+        generar_ocurrencias_mensual(i1)
+        generar_ocurrencias_mensual(i2)
+
+        self.stdout.write("  Caso de demo (Seña y Paga en el día) creado exitosamente.")

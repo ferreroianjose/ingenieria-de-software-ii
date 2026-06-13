@@ -7,6 +7,11 @@
 <div class="internal-page" x-data="{ tab: 'ingreso', scanning: false, scanner: null }">
   <!-- Script de lectura de códigos QR de HTML5 -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+      #qr-reader video {
+          transform: scaleX(-1);
+      }
+  </style>
 
   <div class="internal-page__content flex flex-col gap-6">
     {% include 'partials/admin/_admin_page_header.html' with title='Control de asistencia' subtitle='Registrá el ingreso de clientes mediante código QR o búsqueda manual.' view_tabs=view_tabs aria_label='Asistencia' %}
