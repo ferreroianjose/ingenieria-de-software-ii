@@ -46,6 +46,10 @@ class CancelacionMensualNoPermitida(ReservaError):
     )
 
 
+class ConflictoHorario(ReservaError):
+    default_message = "Ya tenés una clase reservada en ese horario, en otra disciplina."
+
+
 class InscripcionDuplicada(ReservaError):
     default_message = "Ya tenés una inscripción activa en esta clase."
 
