@@ -521,6 +521,15 @@ function syncPageChrome() {
 		}
 	}
 
+	const topbar = document.getElementById("topbar-mobile");
+	if (topbar) {
+		if (sidebarVariant === "light") {
+			topbar.classList.add("topbar--light");
+		} else {
+			topbar.classList.remove("topbar--light");
+		}
+	}
+
 	const metaScheme = document.getElementById("meta-color-scheme");
 	if (metaScheme && colorScheme) {
 		metaScheme.setAttribute("content", colorScheme);

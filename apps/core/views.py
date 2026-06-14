@@ -1,17 +1,17 @@
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.core.page_chrome import (
-    PAGE_CHROME_DASHBOARD_CLIENTE,
     PAGE_CHROME_LIGHT,
     PAGE_CHROME_DARK,
     merge_page_chrome,
 )
 from apps.classes.models import Disciplina, Inscripcion
 from apps.payments.models import Pago, PeriodoCobro
+from apps.attendance.models import Asistencia
 from apps.payments.periodos import periodo_vigente
 
 
@@ -317,6 +317,37 @@ def _historial_pagos_para_dashboard(user, limite=2):
     ]
 
 
+def _clases_de_hoy_para_empleado():
+    from apps.classes.models import Class, InscripcionOcurrencia
+    from django.db.models import Count, Q, Subquery, OuterRef, IntegerField
+    from django.db.models.functions import Coalesce
+    hoy = timezone.localtime(timezone.now())
+    
+    ocurrencias_count = InscripcionOcurrencia.objects.filter(
+        inscripcion__clase=OuterRef('pk'),
+        fecha_clase__date=hoy.date(),
+        estado="ACTIVA"
+    ).values('inscripcion__clase').annotate(c=Count('id')).values('c')
+
+    clases = (
+        Class.objects.filter(dia_semana=hoy.weekday(), estado='disponible')
+        .select_related("disciplina", "sala", "profesor")
+        .annotate(anotados=Coalesce(Subquery(ocurrencias_count, output_field=IntegerField()), 0))
+        .order_by("hora_inicio")
+    )
+    resultado = []
+    for c in clases:
+        resultado.append({
+            "hora": c.hora_inicio.strftime("%H:%M") if c.hora_inicio else "TBD",
+            "disciplina": c.disciplina.nombre if c.disciplina else "Sin disciplina",
+            "sala": c.sala.nombre if c.sala else "Sin sala",
+            "profesor": f"{c.profesor.nombre} {c.profesor.apellido}" if c.profesor else "-",
+            "cupo": c.cupo_maximo,
+            "anotados": c.anotados,
+        })
+    return resultado
+
+
 def root(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
@@ -336,10 +367,22 @@ def dashboard(request):
         )
 
     if user.rol == "EMPLEADO":
+        from apps.classes.models import InscripcionOcurrencia
+        hoy = timezone.localtime(timezone.now())
+        asistencias_hoy = Asistencia.objects.filter(fecha_hora_ingreso__date=hoy.date()).count()
+        ingresos_hoy = Pago.objects.filter(fecha_pago__date=hoy.date(), estado=Pago.Estado.COMPLETADO).aggregate(total=Sum('monto'))['total'] or 0
+        cancelaciones_hoy = InscripcionOcurrencia.objects.filter(fecha_clase__date=hoy.date(), estado="CANCELADA").count()
+
         return render(
             request,
             "dashboards/empleado.html",
-            {"page_section": "Panel de empleado"},
+            {
+                "page_section": "Dashboard Operativo",
+                "clases_hoy": _clases_de_hoy_para_empleado(),
+                "asistencias_hoy": asistencias_hoy,
+                "ingresos_hoy": ingresos_hoy,
+                "cancelaciones_hoy": cancelaciones_hoy,
+            },
         )
 
     # Else es un usuario cliente.
@@ -348,7 +391,6 @@ def dashboard(request):
         request,
         "dashboards/cliente.html",
         {
-            **merge_page_chrome(PAGE_CHROME_DASHBOARD_CLIENTE),
             "next_classes": _proximas_clases_para_dashboard(user),
             "featured_disciplines": _cartelera_para_dashboard(),
             "payment_history": _historial_pagos_para_dashboard(user),

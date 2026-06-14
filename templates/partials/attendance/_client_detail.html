@@ -1,5 +1,6 @@
 <div class="flex flex-col flex-1 w-full">
     <!-- Navegación -->
+    {% if source != 'dashboard' %}
     <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/50 shrink-0 flex items-center">
         <button type="button"
                 onclick="const input = document.getElementById('search-input'); if(input && input.value.trim() !== '') { htmx.trigger('#search-form', 'submit'); } else { htmx.ajax('GET', '{% url 'attendance:search' %}', {target: '#main-content-container'}); }"
@@ -8,9 +9,10 @@
             Volver a la búsqueda
         </button>
     </div>
+    {% endif %}
 
     <!-- Ficha del Cliente Header -->
-    <div class="p-6 border-b border-gray-100 flex flex-wrap items-start justify-between gap-6 bg-white shrink-0">
+    <div class="p-6 border-b border-gray-100 flex flex-wrap items-start justify-between gap-6 shrink-0">
         <div class="min-w-[240px] flex-initial">
             <div class="flex items-center gap-3 mb-1">
                 <h3 class="text-xl font-bold text-gray-900">{{ cliente.get_full_name }}</h3>
@@ -29,14 +31,7 @@
                 </p>
                 {% endif %}
             </div>
-            {% if qr_used %}
-            <div class="flex flex-col items-start justify-center mt-3 pt-3 border-t border-gray-100 w-full">
-                <span class="flex items-center text-green-600">
-                    <span class="text-sm font-bold tracking-wide">Código QR verificado</span>
-                </span>
-                <span class="text-xs text-gray-500 mt-0.5">Identidad confirmada</span>
-            </div>
-            {% endif %}
+
         </div>
 
         <!-- Alertas y Controles -->
@@ -77,8 +72,9 @@
                     Constancia del tutor
                 </p>
                 <p class="text-xs text-green-700 font-medium mt-1">Aprobada y verificada.</p>
-                <form hx-post="{% url 'attendance:undo_approve_tutor' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="mt-auto w-full">
+                <form hx-post="{% url 'attendance:undo_approve_tutor' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="mt-auto w-full">
                     {% csrf_token %}
+                    <input type="hidden" name="source" value="{{ source|default:'' }}" />
                     <input type="hidden" name="user_id" value="{{ cliente.id }}" />
                     <button type="button"
                             onclick="window.gymflowConfirm('¿Seguro que querés deshacer la aprobación de la constancia?', { variant: 'danger', title: 'Deshacer constancia', confirmLabel: 'Sí, deshacer' }).then(ok => { if (ok) htmx.trigger(this.parentElement, 'submit') })"
@@ -92,8 +88,9 @@
                     Constancia del tutor
                 </p>
                 <p class="text-xs text-amber-700 font-semibold mt-1">Falta verificar constancia física.</p>
-                <form hx-post="{% url 'attendance:approve_tutor' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="mt-auto w-full">
+                <form hx-post="{% url 'attendance:approve_tutor' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="mt-auto w-full">
                     {% csrf_token %}
+                    <input type="hidden" name="source" value="{{ source|default:'' }}" />
                     <input type="hidden" name="user_id" value="{{ cliente.id }}" />
                     <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] uppercase tracking-wide py-1.5 px-3 rounded-full transition-colors shadow-sm flex items-center justify-center gap-1.5">
                         Aprobar Constancia
@@ -169,8 +166,9 @@
                 <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0">
                     <!-- Pagar Button (Only if owed) -->
                     {% if pag.mostrar_pagar or pag.mostrar_pagar_saldo %}
-                    <form hx-post="{% url 'attendance:quick_pay' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="w-full sm:w-auto">
+                    <form hx-post="{% url 'attendance:quick_pay' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="w-full sm:w-auto">
                         {% csrf_token %}
+                        <input type="hidden" name="source" value="{{ source|default:'' }}" />
                         <input type="hidden" name="user_id" value="{{ cliente.id }}" />
                         <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
                         <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary h-10 w-full sm:w-auto flex items-center justify-center gap-1.5">
@@ -187,8 +185,9 @@
                             <span class="text-sm font-bold text-green-800">Presente</span>
                             <span class="text-xs text-green-600 font-semibold ml-1">{{ item.hora_asistencia|date:"H:i" }} hs</span>
                         </div>
-                        <form hx-post="{% url 'attendance:undo_register' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="h-full">
+                        <form hx-post="{% url 'attendance:undo_register' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="h-full">
                             {% csrf_token %}
+                            <input type="hidden" name="source" value="{{ source|default:'' }}" />
                             <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
                             <button type="button"
                                     onclick="window.gymflowConfirm('¿Seguro que querés deshacer el registro de asistencia a esta clase?', { variant: 'danger', title: 'Deshacer asistencia', confirmLabel: 'Sí, deshacer' }).then(ok => { if (ok) htmx.trigger(this.parentElement, 'submit') })"
@@ -199,8 +198,9 @@
                         </form>
                     </div>
                     {% else %}
-                    <form hx-post="{% url 'attendance:register' %}" hx-target="#main-content-container" hx-swap="innerHTML" class="w-full sm:w-auto">
+                    <form hx-post="{% url 'attendance:register' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="w-full sm:w-auto">
                         {% csrf_token %}
+                        <input type="hidden" name="source" value="{{ source|default:'' }}" />
                         <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
                         {% if pag.mostrar_pagar or pag.mostrar_pagar_saldo or es_menor and cliente.estado_constancia != 'APROBADA' or not tiene_telefono_emergencia %}
                         <button type="button" disabled class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary h-10 w-full sm:w-auto flex items-center justify-center gap-1.5">

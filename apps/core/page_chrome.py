@@ -40,18 +40,6 @@ PAGE_CHROME_ADMIN = {
     "sidebar_variant": "light",
 }
 
-PAGE_CHROME_DASHBOARD_CLIENTE = {
-    "footer_variant": "light",
-    "color_scheme": "light",
-    "page_background": (
-        "background:"
-        " radial-gradient(circle at 8% 0%, rgba(223, 2, 255, 0.14), transparent 32%),"
-        " radial-gradient(circle at 92% 10%, rgba(92, 225, 230, 0.14), transparent 28%),"
-        " linear-gradient(180deg, #ffffff 0%, #f8f9ff 40%, #f5f7ff 100%);"
-    ),
-    "sidebar_variant": "light",
-}
-
 
 def merge_page_chrome(preset=None, **overrides):
     """Combina preset + overrides para pasar al contexto del template."""

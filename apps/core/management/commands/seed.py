@@ -927,6 +927,10 @@ class Command(BaseCommand):
                     num_clases = random.choice([2, 3, 4])
                     clases_elegidas = random.sample(todas_clases, k=num_clases)
                     for clase in clases_elegidas:
+                        # Validar cupo para no generar sobreocupaciones irreales en los datos de prueba
+                        if Inscripcion.objects.filter(clase=clase, periodo=periodo, estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]).count() >= clase.cupo_maximo:
+                            continue
+                        
                         tipo = random.choices([Inscripcion.Tipo.MENSUAL, Inscripcion.Tipo.CLASE_SUELTA], weights=[0.8, 0.2])[0]
                         insc = crear_inscripcion(usuario, clase, periodo, tipo, Inscripcion.Estado.RESERVADA)
                         if insc:

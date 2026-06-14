@@ -194,6 +194,7 @@ def detalle_cliente_asistencia(request):
 
     client_user = get_object_or_404(User, id=client_id, rol="CLIENTE")
     context = _get_client_detail_context(client_user, qr_token)
+    context["source"] = request.GET.get("source") or request.POST.get("source") or ""
     return render(request, "partials/attendance/_client_detail.html", context)
 
 

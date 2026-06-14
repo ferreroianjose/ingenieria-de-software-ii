@@ -1,26 +1,224 @@
 {% extends 'base.html' %}
 
-{% block title %}Panel de Empleado{% endblock %}
+{% block title %}Dashboard Operativo{% endblock %}
 
 {% block content %}
-<div class="internal-page">
-  <div class="internal-page__content flex flex-col items-center justify-center min-h-[70vh] gap-8 text-center">
+<div class="internal-page" x-data="{
+    scanning: false,
+    scanner: null,
+    modalOpen: false,
+    tip: { show: false, text: '', x: 0, y: 0 },
+    showTip(el, text) {
+        const r = el.getBoundingClientRect();
+        this.tip.x = r.left + r.width / 2;
+        this.tip.y = r.top;
+        this.tip.text = text;
+        this.tip.show = true;
+    },
+    hideTip() { this.tip.show = false; },
+    toggleTip(el, text) {
+        if (this.tip.show && this.tip.text === text) {
+            this.tip.show = false;
+        } else {
+            this.showTip(el, text);
+        }
+    }
+}">
 
-    <div class="flex flex-col items-center gap-4">
-      <div class="size-20 rounded-full bg-primary-900/60 border border-primary-700/40 flex items-center justify-center shadow-fair-lg">
-        <svg class="size-10 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75a4.5 4.5 0 0 1-4.884 4.484c-1.076-.091-2.264.071-2.95.904l-7.152 8.684a2.548 2.548 0 1 1-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5 4.5 0 0 1 6.336-4.486l-3.276 3.276a3.004 3.004 0 0 0 2.25 2.25l3.276-3.276c.256.565.398 1.192.398 1.852Z" />
-        </svg>
-      </div>
+    <style>
+        #dashboard-qr-reader video {
+            transform: scaleX(-1);
+        }
+    </style>
 
-      <div>
-        <p class="text-xs font-black uppercase tracking-widest text-primary-400/80 mb-2">Panel de Empleado</p>
-        <h1 class="text-4xl lg:text-5xl font-black uppercase tracking-tighter text-secondary-900">
-          En construcción
-        </h1>
-      </div>
+    <div
+        :style="`display:${tip.show?'block':'none'};position:fixed;left:${tip.x}px;top:${tip.y}px;transform:translate(-50%,calc(-100% - 10px));z-index:9999;max-width:14rem;padding:8px 12px;font-size:0.75rem;line-height:1.6;color:#fff;background:rgba(17,24,39,.93);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);pointer-events:none;`"
+        x-text="tip.text"
+    ></div>
+    <div class="internal-page__content flex flex-col gap-6">
+
+        {% include 'partials/admin/_admin_page_header.html' with title="Dashboard Operativo" subtitle="Acciones rápidas y control del día." %}
+
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        {# PANEL 1 — MÉTRICAS Y ESCÁNER QR                                     #}
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- MÉTRICAS DEL DÍA -->
+            <div class="admin-panel col-span-1 lg:col-span-2 flex flex-col">
+                <div class="admin-panel__toolbar border-b border-gray-100 flex items-center justify-between">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Resumen del día</p>
+                    <div class="flex gap-2">
+                        <a href="{% url 'manage' %}" class="btn-auto rounded-full bg-primary-400 text-white px-4 py-1.5 text-xs font-bold hover:bg-primary-600 transition-colors no-underline shadow-sm">Buscar alumno</a>
+                        <a href="{% url 'payments:manage' %}" class="btn-auto rounded-full bg-gray-800 text-white px-4 py-1.5 text-xs font-bold hover:bg-gray-900 transition-colors no-underline shadow-sm">Cobranzas</a>
+                    </div>
+                </div>
+                <div class="flex-1 flex flex-col justify-center p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div class="flex flex-col items-center gap-1 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0">
+                            <span class="text-4xl font-black text-gray-900 tabular-nums leading-none">{{ asistencias_hoy }}</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Asistencias</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Cantidad de ingresos registrados el día de hoy (tanto vía escáner QR como manual)." %}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center gap-1 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0">
+                            <span class="text-4xl font-black text-gray-900 tabular-nums leading-none">${{ ingresos_hoy|floatformat:"0" }}</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Cobros de hoy</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Suma total de los pagos cobrados y acreditados en efectivo, tarjeta o MercadoPago durante el día de hoy." %}
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-4xl font-black text-gray-900 tabular-nums leading-none">{{ cancelaciones_hoy }}</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Cancelaciones</span>
+                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Cantidad de asistencias que han sido canceladas en el día de hoy." %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESCÁNER QR NATIVO -->
+            <div class="admin-panel col-span-1 flex flex-col relative min-h-[320px]">
+                <div class="admin-panel__toolbar border-b border-gray-100 bg-gray-50 rounded-t-2xl flex items-center justify-between">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Ingreso Rápido</p>
+                    <button
+                        type="button"
+                        class="btn-auto py-1.5 px-4 rounded-full font-bold text-xs transition-colors flex items-center gap-2 shadow-sm"
+                        :class="scanning ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-secondary-500 text-white hover:bg-secondary-600'"
+                        @click="
+                            if (!scanning) {
+                                scanning = true;
+                                $nextTick(() => {
+                                    scanner = new Html5Qrcode('dashboard-qr-reader');
+                                    scanner.start(
+                                        { facingMode: 'environment' },
+                                        { fps: 15, qrbox: (vw, vh) => { let s = Math.min(vw, vh) * 0.75; return { width: s, height: s }; }, aspectRatio: 1.0 },
+                                        (decodedText) => {
+                                            modalOpen = true;
+                                            document.getElementById('qr-modal-content').innerHTML = '<div class=\'flex min-h-[12rem] flex-1 items-center justify-center p-8 text-sm font-medium text-gray-500\'>Cargando\u2026</div>';
+                                            htmx.ajax('GET', `{% url 'attendance:detail' %}?qr_token=` + encodeURIComponent(decodedText) + `&source=dashboard`, {
+                                                target: '#qr-modal-content',
+                                                swap: 'innerHTML'
+                                            });
+                                            scanner.stop().then(() => {
+                                                scanner.clear();
+                                                document.getElementById('dashboard-qr-reader').innerHTML = '';
+                                                scanner = null;
+                                                scanning = false;
+                                            }).catch(() => {
+                                                try { scanner.clear(); } catch(e){}
+                                                document.getElementById('dashboard-qr-reader').innerHTML = '';
+                                                scanner = null;
+                                                scanning = false;
+                                            });
+                                        },
+                                        (error) => { /* ignore frame errors */ }
+                                    ).catch(err => {
+                                        console.error(err);
+                                        scanning = false;
+                                        alert('No se pudo acceder a la cámara. Por favor verificá los permisos del navegador.');
+                                    });
+                                });
+                            } else {
+                                if (scanner) {
+                                    scanner.stop().then(() => {
+                                        scanner.clear();
+                                        document.getElementById('dashboard-qr-reader').innerHTML = '';
+                                        scanner = null;
+                                        scanning = false;
+                                    }).catch(() => {
+                                        try { scanner.clear(); } catch(e){}
+                                        document.getElementById('dashboard-qr-reader').innerHTML = '';
+                                        scanner = null;
+                                        scanning = false;
+                                    });
+                                } else {
+                                    document.getElementById('dashboard-qr-reader').innerHTML = '';
+                                    scanning = false;
+                                }
+                            }
+                        "
+                    >
+                        <svg x-show="!scanning" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        <span class='text-nowrap' x-text="scanning ? 'Cerrar cámara' : 'Activar lector'"></span>
+                    </button>
+                </div>
+
+                <div class="flex-1 flex flex-col relative overflow-hidden bg-white rounded-b-2xl">
+                    <template x-if="scanning">
+                        <div class="absolute inset-0 bg-gray-900 z-10 flex flex-col items-center justify-center p-4">
+                            <div id="dashboard-qr-reader" class="w-full max-w-[220px] rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-800 bg-black aspect-square"></div>
+                            <p class="text-xs font-semibold text-white/70 mt-4 uppercase tracking-widest text-center">Enfocá el código QR aquí</p>
+                        </div>
+                    </template>
+
+                    <div class="flex-1 w-full flex flex-col items-center justify-center text-center p-8 min-h-[250px]" x-show="!scanning">
+                        <div class="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4 ring-1 ring-gray-100">
+                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-600">Listo para escanear</p>
+                        <p class="text-xs text-gray-400 mt-1 max-w-[200px]">Activá la cámara para detectar un código QR al instante.</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        {# PANEL 2 — CLASES DE HOY                                             #}
+        {# ═══════════════════════════════════════════════════════════════════ #}
+        <section>
+            <div class="admin-panel">
+                <div class="admin-panel__toolbar border-b border-gray-100 bg-gray-50 rounded-t-2xl">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-0">Clases Programadas para Hoy</p>
+                </div>
+
+                {% if clases_hoy %}
+                <div class="admin-panel__table">
+                    <table class="min-w-full table-auto admin-selectable-table">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 text-left">Hora</th>
+                                <th class="px-6 py-3 text-left">Disciplina</th>
+                                <th class="px-6 py-3 text-left">Profesor</th>
+                                <th class="px-6 py-3 text-left">Sala</th>
+                                <th class="px-6 py-3 text-right">Ocupación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for clase in clases_hoy %}
+                            <tr class="admin-selectable-row">
+                                <td class="px-6 py-4 text-sm font-bold text-gray-900 whitespace-nowrap">{{ clase.hora }}</td>
+                                <td class="px-6 py-4 text-sm font-bold text-gray-800">{{ clase.disciplina }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">{{ clase.profesor }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-600">{{ clase.sala }}</td>
+                                <td class="px-6 py-4 text-sm text-right">
+                                    <span class="text-sm font-semibold {% if clase.anotados >= clase.cupo %}text-red-600{% else %}text-gray-700{% endif %}">
+                                        {{ clase.anotados }} / {{ clase.cupo }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="py-12">
+                    {% include 'partials/admin/_empty_state.html' with icon='classes' title='No hay clases hoy' message='No se encontraron clases programadas para el día de la fecha.' %}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
     </div>
 
-  </div>
+    {% include 'partials/dashboards/_qr_scanner_modal.html' with modal_show_var='modalOpen' %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 {% endblock %}
