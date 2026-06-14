@@ -4,6 +4,10 @@
 <meta name="color-scheme" id="meta-color-scheme" content="dark">
 {% endblock %}
 
+{% block sidebar_variant_block %}
+{% include 'partials/layout/_sidebar.html' with sidebar_variant='dark' %}
+{% endblock %}
+
 {% block page_chrome_boot %}
 <style id="page-chrome-boot">
 	html,
@@ -22,6 +26,7 @@
 
 {% block footer_variant %}dark{% endblock %}
 {% block color_scheme %}dark{% endblock %}
+{% block sidebar_variant %}dark{% endblock %}
 {% block body_background %}#000000{% endblock %}
 {% block page_canvas_background %}background: radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14) 0%, transparent 32%), radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09) 0%, transparent 28%), #000000;{% endblock %}
 {% block page_canvas_style %}background: radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14) 0%, transparent 32%), radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09) 0%, transparent 28%), #000000;{% endblock %}

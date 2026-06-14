@@ -14,7 +14,7 @@
   hx-target="#main-content"
   hx-select="#main-content"
   hx-swap="outerHTML"
-  class="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col overflow-visible topbar-mobile-transition"
+  class="md:hidden fixed top-0 left-0 right-0 z-50 flex flex-col overflow-visible topbar-mobile-transition {% if topbar_variant == 'light' %}topbar--light{% endif %}"
   :class="mobileOpen ? 'max-h-[90vh] rounded-b-8xl' : 'max-h-[var(--topbar-height)] rounded-b-0xl'"
 >
   <!-- Always visible header row -->

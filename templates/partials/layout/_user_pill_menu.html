@@ -2,7 +2,7 @@
   <div class="user-pill-item">
     <form method="post" action="{% url 'logout' %}" hx-boost="false">
       {% csrf_token %}
-      <button type="submit" class="text-white !bg-[#F00]/45 hover:!bg-[#F00]/65">
+      <button type="submit" class="text-white !bg-red-600 hover:!bg-red-700 font-bold transition-colors">
         {% include 'partials/ui/_icon.html' with name="box-arrow-left" class="size-4 shrink-0" %}
         <span class="whitespace-nowrap">Cerrar sesión</span>
       </button>

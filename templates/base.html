@@ -129,6 +129,13 @@
 	      inset -1px -1px 0 0 rgba(255, 255, 255, 0.15),
 	      inset  1px  1px 0 0 rgba(255, 255, 255, 0.05);
 	  }
+	  .user-pill-avatar {
+	    background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-400) 100%) !important;
+	    box-shadow: 0 2px 8px rgba(223, 2, 255, 0.25);
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	  }
 	  .user-pill-sidebar.pill-open {
 	    background:
 	      linear-gradient(-135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0) 25%),
@@ -167,11 +174,11 @@
 	    body.is-collapsed .user-pill-sidebar .user-pill-avatar {
 	      margin-left: auto;
 	      margin-right: auto;
-	      background: rgba(255, 255, 255, 0.08) !important;
-	      border: 1px solid rgba(255, 255, 255, 0.11) !important;
+	      background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-400) 100%) !important;
+	      border: none !important;
 	      border-radius: 999px !important;
-	      padding: 0.375rem;
-	      box-shadow: 0 0 12px rgba(255, 0, 255, 0.12), 0 4px 16px rgba(0, 0, 0, 0.40);
+	      padding: 0.375rem !important;
+	      box-shadow: 0 0 16px rgba(223, 2, 255, 0.35), 0 4px 16px rgba(0, 0, 0, 0.40) !important;
 	    }
 
 	    /* Flyout: flota separado del sidebar con un gap visible */
@@ -188,6 +195,177 @@
 	      display: none !important;
 	    }
 	  }
+
+	  /* ── Light Sidebar Overrides ─────────────────────────────────────────── */
+	  #sidebar.sidebar--light {
+	    background:
+	      linear-gradient(-135deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0) 25%),
+	      #ffffff;
+	    box-shadow:
+	      inset -1px -1px 0 0 rgba(0, 0, 0, 0.04),
+	      inset  1px  1px 0 0 rgba(0, 0, 0, 0.02),
+	      0 8px 40px rgba(0, 0, 0, 0.12),
+	      0 2px 10px rgba(0, 0, 0, 0.05);
+	    border: 1px solid rgba(0, 0, 0, 0.12);
+	  }
+	  #sidebar.sidebar--light::after {
+	    background: linear-gradient(
+	      90deg,
+	      transparent 0%,
+	      rgba(223, 2, 255, 0.25) 22%,
+	      rgba(92, 225, 230, 0.22) 78%,
+	      transparent 100%
+	    );
+	  }
+
+	  /* desktop toggle button inside light sidebar */
+	  #sidebar.sidebar--light button[aria-label="Alternar menú"] {
+	    background: #ffffff !important;
+	    border-color: rgba(0, 0, 0, 0.12) !important;
+	    color: rgb(55, 65, 81) !important;
+	    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+	  }
+	  #sidebar.sidebar--light button[aria-label="Alternar menú"]:hover {
+	    background: rgb(243, 244, 246) !important;
+	    color: var(--color-primary-500) !important;
+	  }
+
+	  /* User pill inside light sidebar */
+	  .sidebar--light .user-pill-sidebar {
+	    background: #ffffff !important;
+	    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+	    box-shadow:
+	      inset 1px 1px 0 0 rgba(255, 255, 255, 0.8),
+	      0 4px 16px rgba(0, 0, 0, 0.03) !important;
+	  }
+	  .sidebar--light .user-pill-sidebar:hover {
+	    background: rgb(249, 250, 251) !important;
+	    border-color: rgba(0, 0, 0, 0.14) !important;
+	    box-shadow:
+	      inset 1px 1px 0 0 rgba(255, 255, 255, 0.8),
+	      0 6px 20px rgba(0, 0, 0, 0.05) !important;
+	  }
+	  .sidebar--light .user-pill-sidebar.pill-open {
+	    background: #ffffff !important;
+	    border-color: rgba(223, 2, 255, 0.25) !important;
+	    box-shadow:
+	      0 8px 30px rgba(0, 0, 0, 0.07),
+	      inset 1px 1px 0 0 rgba(255, 255, 255, 0.8) !important;
+	  }
+	  .sidebar--light .user-pill-sidebar .user-pill-avatar {
+	    background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-400) 100%) !important;
+	    box-shadow: 0 2px 8px rgba(223, 2, 255, 0.25) !important;
+	    padding: 0.25rem !important;
+	  }
+	  .sidebar--light .user-pill-sidebar .user-pill-avatar svg {
+	    color: #ffffff !important;
+	  }
+	  .sidebar--light .user-pill-sidebar .user-pill-meta p.font-bold {
+	    color: rgb(17, 24, 39) !important;
+	  }
+	  .sidebar--light .user-pill-sidebar .user-pill-meta p.text-sm {
+	    color: rgb(75, 85, 99) !important;
+	    font-weight: 600 !important;
+	  }
+	  .sidebar--light .user-pill-sidebar .user-pill-chevron {
+	    color: rgb(156, 163, 175) !important;
+	  }
+
+	  /* user pill flyout and inline menu items in light sidebar/topbar */
+	  .sidebar--light .user-pill-menu-flyout,
+	  .topbar--light .user-pill-menu-flyout {
+	    background: #ffffff !important;
+	    box-shadow:
+	      inset 1px 1px 0 0 rgba(255, 255, 255, 0.8),
+	      0 10px 40px rgba(0, 0, 0, 0.08) !important;
+	    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+	  }
+	  .sidebar--light .user-pill-menu-flyout p.font-bold,
+	  .topbar--light .user-pill-menu-flyout p.font-bold {
+	    color: rgb(17, 24, 39) !important;
+	  }
+	  .sidebar--light .user-pill-menu-flyout p.text-xs,
+	  .topbar--light .user-pill-menu-flyout p.text-xs {
+	    color: rgb(75, 85, 99) !important;
+	    font-weight: 600 !important;
+	  }
+	  .sidebar--light .user-pill-menu-flyout .border-b,
+	  .topbar--light .user-pill-menu-flyout .border-b {
+	    border-bottom-color: rgba(0, 0, 0, 0.08) !important;
+	  }
+	  .sidebar--light .user-pill-menu-flyout .user-pill-avatar,
+	  .topbar--light .user-pill-menu-flyout .user-pill-avatar {
+	    background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-400) 100%) !important;
+	    padding: 0.25rem !important;
+	  }
+	  .sidebar--light .user-pill-menu-flyout .user-pill-avatar svg,
+	  .topbar--light .user-pill-menu-flyout .user-pill-avatar svg {
+	    color: #ffffff !important;
+	  }
+
+	  /* items menu inside pill */
+	  .sidebar--light .user-pill-item a,
+	  .sidebar--light .user-pill-item button:not(.text-white),
+	  .topbar--light .user-pill-item a,
+	  .topbar--light .user-pill-item button:not(.text-white) {
+	    color: rgb(55, 65, 81) !important;
+	    background: rgb(243, 244, 246) !important;
+	    border: 1px solid rgba(0, 0, 0, 0.02) !important;
+	  }
+	  .sidebar--light .user-pill-item a:hover,
+	  .sidebar--light .user-pill-item button:not(.text-white):hover,
+	  .topbar--light .user-pill-item a:hover,
+	  .topbar--light .user-pill-item button:not(.text-white):hover {
+	    background: rgb(229, 231, 235) !important;
+	  }
+
+	  /* Collapsed states */
+	  body.is-collapsed .sidebar--light .user-pill-sidebar .user-pill-avatar {
+	    background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-secondary-400) 100%) !important;
+	    border: none !important;
+	    border-radius: 999px !important;
+	    padding: 0.375rem !important;
+	    box-shadow: 0 0 16px rgba(223, 2, 255, 0.35), 0 4px 16px rgba(0, 0, 0, 0.40) !important;
+	  }
+
+	  /* ── Light Topbar Overrides ─────────────────────────────────────────── */
+	  #topbar-mobile.topbar--light {
+	    background:
+	      linear-gradient(-135deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0) 25%),
+	      #ffffff;
+	    box-shadow:
+	      inset -1px -1px 0 0 rgba(0, 0, 0, 0.04),
+	      inset  1px  1px 0 0 rgba(0, 0, 0, 0.02),
+	      0 8px 40px rgba(0, 0, 0, 0.12),
+	      0 2px 10px rgba(0, 0, 0, 0.05);
+	    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+	  }
+	  #topbar-mobile.topbar--light::after {
+	    background: linear-gradient(
+	      90deg,
+	      transparent 0%,
+	      rgba(223, 2, 255, 0.25) 22%,
+	      rgba(92, 225, 230, 0.22) 78%,
+	      transparent 100%
+	    );
+	  }
+
+	  /* toggle button inside light topbar */
+	  #topbar-mobile.topbar--light button[aria-label="Toggle menú"],
+	  #topbar-mobile.topbar--light button[aria-label="Menú de usuario"] {
+	    background: rgb(243, 244, 246) !important;
+	    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+	    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+	  }
+	  #topbar-mobile.topbar--light button[aria-label="Toggle menú"] svg,
+	  #topbar-mobile.topbar--light button[aria-label="Menú de usuario"] svg {
+	    color: rgb(17, 24, 39) !important;
+	  }
+	  #topbar-mobile.topbar--light button[aria-label="Toggle menú"]:hover,
+	  #topbar-mobile.topbar--light button[aria-label="Menú de usuario"]:hover {
+	    background: rgb(229, 231, 235) !important;
+	  }
+	}
 	</style>
 
 	<!-- Alpine no resuelve globals sin window.; stub hasta gymflow-confirm.js -->
@@ -263,8 +441,10 @@
 	:class="{ 'is-collapsed': desktopCollapsed }"
 	class="min-h-svh flex flex-col overflow-x-hidden relative bg-primary-900">
 	{% block header %}
-	{% include 'partials/layout/_sidebar.html' %}
-	{% include 'partials/layout/_topbar.html' %}
+	{% block sidebar_variant_block %}
+	{% include 'partials/layout/_sidebar.html' with sidebar_variant=sidebar_variant %}
+	{% endblock %}
+	{% include 'partials/layout/_topbar.html' with topbar_variant=sidebar_variant %}
 	{% endblock %}
 
 	<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
@@ -277,6 +457,7 @@
 				data-color-scheme="{% block color_scheme %}{% firstof color_scheme 'dark' %}{% endblock %}"
 				data-page-background="{% block page_canvas_background %}{% firstof page_background '' %}{% endblock %}"
 				data-body-background="{% block body_background %}{% firstof body_background '' %}{% endblock %}"
+				data-sidebar-variant="{% block sidebar_variant %}{% firstof sidebar_variant 'dark' %}{% endblock %}"
 				style="{% block page_canvas_style %}{% firstof page_background '' %}{% endblock %}"
 			>
 				<div

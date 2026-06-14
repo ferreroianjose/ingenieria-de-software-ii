@@ -1,5 +1,9 @@
 {% extends 'base.html' %}
 
+{% block page_chrome_head %}
+<meta name="color-scheme" id="meta-color-scheme" content="light">
+{% endblock %}
+
 {% block title %}Mi Dashboard{% endblock %}
 
 {% block content %}
@@ -33,14 +37,14 @@
         <div class="dash-panel__ambient overflow-hidden" aria-hidden="true">
           <div class="absolute -top-10 -right-10 size-44 rounded-full bg-primary-400/35 blur-3xl"></div>
           <div class="absolute -bottom-12 -left-10 size-44 rounded-full bg-secondary-300/25 blur-3xl"></div>
-          
+
           <!-- Ícono de fondo (fingerprint) -->
           <div class="absolute -bottom-8 -left-12 @md/qr:-bottom-24 @md/qr:-left-16 opacity-[0.04] text-white pointer-events-none select-none -rotate-12 transition-all duration-500">
             {% include 'partials/ui/_icon.html' with name="fingerprint" class="size-64 @md/qr:size-[24rem]" %}
           </div>
         </div>
         <div class="relative z-10 flex h-full flex-col @md/qr:grid @md/qr:grid-cols-[1fr_auto] @md/qr:grid-rows-[auto_1fr] @md/qr:gap-x-8 @md/qr:items-center justify-between gap-5 {% if not show_membership_status %}items-center text-center{% endif %}">
-          
+
           <div class="min-w-0 @md/qr:col-start-1 @md/qr:row-start-1 @md/qr:self-end">
             <div class="flex items-center @md/items-center @sm:items-start gap-3 {% if not show_membership_status %}justify-center @md/qr:justify-start{% endif %}">
               <h2 class="dash-title !text-white text-center md:text-left @md/qr:text-left w-full">Ingreso rápido</h2>

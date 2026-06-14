@@ -9,6 +9,7 @@ PAGE_CHROME_DARK = {
     "footer_variant": "dark",
     "color_scheme": "dark",
     "page_background": "",
+    "sidebar_variant": "dark",
 }
 
 _CF_GRADIENT = (
@@ -22,18 +23,21 @@ PAGE_CHROME_CLIENTE_FLOW = {
     "footer_variant": "dark",
     "color_scheme": "dark",
     "page_background": _CF_GRADIENT,
+    "sidebar_variant": "dark",
 }
 
 PAGE_CHROME_LIGHT = {
     "footer_variant": "light",
     "color_scheme": "light",
     "page_background": "background:#ffffff;",
+    "sidebar_variant": "light",
 }
 
 PAGE_CHROME_ADMIN = {
     "footer_variant": "light",
     "color_scheme": "light",
     "page_background": "background:#ffffff;",
+    "sidebar_variant": "light",
 }
 
 PAGE_CHROME_DASHBOARD_CLIENTE = {
@@ -45,6 +49,7 @@ PAGE_CHROME_DASHBOARD_CLIENTE = {
         " radial-gradient(circle at 92% 10%, rgba(92, 225, 230, 0.14), transparent 28%),"
         " linear-gradient(180deg, #ffffff 0%, #f8f9ff 40%, #f5f7ff 100%);"
     ),
+    "sidebar_variant": "light",
 }
 
 

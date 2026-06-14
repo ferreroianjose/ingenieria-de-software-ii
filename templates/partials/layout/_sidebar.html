@@ -6,7 +6,7 @@
   hx-target="#main-content"
   hx-select="#main-content"
   hx-swap="outerHTML"
-  class="hidden md:flex fixed z-50 flex-col px-4 py-6 gap-6 transition-all duration-350 ease-out @container items-center sidebar-w sidebar-float overflow-visible"
+  class="{% if sidebar_variant == 'light' %}sidebar--light{% endif %} hidden md:flex fixed z-50 flex-col px-4 py-6 gap-6 transition-all duration-350 ease-out @container items-center sidebar-w sidebar-float overflow-visible"
 >
   {# Brand + desktop toggle #}
   <div class="mt-4 z-0 flex items-center relative w-full justify-between">

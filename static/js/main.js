@@ -505,11 +505,20 @@ function syncPageChrome() {
 	const canvas = document.getElementById("page-canvas");
 	if (!canvas?.dataset) return;
 
-	const { footerVariant, colorScheme, pageBackground, bodyBackground } = canvas.dataset;
+	const { footerVariant, colorScheme, pageBackground, bodyBackground, sidebarVariant } = canvas.dataset;
 	const footer = document.querySelector(".site-footer");
 	if (footer && footerVariant) {
 		footer.classList.remove("site-footer--dark", "site-footer--light");
 		footer.classList.add(`site-footer--${footerVariant}`);
+	}
+
+	const sidebar = document.getElementById("sidebar");
+	if (sidebar) {
+		if (sidebarVariant === "light") {
+			sidebar.classList.add("sidebar--light");
+		} else {
+			sidebar.classList.remove("sidebar--light");
+		}
 	}
 
 	const metaScheme = document.getElementById("meta-color-scheme");
