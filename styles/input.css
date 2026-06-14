@@ -1032,8 +1032,13 @@
       radial-gradient(circle at top right, oklch(0.778 0.133 202.83 / 0.12), transparent 36%),
       linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(247, 248, 255, 0.95) 100%);
     box-shadow:
-      0 8px 24px rgba(17, 24, 39, 0.1),
+      0 4px 6px rgba(17, 24, 39, 0.04),
+      0 12px 32px rgba(17, 24, 39, 0.10),
+      0 0 0 1px rgba(17, 24, 39, 0.06),
       0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  }
+  .faq-wrapper .dash-panel:hover {
+    transform: none;
   }
   .dash-panel-dark {
     border-color: rgb(255 255 255 / 0.1);
@@ -1046,13 +1051,7 @@
       0 14px 38px rgba(10, 14, 24, 0.55),
       inset 0 0 28px rgba(223, 2, 255, 0.14);
   }
-  .dash-panel-light {
-    border-color: rgb(255 255 255 / 0.1);
-    color: #fff;
-    box-shadow:
-      0 14px 38px rgba(0, 0, 0, 0.95),
-      inset 0 0 28px rgba(223, 2, 255, 0.14);
-  }
+
   .dash-panel-premium {
     border-color: rgba(92, 225, 230, 0.38);
     color: #fff;
@@ -1125,26 +1124,66 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.78),
       inset 0 0 24px rgba(223, 2, 255, 0.08);
   }
-  .dash-panel-side-pair .dash-payment-row {
-    border-color: rgba(23, 33, 56, 0.14);
+
+  .dash-panel-side-pair.dash-panel-payments {
     background:
-      linear-gradient(135deg, rgba(223, 2, 255, 0.1), rgba(92, 225, 230, 0.1)),
-      rgba(255, 255, 255, 0.82);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.85),
-      0 6px 16px rgba(17, 24, 39, 0.08);
+      linear-gradient(
+        125deg,
+        rgba(223, 2, 255, 0.18) 0%,
+        rgba(223, 2, 255, 0.02) 28%,
+        transparent 28%
+      ),
+      linear-gradient(
+        320deg,
+        rgba(92, 225, 230, 0.18) 0%,
+        rgba(92, 225, 230, 0.04) 34%,
+        transparent 34%
+      ),
+      repeating-linear-gradient(
+        -18deg,
+        rgba(0, 0, 0, 0.07) 0 7px,
+        rgba(0, 0, 0, 0) 7px 17px
+      ),
+      linear-gradient(180deg, rgba(105, 110, 128, 0.98) 0%, rgba(95, 102, 118, 0.97) 100%);
+  }
+
+  .dash-panel-side-pair.dash-panel-faq {
+    background:
+      linear-gradient(
+        125deg,
+        rgba(223, 2, 255, 0.18) 0%,
+        rgba(223, 2, 255, 0.02) 28%,
+        transparent 28%
+      ),
+      linear-gradient(
+        320deg,
+        rgba(92, 225, 230, 0.18) 0%,
+        rgba(92, 225, 230, 0.04) 34%,
+        transparent 34%
+      ),
+      repeating-linear-gradient(
+        -18deg,
+        rgba(0, 0, 0, 0.07) 0 7px,
+        rgba(0, 0, 0, 0) 7px 17px
+      ),
+      linear-gradient(180deg, rgba(100, 95, 118, 0.98) 0%, rgba(90, 87, 110, 0.97) 100%);
+  }
+  .dash-panel-side-pair .dash-payment-row {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
   }
   .dash-panel-side-pair .dash-payment-row__meta .size-10 {
-    border-color: rgba(92, 225, 230, 0.62);
-    color: rgba(17, 94, 89, 0.92);
-    background: rgba(236, 254, 255, 0.9);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--color-primary-300);
+    background: rgba(255, 255, 255, 0.08);
   }
   .dash-panel-side-pair .dash-payment-row__meta p:first-child,
   .dash-panel-side-pair .dash-payment-row__amount {
-    color: rgba(15, 23, 42, 0.95);
+    color: rgba(255, 255, 255, 0.95);
   }
   .dash-panel-side-pair .dash-payment-row__meta p:last-child {
-    color: rgba(75, 85, 99, 0.85);
+    color: rgba(255, 255, 255, 0.55);
   }
   .dash-panel-payments-energy {
     border-color: rgba(255, 142, 92, 0.44);
@@ -1652,7 +1691,8 @@
     --site-footer-fg: rgba(26, 26, 26, 0.62);
   }
 
-  body:has(.internal-page.cliente-flow) {
+  body:has(.internal-page.cliente-flow),
+  body:has(.cliente-dashboard) {
     background-color: #000000;
   }
 

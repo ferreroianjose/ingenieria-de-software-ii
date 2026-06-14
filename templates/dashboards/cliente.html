@@ -1,13 +1,20 @@
 {% extends 'base.html' %}
 
 {% block page_chrome_head %}
-<meta name="color-scheme" id="meta-color-scheme" content="light">
+<meta name="color-scheme" id="meta-color-scheme" content="dark">
 {% endblock %}
+
+{% block footer_variant %}dark{% endblock %}
+{% block color_scheme %}dark{% endblock %}
+{% block sidebar_variant %}dark{% endblock %}
+{% block body_background %}#000000{% endblock %}
+{% block page_canvas_background %}background: linear-gradient(to bottom, #000000 0%, var(--color-primary-900) 100%);{% endblock %}
+{% block page_canvas_style %}background: linear-gradient(to bottom, #000000 0%, var(--color-primary-900) 100%);{% endblock %}
 
 {% block title %}Mi Dashboard{% endblock %}
 
 {% block content %}
-<section class="dashboard-shell" x-data="{ showQrModal: false }">
+<section class="dashboard-shell cliente-dashboard" x-data="{ showQrModal: false }">
   <div class="dashboard-content @container/dashboard">
     {% if missing_emergency_phone %}
     <article class="dash-panel dash-panel-neon-alert">
@@ -172,29 +179,29 @@
       </article>
 
       <div class="dash-side-stack">
-        <article class="dash-panel dash-panel-side-pair">
+        <article class="dash-panel dash-panel-side-pair dash-panel-payments">
           <div class="relative z-10 flex items-start justify-between gap-3">
-            <h2 class="dash-title text-secondary-950">Historial de pagos</h2>
+            <h2 class="dash-title !text-white">Historial de pagos</h2>
             <a href="{{ my_reservations_url }}" class="dash-side-pair-cta shrink-0">Ver todo</a>
           </div>
           <div class="relative z-10 mt-5 space-y-3">
             {% for payment in payment_history %}
               {% include 'partials/dashboards/_payment_row.html' with disciplina=payment.disciplina method=payment.method amount=payment.amount %}
             {% empty %}
-              <p class="text-sm font-semibold text-secondary-700/80 italic">Todavía no registramos pagos acreditados.</p>
+              <p class="text-sm font-semibold text-white/60 italic">Todavía no registramos pagos acreditados.</p>
             {% endfor %}
           </div>
         </article>
 
-        <article class="dash-panel dash-panel-side-pair">
+        <article class="dash-panel dash-panel-side-pair dash-panel-faq">
           <div class="dash-panel__ambient" aria-hidden="true">
-            <div class="absolute top-0 right-2 text-[8rem] font-black text-secondary-300/45 leading-none">?</div>
+            <div class="absolute top-0 right-2 text-[8rem] font-black text-white/10 leading-none">?</div>
             <div class="absolute -bottom-10 -left-10 size-44 rounded-full bg-primary-400/20 blur-3xl"></div>
           </div>
           <div class="relative z-10">
-            <p class="text-xs font-black uppercase tracking-widest text-primary-700/85">Soporte</p>
-            <h2 class="dash-title text-secondary-950 mt-1">FAQ</h2>
-            <p class="text-sm font-semibold text-secondary-800/75 mt-3">
+            <p class="text-xs font-black uppercase tracking-widest text-primary-300">Soporte</p>
+            <h2 class="dash-title !text-white mt-1">FAQ</h2>
+            <p class="text-sm font-semibold text-white/70 mt-3">
               Entrá a preguntas frecuentes.
             </p>
             <a href="{{ faq_url }}" class="mt-6 inline-flex w-full sm:w-auto justify-center dash-side-pair-cta">

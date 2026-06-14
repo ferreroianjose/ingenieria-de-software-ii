@@ -21,35 +21,31 @@
     <style>
     .faq-wrapper {
           border-radius: 42px;
-          border: 1px solid rgba(255,255,255, 0.25);
-          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.10);
-          transition: all 300ms ease;
-      }
-      .faq-wrapper:hover {
-          box-shadow: 0 8px 12px 0px rgba(0, 0, 0, 0.15);
-          transform: translateY(-4px);
+          border: 1px solid rgba(0,0,0, 0.06);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
       }
       .faq-wrapper .dash-panel {
           border-radius: inherit !important;
           border: none !important;
+          box-shadow: none !important;
       }
     </style>
-    
+
     {% include 'partials/cliente/flow/_page_header.html' with title="Preguntas Frecuentes" subtitle="Todo lo que necesitás saber sobre el funcionamiento de Siempre GYM." %}
 
     <div class="grid grid-cols-1 gap-8 mt-4">
-      
+
       <!-- SECCIÓN 1: Inscripciones y Clases -->
       <div class="faq-wrapper group relative">
         <article class="dash-panel dash-panel-light h-full w-full">
           <div class="dash-panel__ambient" aria-hidden="true">
-            <div class="absolute -top-12 -left-10 size-72 rounded-full bg-primary-400/20 blur-3xl transition-colors duration-500"></div>
+            <div class="absolute -top-12 -left-10 size-72 rounded-full bg-primary-400/20 blur-3xl"></div>
           </div>
           <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
             <div>
               <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Inscripciones y clases</h2>
             </div>
-            <div class="size-12 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(255,0,255,0.3)] group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(255,0,255,0.3)] shrink-0 border border-white/20">
               {% include 'partials/ui/_icon.html' with name="calendar-check" class="size-6" %}
             </div>
           </div>
@@ -96,16 +92,16 @@
 
       <!-- SECCIÓN 2: Pagos y Señas -->
       <div class="faq-wrapper group relative">
-        <article class="dash-panel dash-panel-light h-full w-full transition-colors duration-300">
+        <article class="dash-panel dash-panel-light h-full w-full">
           <div class="dash-panel__ambient" aria-hidden="true">
-            <div class="absolute -bottom-16 -right-10 size-72 rounded-full bg-secondary-400/15 blur-3xl group-hover:bg-secondary-400/30 transition-colors duration-500"></div>
-            <div class="absolute -top-12 -left-10 size-48 rounded-full bg-primary-400/5 blur-3xl group-hover:bg-primary-400/15 transition-colors duration-500"></div>
+            <div class="absolute -bottom-16 -right-10 size-72 rounded-full bg-secondary-400/15 blur-3xl"></div>
+            <div class="absolute -top-12 -left-10 size-48 rounded-full bg-primary-400/5 blur-3xl"></div>
           </div>
           <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
             <div>
               <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Pagos y señas</h2>
             </div>
-            <div class="size-12 rounded-2xl bg-gradient-to-br from-secondary-600 to-secondary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.3)] group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-secondary-600 to-secondary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(0,240,255,0.3)] shrink-0 border border-white/20">
               {% include 'partials/ui/_icon.html' with name="credit-card-2-back" class="size-6" %}
             </div>
           </div>
@@ -143,16 +139,16 @@
 
       <!-- SECCIÓN 3: Cambios y Cancelaciones -->
       <div class="faq-wrapper group relative">
-        <article class="dash-panel dash-panel-light h-full w-full transition-colors duration-300">
+        <article class="dash-panel dash-panel-light h-full w-full">
           <div class="dash-panel__ambient" aria-hidden="true">
-            <div class="absolute -top-20 -right-20 size-80 rounded-full bg-primary-500/10 blur-3xl group-hover:bg-primary-500/20 transition-colors duration-500"></div>
-            <div class="absolute -bottom-16 -left-10 size-64 rounded-full bg-secondary-400/10 blur-3xl group-hover:bg-secondary-400/20 transition-colors duration-500"></div>
+            <div class="absolute -top-20 -right-20 size-80 rounded-full bg-primary-500/10 blur-3xl"></div>
+            <div class="absolute -bottom-16 -left-10 size-64 rounded-full bg-secondary-400/10 blur-3xl"></div>
           </div>
           <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
             <div>
               <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Cambios y cancelaciones</h2>
             </div>
-            <div class="size-12 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(223,2,255,0.2)] group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-primary-500 to-secondary-400 text-white flex items-center justify-center shadow-[0_0_15px_rgba(223,2,255,0.2)] shrink-0 border border-white/20">
               {% include 'partials/ui/_icon.html' with name="arrow-left-right" class="size-6" %}
             </div>
           </div>
@@ -172,7 +168,7 @@
                 Políticas de cancelación
               </h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
-                <div class="p-6 rounded-3xl bg-secondary-50/10 border-secondary-300 border">
+                <div class="p-6 rounded-3xl bg-secondary-50/40 border border-secondary-200/45">
                   <p class="text-sm font-black uppercase text-secondary-900 mb-3 tracking-wide">Alumnos mensuales</p>
                   <p class="text-sm text-secondary-700 leading-relaxed">
                     Si cancelás con al menos <strong>48 horas de anticipación</strong>, el sistema te otorga un <strong>crédito</strong> para que puedas anotarte y recuperar esa sesión en otro horario de la misma disciplina, siempre dentro del mismo mes. Pasadas las 48hs, se pierde la clase.
@@ -180,7 +176,7 @@
                     <strong class="text-secondary-900">Importante:</strong> El dinero de las cuotas mensuales <strong>no es devuelto bajo ninguna circunstancia</strong>. Los reintegros siempre se hacen en formato de créditos para clases.
                   </p>
                 </div>
-                <div class="p-6 rounded-3xl bg-secondary-50/10 border-secondary-300 border">
+                <div class="p-6 rounded-3xl bg-secondary-50/40 border border-secondary-200/45">
                   <p class="text-sm font-black uppercase text-secondary-900 mb-3 tracking-wide">Clase individual</p>
                   <p class="text-sm text-secondary-700 leading-relaxed">
                     Si cancelás con al menos <strong>24 horas de antelación</strong>, te reintegramos el dinero pagado por la seña. En caso de cancelar con menos tiempo de aviso, <strong>la seña es retenida</strong> por el establecimiento en concepto de reserva de cupo perdido y el dinero no es devuelto.
@@ -194,16 +190,16 @@
 
       <!-- SECCIÓN 4: Acceso, Seguridad y Menores -->
       <div class="faq-wrapper group relative">
-        <article class="dash-panel dash-panel-light h-full w-full transition-colors duration-300">
+        <article class="dash-panel dash-panel-light h-full w-full">
           <div class="dash-panel__ambient" aria-hidden="true">
-            <div class="absolute -top-10 right-20 size-56 rounded-full bg-secondary-400/15 blur-3xl group-hover:bg-secondary-400/25 transition-colors duration-500"></div>
-            <div class="absolute bottom-0 left-20 size-48 rounded-full bg-primary-400/5 blur-3xl group-hover:bg-primary-400/10 transition-colors duration-500"></div>
+            <div class="absolute -top-10 right-20 size-56 rounded-full bg-secondary-400/15 blur-3xl"></div>
+            <div class="absolute bottom-0 left-20 size-48 rounded-full bg-primary-400/5 blur-3xl"></div>
           </div>
           <div class="relative z-10 flex items-center justify-between gap-4 mb-8">
             <div>
               <h2 class="text-2xl font-black text-secondary-950 tracking-tight leading-none uppercase">Ingreso, seguridad y menores</h2>
             </div>
-            <div class="size-12 rounded-2xl bg-gradient-to-br from-secondary-900 to-secondary-700 text-white flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300 shrink-0 border border-white/20">
+            <div class="size-12 rounded-2xl bg-gradient-to-br from-secondary-900 to-secondary-700 text-white flex items-center justify-center shadow-lg shrink-0 border border-white/20">
               {% include 'partials/ui/_icon.html' with name="shield-lock-fill" class="size-6" %}
             </div>
           </div>

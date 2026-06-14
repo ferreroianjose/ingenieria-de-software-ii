@@ -2,15 +2,15 @@
   Usage:
     {% include 'partials/dashboards/_payment_row.html' with disciplina="..." method="..." amount="..." %}
 {% endcomment %}
-<div class="dash-payment-row bg-stone-50 rounded-4xl p-4 flex justify-between items-center gap-3 shadow-fair-sm border border-white/25">
+<div class="dash-payment-row rounded-4xl p-4 flex justify-between items-center gap-3 bg-white/10 border border-white/15">
     <div class="dash-payment-row__meta flex items-center gap-4 min-w-0">
-        <div class="size-10 shrink-0 rounded-8xl ring-2 ring-inset ring-primary-500 flex items-center justify-center text-primary-500 bg-gray-50 shadow-fair-md">
-            {% include 'partials/ui/_icon.html' with name="check" class="size-7 stroke-[3]" %}
+        <div class="size-10 shrink-0 rounded-8xl border border-white/20 flex items-center justify-center bg-white/10 text-white">
+            {% include 'partials/ui/_icon.html' with name="check" class="size-5 stroke-[2.5]" %}
         </div>
         <div class="min-w-0">
-            <p class="font-black text-secondary-900">{{ disciplina }}</p>
-            <p class="text-sm font-bold text-gray-400 uppercase tracking-tight">{{ method }}</p>
+            <p class="font-black !text-white truncate">{{ disciplina }}</p>
+            <p class="text-sm font-bold !text-white/55 uppercase tracking-tight">{{ method }}</p>
         </div>
     </div>
-    <p class="dash-payment-row__amount font-black text-secondary-900 text-xl">{{ amount }}</p>
+    <p class="dash-payment-row__amount font-black !text-white text-xl shrink-0">{{ amount }}</p>
 </div>
