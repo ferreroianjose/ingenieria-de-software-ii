@@ -28,16 +28,303 @@ from apps.payments.inscripcion_pago import (
     resumen_abono_para_inscripcion,
     resumen_credito_automatico,
     resumen_credito_para_clase,
+    resumen_pago_inscripcion,
     validar_modalidad_pago,
 )
 from apps.payments.models import Pago, PeriodoCobro
 from apps.payments.services import ConfirmacionMP, mercadopago_service
 from apps.payments.webhook_verify import verify_mercadopago_webhook
 
-
 @staff_required
 def staff_pagos(request):
-    return render(request, "payments/manage.html")
+    view_tabs = [
+        {"id": "registrar", "label": "Registrar pago"},
+    ]
+    if request.user.rol == "ADMIN":
+        view_tabs.append({"id": "historial", "label": "Historial global"})
+
+    # To show periods in the global filters on initial load
+    periodos = PeriodoCobro.objects.order_by("-fecha_inicio_periodo")[:12]
+
+    return render(
+        request,
+        "payments/manage.html",
+        {
+            "view_tabs": view_tabs,
+            "periodos": periodos,
+        },
+    )
+
+
+@staff_required
+def buscar_cliente_pago(request):
+    """Buscador de clientes por nombre, apellido, DNI o email en la sección de pagos."""
+    from django.db.models import Q
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return render(request, "partials/payments/_client_ready_state.html")
+
+    clientes = User.objects.filter(
+        rol="CLIENTE"
+    ).filter(
+        Q(first_name__icontains=query) |
+        Q(last_name__icontains=query) |
+        Q(dni__icontains=query) |
+        Q(email__icontains=query)
+    )[:10]
+
+    return render(
+        request,
+        "partials/payments/_client_search_results.html",
+        {"clientes": clientes},
+    )
+
+
+@staff_required
+def detalle_pago_cliente(request):
+    """Carga el detalle financiero (inscripciones activas, historial e historial de pagos) de un cliente."""
+    from django.contrib.auth import get_user_model
+    from django.db.models import Q
+    from datetime import date
+    User = get_user_model()
+
+    user_id = request.GET.get("user_id")
+    client_user = get_object_or_404(User, id=user_id, rol="CLIENTE")
+
+    today = date.today()
+
+    # 1. Inscripciones activas (período vigente o futuro, no canceladas)
+    active_inscriptions = Inscripcion.objects.filter(
+        usuario=client_user,
+        periodo__fecha_fin_periodo__gte=today
+    ).exclude(
+        estado=Inscripcion.Estado.CANCELADA
+    ).select_related(
+        "clase__disciplina", "clase__profesor", "clase__sala__sede", "periodo"
+    ).order_by("-fecha_inscripcion")
+
+    active_inscriptions_data = []
+    for ins in active_inscriptions:
+        resumen_credito = resumen_credito_automatico(ins, client_user)
+        resumen_pago = resumen_pago_inscripcion(ins)
+        opciones = opciones_pago_inscripcion(ins, client_user)
+
+        active_inscriptions_data.append({
+            "object": ins,
+            "resumen_credito": resumen_credito,
+            "resumen_pago": resumen_pago,
+            "opciones": opciones,
+        })
+
+    # 2. Historial de inscripciones (período vencido o canceladas)
+    history_inscriptions = Inscripcion.objects.filter(
+        usuario=client_user
+    ).filter(
+        Q(periodo__fecha_fin_periodo__lt=today) | Q(estado=Inscripcion.Estado.CANCELADA)
+    ).select_related(
+        "clase__disciplina", "clase__profesor", "clase__sala__sede", "periodo"
+    ).order_by("-fecha_inscripcion")
+
+    # 3. Historial de pagos
+    pagos = (
+        Pago.objects.filter(usuario=client_user)
+        .select_related("periodo")
+        .prefetch_related(
+            "detalles__inscripcion__clase__disciplina",
+            "detalles__inscripcion__clase__sala__sede",
+        )
+        .order_by("-fecha_pago")
+    )
+
+    estado_meta = {
+        Pago.Estado.COMPLETADO: {"level": "success", "label": "Completado"},
+        Pago.Estado.PENDIENTE: {"level": "warning-alert", "label": "Pendiente"},
+        Pago.Estado.FALLIDO: {"level": "error", "label": "Fallido"},
+        Pago.Estado.REEMBOLSADO: {"level": "info", "label": "Reembolsado"},
+    }
+
+    pagos_data = []
+    for p in pagos:
+        meta = estado_meta.get(p.estado, {"level": "info", "label": p.get_estado_display()})
+        pagos_data.append({
+            "object": p,
+            "meta": meta,
+        })
+
+    profile_tabs = [
+        {"id": "activas", "label": "Inscripciones activas"},
+        {"id": "historial", "label": "Historial de inscripciones"},
+        {"id": "pagos", "label": "Historial de pagos"},
+    ]
+
+    return render(
+        request,
+        "partials/payments/_client_payment_profile.html",
+        {
+            "client_user": client_user,
+            "active_inscriptions_data": active_inscriptions_data,
+            "history_inscriptions": history_inscriptions,
+            "pagos_data": pagos_data,
+            "profile_tabs": profile_tabs,
+        }
+    )
+
+
+@staff_required
+@require_POST
+def registrar_pago_sucursal(request, inscripcion_id):
+    """Registra el cobro en efectivo/sucursal de una inscripción."""
+    from django.db import transaction
+    from apps.payments.cancelaciones import aplicar_credito_automatico
+    from apps.payments.inscripcion_pago import aplicar_pago_aprobado, PagoInscripcion
+    from apps.classes.htmx import hx_ok
+
+    inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id)
+    if inscripcion.estado == Inscripcion.Estado.RESERVADA:
+        return hx_ok(
+            request,
+            message="Esta inscripción ya está reservada.",
+            level="info",
+        )
+
+    modalidad = request.POST.get("modalidad", "TOTAL").upper()
+    client_user = inscripcion.usuario
+
+    # 1. Aplicar créditos del cliente si existen
+    monto_credito = Decimal("0")
+    try:
+        monto_credito = aplicar_credito_automatico(inscripcion, client_user)
+    except Exception:
+        pass
+
+    inscripcion.refresh_from_db()
+    if inscripcion.estado == Inscripcion.Estado.RESERVADA:
+        return hx_ok(
+            request,
+            message=f"Se aplicó el crédito de {client_user.get_full_name()} y la clase fue reservada.",
+            level="success",
+            trigger="refreshClientProfile",
+        )
+
+    # 2. Calcular monto restante a pagar según modalidad
+    try:
+        monto = monto_a_cobrar(inscripcion, modalidad)
+    except ValueError as exc:
+        return hx_ok(
+            request,
+            message=str(exc),
+            level="error",
+        )
+
+    if monto <= 0:
+        return hx_ok(
+            request,
+            message="No hay saldo pendiente para cobrar.",
+            level="info",
+        )
+
+    # 3. Crear el pago en efectivo y completarlo
+    try:
+        with transaction.atomic():
+            pago = Pago.objects.create(
+                usuario=client_user,
+                periodo=inscripcion.periodo,
+                monto=monto,
+                metodo=Pago.Metodo.EFECTIVO,
+                estado=Pago.Estado.COMPLETADO
+            )
+            PagoInscripcion.objects.create(
+                pago=pago,
+                inscripcion=inscripcion,
+                monto_aplicado=monto
+            )
+            aplicar_pago_aprobado(pago)
+    except Exception as exc:
+        return hx_ok(
+            request,
+            message=f"Error al procesar el pago: {str(exc)}",
+            level="error",
+        )
+
+    return hx_ok(
+        request,
+        message=f"Pago en efectivo de ${monto} registrado con éxito.",
+        level="success",
+        trigger="refreshClientProfile",
+    )
+
+
+@staff_required
+def historial_pagos_global(request):
+    """Muestra el historial global de todos los pagos registrados (solo para administradores)."""
+    if request.user.rol != "ADMIN":
+        return HttpResponse("No autorizado", status=403)
+
+    from django.core.paginator import Paginator
+    from django.db.models import Q
+
+    query = request.GET.get("q", "").strip()
+    metodo = request.GET.get("metodo", "").strip()
+    estado = request.GET.get("estado", "").strip()
+    periodo_id = request.GET.get("periodo", "").strip()
+
+    pagos = Pago.objects.select_related("usuario", "periodo").order_by("-fecha_pago")
+
+    if query:
+        pagos = pagos.filter(
+            Q(usuario__first_name__icontains=query) |
+            Q(usuario__last_name__icontains=query) |
+            Q(usuario__dni__icontains=query) |
+            Q(usuario__email__icontains=query)
+        )
+
+    if metodo:
+        pagos = pagos.filter(metodo=metodo)
+
+    if estado:
+        pagos = pagos.filter(estado=estado)
+
+    if periodo_id:
+        pagos = pagos.filter(periodo_id=periodo_id)
+
+    paginator = Paginator(pagos, 10)
+    page_number = request.GET.get("page", 1)
+    page_obj = paginator.get_page(page_number)
+
+    periodos = PeriodoCobro.objects.order_by("-fecha_inicio_periodo")[:12]
+
+    estado_meta = {
+        Pago.Estado.COMPLETADO: {"level": "success", "label": "Completado"},
+        Pago.Estado.PENDIENTE: {"level": "warning-alert", "label": "Pendiente"},
+        Pago.Estado.FALLIDO: {"level": "error", "label": "Fallido"},
+        Pago.Estado.REEMBOLSADO: {"level": "info", "label": "Reembolsado"},
+    }
+
+    pagos_decorados = []
+    for p in page_obj:
+        meta = estado_meta.get(p.estado, {"level": "info", "label": p.get_estado_display()})
+        pagos_decorados.append({
+            "object": p,
+            "meta": meta,
+        })
+
+    return render(
+        request,
+        "partials/payments/_global_payment_history_panel.html",
+        {
+            "page_obj": page_obj,
+            "pagos_decorados": pagos_decorados,
+            "periodos": periodos,
+            "q": query,
+            "metodo": metodo,
+            "estado": estado,
+            "periodo_id": periodo_id,
+        }
+    )
+
 
 
 @login_required

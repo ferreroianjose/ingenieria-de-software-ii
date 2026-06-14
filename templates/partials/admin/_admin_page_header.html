@@ -6,7 +6,7 @@
 			<p>{{ subtitle }}</p>
 			{% endif %}
 		</div>
-		{% if view_tabs %}
+		{% if view_tabs|length > 1 %}
 		<div class="internal-page-header__tabs w-full md:col-start-2 md:row-start-1 md:w-auto md:justify-self-end lg:justify-self-auto">
 			{% include 'partials/admin/_admin_segmented_control.html' with view_tabs=view_tabs aria_label=aria_label %}
 		</div>

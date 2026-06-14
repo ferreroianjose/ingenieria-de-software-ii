@@ -1,0 +1,154 @@
+{% url 'payments:global_history' as global_history_url %}
+<div class="admin-panel__toolbar">
+    <form id="global-history-filters"
+          class="flex flex-col gap-4"
+          hx-get="{{ global_history_url }}"
+          hx-target="#global-history-container"
+          hx-swap="innerHTML"
+          hx-trigger="submit"
+          hx-on::after-request="if (event.detail.successful) this.setAttribute('data-searched', '1')">
+          
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 [&>div]:grid [&>div]:grid-cols-1 [&>div]:justify-between [&>div]:gap-0">
+            <!-- Búsqueda por Cliente -->
+            <div>
+                <label for="global-search-input">Cliente</label>
+                <input
+                    id="global-search-input"
+                    type="search"
+                    name="q"
+                    value="{{ q|default:'' }}"
+                    placeholder="Nombre, DNI o email..."
+                    class="!py-2 !px-4 text-sm"
+                    autocomplete="off"
+                />
+            </div>
+
+            <!-- Método de Pago -->
+            <div>
+                <label for="metodo-select">Método</label>
+                <select name="metodo" id="metodo-select" class="!py-2 !px-4 text-sm">
+                    <option value="">Todos los métodos</option>
+                    <option value="EFECTIVO" {% if metodo == 'EFECTIVO' %}selected{% endif %}>Efectivo</option>
+                    <option value="MERCADOPAGO" {% if metodo == 'MERCADOPAGO' %}selected{% endif %}>MercadoPago</option>
+                    <option value="CREDITO" {% if metodo == 'CREDITO' %}selected{% endif %}>Crédito</option>
+                </select>
+            </div>
+
+            <!-- Estado del Pago -->
+            <div>
+                <label for="estado-select">Estado</label>
+                <select name="estado" id="estado-select" class="!py-2 !px-4 text-sm">
+                    <option value="">Todos los estados</option>
+                    <option value="COMPLETADO" {% if estado == 'COMPLETADO' %}selected{% endif %}>Completado</option>
+                    <option value="PENDIENTE" {% if estado == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
+                    <option value="FALLIDO" {% if estado == 'FALLIDO' %}selected{% endif %}>Fallido</option>
+                    <option value="REEMBOLSADO" {% if estado == 'REEMBOLSADO' %}selected{% endif %}>Reembolsado</option>
+                </select>
+            </div>
+
+            <!-- Período de Cobro -->
+            <div>
+                <label for="periodo-select">Período</label>
+                <select name="periodo" id="periodo-select" class="!py-2 !px-4 text-sm">
+                    <option value="">Todos los períodos</option>
+                    {% for p in periodos %}
+                        <option value="{{ p.id }}" {% if periodo_id == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="flex flex-wrap gap-2 justify-end">
+            {% include 'partials/ui/buttons/_secondary_button.html' with label='Limpiar' type='button' class='btn-auto shrink-0 py-2 px-5 text-sm whitespace-nowrap' hx_get=global_history_url|add:'?cleared=1' hx_target='#global-history-container' hx_swap='innerHTML' onclick="const f=this.closest('form'); if(f){ f.reset(); f.removeAttribute('data-searched'); }" %}
+            <button
+                type="submit"
+                class="btn-auto shrink-0 bg-primary-400 hover:bg-primary-600 text-white py-2 px-6 rounded-full font-bold text-sm transition-colors"
+            >
+                Aplicar filtros
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Listado del Historial Global -->
+{% if pagos_decorados %}
+    <div class="admin-panel__table">
+        <table class="min-w-full table-auto admin-selectable-table">
+            <thead>
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cliente</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Período</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Monto</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Método</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 text-sm">
+                {% for item in pagos_decorados %}
+                <tr class="hover:bg-gray-50/50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="font-bold text-gray-900">{{ item.object.usuario.get_full_name }}</span>
+                        <span class="block text-xs text-gray-500">{{ item.object.usuario.email }} • DNI: {{ item.object.usuario.dni }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">
+                        {{ item.object.periodo.nombre }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">
+                        ${{ item.object.monto }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-600">
+                        {{ item.object.get_metodo_display }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide
+                            {% if item.meta.level == 'success' %}bg-green-100 text-green-800
+                            {% elif item.meta.level == 'error' %}bg-red-100 text-red-800
+                            {% elif item.meta.level == 'warning-alert' %}bg-amber-100 text-amber-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ item.meta.label }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-gray-500">
+                        {{ item.object.fecha_pago|date:"d/m/Y H:i" }} hs
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between" aria-label="Paginación global">
+        <p class="text-sm text-gray-500">
+            Mostrando {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }} transacciones
+        </p>
+        <div class="flex flex-wrap gap-2">
+            {% if page_obj.has_previous %}
+            <button type="button"
+                    class="btn-auto rounded-full border border-gray-300 bg-white px-4 py-1.5 text-sm font-bold text-gray-700 hover:bg-gray-50"
+                    hx-get="{% url 'payments:global_history' %}?q={{ q|urlencode }}&metodo={{ metodo }}&estado={{ estado }}&periodo={{ periodo_id }}&page={{ page_obj.previous_page_number }}"
+                    hx-target="#global-history-container"
+                    hx-swap="innerHTML">
+                Anterior
+            </button>
+            {% endif %}
+            <span class="flex items-center px-2 text-sm font-medium text-gray-600">
+                Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </span>
+            {% if page_obj.has_next %}
+            <button type="button"
+                    class="btn-auto rounded-full bg-primary-400 px-4 py-1.5 text-sm font-bold text-white hover:bg-primary-600"
+                    hx-get="{% url 'payments:global_history' %}?q={{ q|urlencode }}&metodo={{ metodo }}&estado={{ estado }}&periodo={{ periodo_id }}&page={{ page_obj.next_page_number }}"
+                    hx-target="#global-history-container"
+                    hx-swap="innerHTML">
+                Siguiente
+            </button>
+            {% endif %}
+        </div>
+    </nav>
+    {% endif %}
+{% else %}
+    {% include 'partials/admin/_empty_state.html' with icon='search' message='No se encontraron pagos con los filtros seleccionados.' extra_classes='min-h-[300px]' %}
+{% endif %}

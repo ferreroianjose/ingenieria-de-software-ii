@@ -997,3 +997,136 @@ class MercadoPagoWebhookTests(TestCase):
         url = reverse("payments:mercadopago_webhook")
         response = self.client.post(f"{url}?data.id=123&type=payment")
         self.assertEqual(response.status_code, 401)
+
+
+class StaffPaymentViewsTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+        # Users
+        self.admin = User.objects.create_user(
+            username='admin@gymflow.com',
+            email='admin@gymflow.com',
+            password='password123',
+            dni='11111111',
+            rol='ADMIN'
+        )
+        self.empleado = User.objects.create_user(
+            username='emp@gymflow.com',
+            email='emp@gymflow.com',
+            password='password123',
+            dni='22222222',
+            rol='EMPLEADO'
+        )
+        self.cliente = User.objects.create_user(
+            username='client@gymflow.com',
+            email='client@gymflow.com',
+            password='password123',
+            dni='33333333',
+            first_name='Juan',
+            last_name='Pérez',
+            rol='CLIENTE'
+        )
+
+        self.sede = Sede.objects.create(nombre="Sede Sur", direccion="Sur 456")
+        self.sala = Sala.objects.create(nombre="Sala A", capacidad=15, sede=self.sede)
+        self.teacher = Teacher.objects.create(nombre="Carlos", apellido="Gómez")
+        self.disciplina = Disciplina.objects.create(nombre="Spinning")
+
+        self.clase = Class.objects.create(
+            disciplina=self.disciplina,
+            sala=self.sala,
+            profesor=self.teacher,
+            duracion=timedelta(hours=1),
+            hora_inicio=time(18, 0),
+            cupo_maximo=10
+        )
+
+        self.periodo = PeriodoCobro.objects.create(
+            nombre="Junio 2026",
+            fecha_inicio_periodo=date(2026, 6, 1),
+            fecha_fin_periodo=date(2026, 6, 30),
+            apertura_abonados=date(2026, 5, 20),
+            apertura_general=date(2026, 6, 1)
+        )
+
+        self.inscripcion = Inscripcion.objects.create(
+            usuario=self.cliente,
+            clase=self.clase,
+            periodo=self.periodo,
+            tipo=Inscripcion.Tipo.CLASE_SUELTA,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+
+        # Precio
+        PrecioClase.objects.create(
+            clase=self.clase,
+            periodo=self.periodo,
+            monto=Decimal('3000.00')
+        )
+
+    def test_staff_pagos_view_as_empleado(self):
+        self.client.login(username='emp@gymflow.com', password='password123')
+        response = self.client.get(reverse("payments:manage"))
+        self.assertEqual(response.status_code, 200)
+        tabs = response.context['view_tabs']
+        self.assertEqual(len(tabs), 1)
+        self.assertEqual(tabs[0]['id'], 'registrar')
+
+    def test_staff_pagos_view_as_admin(self):
+        self.client.login(username='admin@gymflow.com', password='password123')
+        response = self.client.get(reverse("payments:manage"))
+        self.assertEqual(response.status_code, 200)
+        tabs = response.context['view_tabs']
+        self.assertEqual(len(tabs), 2)
+        self.assertEqual(tabs[0]['id'], 'registrar')
+        self.assertEqual(tabs[1]['id'], 'historial')
+
+    def test_buscar_cliente_pago(self):
+        self.client.login(username='emp@gymflow.com', password='password123')
+        response = self.client.get(reverse("payments:search_client"), {'q': 'Pérez'})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Juan Pérez')
+        self.assertContains(response, '33333333')
+
+    def test_detalle_pago_cliente(self):
+        self.client.login(username='emp@gymflow.com', password='password123')
+        response = self.client.get(reverse("payments:client_detail"), {'user_id': self.cliente.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Juan Pérez')
+        self.assertContains(response, 'Spinning')
+        self.assertContains(response, 'Saldo')
+
+    def test_registrar_pago_sucursal_success(self):
+        self.client.login(username='emp@gymflow.com', password='password123')
+        # Registrar el pago total en efectivo
+        response = self.client.post(
+            reverse("payments:registrar_pago_sucursal", args=[self.inscripcion.id]),
+            {'modalidad': 'TOTAL'}
+        )
+        # Debería retornar 204 (hx_ok)
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.headers.get('HX-Reswap'), 'none')
+        
+        # Validar base de datos
+        self.inscripcion.refresh_from_db()
+        self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.RESERVADA)
+
+        pago = Pago.objects.last()
+        self.assertIsNotNone(pago)
+        self.assertEqual(pago.usuario, self.cliente)
+        self.assertEqual(pago.metodo, Pago.Metodo.EFECTIVO)
+        self.assertEqual(pago.estado, Pago.Estado.COMPLETADO)
+        self.assertEqual(pago.monto, Decimal('3000.00'))
+
+    def test_historial_pagos_global_permissions(self):
+        # Como empleado debe dar 403
+        self.client.login(username='emp@gymflow.com', password='password123')
+        response = self.client.get(reverse("payments:global_history"))
+        self.assertEqual(response.status_code, 403)
+
+        # Como admin debe dar 200
+        self.client.login(username='admin@gymflow.com', password='password123')
+        response = self.client.get(reverse("payments:global_history"))
+        self.assertEqual(response.status_code, 200)
+

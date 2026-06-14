@@ -25,4 +25,8 @@ urlpatterns = [
     path("pago/<int:pago_id>/success/", views.success, name="success"),
     path("pago/<int:pago_id>/failure/", views.failure, name="failure"),
     path("webhooks/mercadopago/", views.mercadopago_webhook, name="mercadopago_webhook"),
+    path("search-client/", views.buscar_cliente_pago, name="search_client"),
+    path("client-detail/", views.detalle_pago_cliente, name="client_detail"),
+    path("registrar-pago/<int:inscripcion_id>/", views.registrar_pago_sucursal, name="registrar_pago_sucursal"),
+    path("global-history/", views.historial_pagos_global, name="global_history"),
 ]

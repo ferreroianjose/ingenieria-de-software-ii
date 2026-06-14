@@ -1,0 +1,285 @@
+<div id="payment-profile-card"
+     class="flex flex-col flex-1 w-full bg-white"
+     hx-get="{% url 'payments:client_detail' %}?user_id={{ client_user.id }}"
+     hx-trigger="refreshClientProfile from:body"
+     hx-target="this"
+     hx-swap="outerHTML"
+     x-data="{ tab: 'activas' }">
+     
+    <!-- Botón Volver -->
+    <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/50 shrink-0 flex items-center">
+        <button type="button" 
+                onclick="const input = document.getElementById('payments-search-input'); if(input && input.value.trim() !== '') { htmx.trigger('#payments-search-form', 'submit'); } else { htmx.ajax('GET', '{% url 'payments:search_client' %}', {target: '#payment-content-container'}); }"
+                class="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Volver a la búsqueda
+        </button>
+    </div>
+
+    <!-- Ficha del Cliente Header -->
+    <div class="p-6 border-b border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white shrink-0">
+        <div>
+            <h3 class="text-xl font-bold text-gray-900">{{ client_user.get_full_name }}</h3>
+            <p class="text-sm text-gray-500 font-normal mt-0.5">{{ client_user.email }}</p>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm text-gray-600">
+                <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
+                    DNI: <strong class="text-gray-800 font-semibold">{{ client_user.dni }}</strong>
+                </span>
+            </div>
+        </div>
+
+        <div class="w-full md:w-auto shrink-0 mt-2 md:mt-0">
+            <div
+                role="tablist"
+                class="admin-segmented relative z-0"
+                aria-label="Tabs de perfil"
+                x-data="{
+                    isResizing: false,
+                    resizeTimer: null,
+                    moveSlider(btn) {
+                        if (!btn) return;
+                        this.$refs.slider.style.transform = `translateX(${btn.offsetLeft}px)`;
+                        this.$refs.slider.style.width = `${btn.offsetWidth}px`;
+                    },
+                    handleResize() {
+                        this.isResizing = true; 
+                        this.moveSlider(this.$el.querySelector('[aria-selected=true]'));             
+                        clearTimeout(this.resizeTimer);
+                        this.resizeTimer = setTimeout(() => {
+                            this.isResizing = false;
+                        }, 150);
+                    }
+                }"
+                x-init="
+                    $nextTick(() => {
+                        const activeBtn = $el.querySelector('[aria-selected=true]') || $el.querySelector('button');
+                        moveSlider(activeBtn);
+                    })
+                "
+                @resize.window="handleResize()"
+            >
+                <!-- Slider -->
+                <div
+                    x-ref="slider"
+                    class="absolute top-1 bottom-1 left-0 z-0 flex flex-col justify-end overflow-hidden rounded-full bg-black shadow-[inset_0_0_4px_rgba(255,255,255,1),0_0_12px_rgba(255,0,255,0.5)] ring-1 ring-inset ring-white/7"
+                    :class="isResizing ? 'transition-none' : 'transition-all duration-300 ease-out'"
+                >
+                </div>
+
+                <button
+                    id="profile-tab-activas"
+                    type="button"
+                    role="tab"
+                    @click="tab = 'activas'; moveSlider($event.currentTarget)"
+                    :aria-selected="tab === 'activas'"
+                    :class="tab === 'activas' ? 'text-primary-400 font-bold' : 'text-gray-600 hover:text-gray-900'"
+                    class="relative z-10 bg-transparent px-3 py-2 text-xs md:text-sm"
+                >
+                    Activas
+                </button>
+
+                <button
+                    id="profile-tab-historial"
+                    type="button"
+                    role="tab"
+                    @click="tab = 'historial'; moveSlider($event.currentTarget)"
+                    :aria-selected="tab === 'historial'"
+                    :class="tab === 'historial' ? 'text-primary-400 font-bold' : 'text-gray-600 hover:text-gray-900'"
+                    class="relative z-10 bg-transparent px-3 py-2 text-xs md:text-sm"
+                >
+                    Historial
+                </button>
+
+                <button
+                    id="profile-tab-pagos"
+                    type="button"
+                    role="tab"
+                    @click="tab = 'pagos'; moveSlider($event.currentTarget)"
+                    :aria-selected="tab === 'pagos'"
+                    :class="tab === 'pagos' ? 'text-primary-400 font-bold' : 'text-gray-600 hover:text-gray-900'"
+                    class="relative z-10 bg-transparent px-3 py-2 text-xs md:text-sm"
+                >
+                    Pagos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido de las pestañas -->
+    <div class="p-6 flex-1 overflow-y-auto bg-white">
+        <!-- Pestaña 1: Inscripciones Activas -->
+        <div x-show="tab === 'activas'" class="space-y-4">
+            {% if active_inscriptions_data %}
+                <div class="space-y-4">
+                    {% for item in active_inscriptions_data %}
+                    <div class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all hover:border-gray-300">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-3">
+                                <h5 class="text-base font-bold text-gray-900 uppercase tracking-wide">
+                                    {{ item.object.clase.disciplina.nombre }}
+                                </h5>
+                                <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase {% if item.object.tipo == 'MENSUAL' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-800{% endif %} border border-transparent">
+                                    {{ item.object.get_tipo_display }}
+                                </span>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+                                <!-- Period -->
+                                <div class="flex items-center gap-1.5 text-sm font-bold text-gray-900">
+                                    <svg class="w-4 h-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span>{{ item.object.periodo.nombre }}</span>
+                                </div>
+
+                                <span class="text-gray-300">|</span>
+
+                                <!-- Schedule -->
+                                <div class="flex items-center gap-1.5 text-sm text-gray-600">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span>{{ item.object.clase.get_dia_semana_display }} {{ item.object.clase.hora_inicio|time:"H:i" }} hs</span>
+                                </div>
+
+                                <span class="text-gray-300">|</span>
+
+                                <!-- Room -->
+                                <div class="flex items-center gap-1.5 text-sm text-gray-600">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    <span>{{ item.object.clase.sala.nombre }} ({{ item.object.clase.sala.sede.nombre }})</span>
+                                </div>
+                                
+                                {% if item.resumen_pago.saldo_restante > 0 %}
+                                <span class="text-gray-300">|</span>
+
+                                <!-- Payment Badge -->
+                                <div class="flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-red-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Saldo: ${{ item.resumen_pago.saldo_restante }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            {% if item.resumen_credito.aplica %}
+                            <div class="text-xs font-semibold text-green-600 bg-green-50/50 p-2 rounded-lg border border-green-100 flex items-center gap-1.5 mt-3 max-w-xl">
+                                <svg class="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span>Se aplicará automáticamente un crédito disponible para {{ item.resumen_credito.disciplina }}.</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Lado derecho: Acciones de pago -->
+                        <div class="shrink-0 flex items-center gap-3">
+                            {% if item.resumen_pago.saldo_restante > 0 %}
+                                <form hx-post="{% url 'payments:registrar_pago_sucursal' item.object.id %}"
+                                      data-confirm="¿Confirmás registrar el cobro presencial en efectivo para esta clase?"
+                                      class="flex items-center gap-3 m-0">
+                                    {% csrf_token %}
+                                    <select name="modalidad" class="rounded-xl border border-gray-300 px-3 py-1.5 text-xs text-gray-900 bg-white focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400">
+                                        {% for op in item.opciones %}
+                                            <option value="{{ op.modalidad }}">
+                                                {{ op.titulo }} (${{ op.monto }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary h-9 flex items-center justify-center font-bold text-xs px-4 rounded-full transition-all">
+                                        Pagar (Efectivo)
+                                    </button>
+                                </form>
+                            {% else %}
+                                <div class="flex items-center gap-2 h-9">
+                                    <div class="px-4 py-1.5 rounded-full border border-green-200 bg-green-50 flex items-center justify-center gap-1.5">
+                                        <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span class="text-xs font-bold text-green-800">Saldada</span>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {% include 'partials/admin/_empty_state.html' with icon='classes' message='El cliente no tiene inscripciones activas para este período.' extra_classes='!m-0 !rounded-2xl !py-8 bg-gray-50/50' %}
+            {% endif %}
+        </div>
+
+        <!-- Pestaña 2: Historial de Inscripciones -->
+        <div x-show="tab === 'historial'" class="space-y-4" x-cloak>
+            {% if history_inscriptions %}
+                <div class="overflow-x-auto border border-gray-200 rounded-xl">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Clase</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Período</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Modalidad</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                            {% for ins in history_inscriptions %}
+                            <tr class="hover:bg-gray-50/30">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="font-bold text-gray-800">{{ ins.clase.disciplina.nombre }}</span>
+                                    <span class="block text-xs text-gray-500">Prof: {{ ins.clase.profesor }}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">{{ ins.periodo.nombre }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ ins.get_tipo_display }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide
+                                        {% if ins.estado == 'RESERVADA' %}bg-green-100 text-green-800
+                                        {% elif ins.estado == 'CANCELADA' %}bg-gray-100 text-gray-800
+                                        {% elif ins.estado == 'PENDIENTE_PAGO' %}bg-amber-100 text-amber-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ ins.get_estado_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                {% include 'partials/admin/_empty_state.html' with icon='inbox' message='No se encontraron inscripciones registradas en el historial.' extra_classes='!m-0 !rounded-2xl !py-8 bg-gray-50/50' %}
+            {% endif %}
+        </div>
+
+        <!-- Pestaña 3: Historial de Pagos -->
+        <div x-show="tab === 'pagos'" class="space-y-4" x-cloak>
+            {% if pagos_data %}
+                <div class="overflow-x-auto border border-gray-200 rounded-xl">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Fecha</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Período</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Monto</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Método</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200 text-sm">
+                            {% for item in pagos_data %}
+                            <tr class="hover:bg-gray-50/30">
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">{{ item.object.fecha_pago|date:"d/m/Y H:i" }} hs</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ item.object.periodo.nombre }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-900">${{ item.object.monto }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ item.object.get_metodo_display }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide
+                                        {% if item.meta.level == 'success' %}bg-green-100 text-green-800
+                                        {% elif item.meta.level == 'error' %}bg-red-100 text-red-800
+                                        {% elif item.meta.level == 'warning-alert' %}bg-amber-100 text-amber-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ item.meta.label }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                {% include 'partials/admin/_empty_state.html' with icon='prices' message='No se encontraron pagos registrados en el historial.' extra_classes='!m-0 !rounded-2xl !py-8 bg-gray-50/50' %}
+            {% endif %}
+        </div>
+    </div>
+</div>
