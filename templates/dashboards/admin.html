@@ -186,9 +186,9 @@
 <script>
     // Instancias de Chart.js fuera del scope reactivo de Alpine para evitar
     // que el Proxy de Alpine las envuelva y cause un stack overflow.
-    const _charts = {};
+    window._adminCharts = window._adminCharts || {};
 
-    document.addEventListener('alpine:init', () => {
+    const registerAdminDashboard = () => {
         Alpine.data('adminDashboard', () => ({
             rango: 'este_mes',
             agruparHorario: 'hora',
@@ -250,7 +250,7 @@
             },
 
             _update(id, data) {
-                const c = _charts[id];
+                const c = window._adminCharts[id];
                 if (!c) return;
                 c.data.labels           = data.labels || [];
                 c.data.datasets[0].data = data.data   || [];
@@ -258,6 +258,19 @@
             },
 
             _initCharts() {
+                // Destruir gráficos anteriores en navegaciones HTMX
+                ['chartIngresos', 'chartClases', 'chartHorarios', 'chartCancelaciones'].forEach(id => {
+                    if (window._adminCharts[id]) {
+                        window._adminCharts[id].destroy();
+                    }
+                });
+
+                const docStyle = getComputedStyle(document.documentElement);
+                const colorPrimary = docStyle.getPropertyValue('--color-primary-500').trim() || '#6366f1';
+                const colorSecondary = docStyle.getPropertyValue('--color-secondary-400').trim() || '#10b981';
+                const colorPrimaryLight = `color-mix(in srgb, ${colorPrimary} 12%, transparent)`;
+                const colorDanger = '#f43f5e';
+
                 Chart.defaults.font.family                      = 'Inter, ui-sans-serif, system-ui, sans-serif';
                 Chart.defaults.color                            = '#9ca3af';
                 Chart.defaults.plugins.legend.labels.boxWidth  = 12;
@@ -277,13 +290,13 @@
                 const noGrid = { grid: { display: false }, border: { display: false } };
 
                 // ── Ingresos: línea ───────────────────────────────────────────
-                _charts['chartIngresos'] = new Chart(
+                window._adminCharts['chartIngresos'] = new Chart(
                     document.getElementById('chartIngresos').getContext('2d'), {
                     type: 'line',
                     data: { labels: [], datasets: [{
                         label: 'Ingresos', data: [],
-                        borderColor: '#6366f1',
-                        backgroundColor: 'rgba(99,102,241,.08)',
+                        borderColor: colorPrimary,
+                        backgroundColor: colorPrimaryLight,
                         fill: true, tension: 0.4,
                         pointRadius: 3, pointHoverRadius: 5,
                         borderWidth: 2,
@@ -295,12 +308,12 @@
                 });
 
                 // ── Clases: barras horizontales ───────────────────────────────
-                _charts['chartClases'] = new Chart(
+                window._adminCharts['chartClases'] = new Chart(
                     document.getElementById('chartClases').getContext('2d'), {
                     type: 'bar',
                     data: { labels: [], datasets: [{
                         label: 'Asistencias', data: [],
-                        backgroundColor: '#6366f1',
+                        backgroundColor: colorPrimary,
                         borderRadius: 4, borderSkipped: false,
                     }]},
                     options: { ...base, indexAxis: 'y',
@@ -310,12 +323,12 @@
                 });
 
                 // ── Horarios: barras verticales ───────────────────────────────
-                _charts['chartHorarios'] = new Chart(
+                window._adminCharts['chartHorarios'] = new Chart(
                     document.getElementById('chartHorarios').getContext('2d'), {
                     type: 'bar',
                     data: { labels: [], datasets: [{
                         label: 'Asistencias', data: [],
-                        backgroundColor: '#10b981',
+                        backgroundColor: colorSecondary,
                         borderRadius: 4, borderSkipped: false,
                     }]},
                     options: { ...base,
@@ -328,12 +341,12 @@
                 });
 
                 // ── Cancelaciones: dona ───────────────────────────────────────
-                _charts['chartCancelaciones'] = new Chart(
+                window._adminCharts['chartCancelaciones'] = new Chart(
                     document.getElementById('chartCancelaciones').getContext('2d'), {
                     type: 'doughnut',
                     data: { labels: [], datasets: [{
                         data: [],
-                        backgroundColor: ['#6366f1', '#f43f5e'],
+                        backgroundColor: [colorSecondary, colorDanger],
                         borderWidth: 0,
                         hoverOffset: 6,
                     }]},
@@ -344,6 +357,12 @@
                 });
             },
         }));
-    });
+    };
+
+    if (window.Alpine) {
+        registerAdminDashboard();
+    } else {
+        document.addEventListener('alpine:init', registerAdminDashboard);
+    }
 </script>
 {% endblock %}
