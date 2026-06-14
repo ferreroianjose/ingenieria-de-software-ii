@@ -31,19 +31,27 @@
     @class-drawer-open.window="classDrawerOpen = true"
 >
     <div class="internal-page__content flex flex-col gap-6">
+        {% if is_admin %}
         {% include 'partials/admin/_admin_page_header.html' with title='Gestionar Clases' subtitle='Filtrá clases y administrá horarios, salas y profesores.' view_tabs=view_tabs aria_label='Clases' %}
+        {% else %}
+        {% include 'partials/admin/_admin_page_header.html' with title='Clases' subtitle='Filtrá y consultá los horarios, salas y profesores de las clases.' view_tabs=view_tabs aria_label='Clases' %}
+        {% endif %}
 
         <section x-show="tab === 'lista'" x-cloak class="flex flex-col gap-4">
             <div class="admin-panel">
                 <div class="admin-panel__toolbar">
                     {% include 'partials/classes/list/_class_filters_form.html' with filter_url=filter_url disciplinas=disciplinas sedes=sedes profesores=profesores weekday_choices=weekday_choices estado_choices=estado_choices %}
                 </div>
+                {% if is_admin %}
                 {% include 'partials/classes/list/_class_selection_toolbar.html' %}
+                {% endif %}
                 <div class="admin-panel__table">
                     <table class="min-w-full table-auto admin-selectable-table">
                         <thead>
                             <tr class="[&_th]:px-6 [&_th]:py-3 [&_th]:text-left">
+                                {% if is_admin %}
                                 <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                                {% endif %}
                                 <th>Disciplina</th>
                                 <th>Sala</th>
                                 <th>Profesor</th>
@@ -55,13 +63,14 @@
                             </tr>
                         </thead>
                         <tbody id="class-rows-tbody">
-                            {% include 'partials/classes/rows/_class_rows.html' with searched=class_rows_searched only %}
+                            {% include 'partials/classes/rows/_class_rows.html' with searched=class_rows_searched is_admin=is_admin only %}
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
+        {% if is_admin %}
         <section x-show="tab === 'precios'" x-cloak class="flex flex-col gap-4">
             <div class="admin-panel">
                 <div class="admin-panel__toolbar">
@@ -85,7 +94,7 @@
                                 <option value="">Seleccionar mes...</option>
                             </select>
                         </form>
-
+ 
                         <!-- Controles de Aumento -->
                         <form 
                             hx-post="{% url 'classes:apply_mass_price_increase' %}" 
@@ -123,7 +132,7 @@
                                         <span class="text-gray-500 text-sm">%</span>
                                     </div>
                                 </div>
-
+ 
                                 <div class="relative w-full sm:w-[140px]" x-show="tipoAumento === 'fijo'" x-cloak>
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <span class="text-gray-500 text-sm">$</span>
@@ -158,9 +167,12 @@
                 </div>
             </div>
         </section>
+        {% endif %}
     </div>
 
+    {% if is_admin %}
     {% include 'partials/ui/modals/_drawer_shell.html' with modal_open_var='classDrawerOpen' container_id='class-drawer' %}
+    {% endif %}
 </div>
 
 <!-- Load periodos on init -->

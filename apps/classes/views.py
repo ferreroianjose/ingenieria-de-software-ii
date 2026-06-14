@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
-from apps.core.access import admin_required
+from apps.core.access import admin_required, staff_required
 from django.db.models import ProtectedError
 from django.http import HttpResponse
 from django.urls import reverse
@@ -438,10 +438,13 @@ CATALOG_VIEW_TABS = [
 ]
 
 
-@admin_required
+@staff_required
 def class_list(request):
+    is_admin = request.user.rol == "ADMIN"
+    tabs = CLASS_LIST_VIEW_TABS if is_admin else [t for t in CLASS_LIST_VIEW_TABS if t["id"] != "precios"]
+
     tab = request.GET.get("tab", "lista")
-    if tab not in {t["id"] for t in CLASS_LIST_VIEW_TABS}:
+    if tab not in {t["id"] for t in tabs}:
         tab = "lista"
     return render(
         request,
@@ -453,9 +456,10 @@ def class_list(request):
             "profesores": Teacher.objects.order_by("nombre", "apellido"),
             "weekday_choices": Class.WEEKDAY_CHOICES,
             "estado_choices": Class.ESTADO_CHOICES,
-            "view_tabs": CLASS_LIST_VIEW_TABS,
+            "view_tabs": tabs,
             "initial_tab": tab,
             "class_rows_searched": False,
+            "is_admin": is_admin,
         },
     )
 
@@ -628,12 +632,14 @@ def class_price_for_period(request, class_id):
     return HttpResponse(str(form['precio']))
 
 
-@admin_required
+@staff_required
 def class_rows(request):
+    ctx = _class_rows_context(request)
+    ctx["is_admin"] = request.user.rol == "ADMIN"
     return render(
         request,
         "partials/classes/rows/_class_rows.html",
-        _class_rows_context(request),
+        ctx,
     )
 
 
