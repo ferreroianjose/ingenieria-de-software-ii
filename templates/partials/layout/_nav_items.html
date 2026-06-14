@@ -155,14 +155,7 @@
     </div>
   </a>
 
-  <a href="{% url 'classes:locations_list' %}"
-     class="nav-item"
-     :class="currentPath.startsWith('/classes/locations') ? 'nav-item-active' : ''">
-    <div class="nav-item-inner">
-      {% include 'partials/ui/_icon.html' with name="building-fill" class="size-5 shrink-0" %}
-      <span class="nav-text">Sedes y salas</span>
-    </div>
-  </a>
+
 
   <a href="{% url 'classes:catalog' %}"
      class="nav-item"

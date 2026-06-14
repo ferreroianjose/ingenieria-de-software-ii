@@ -441,6 +441,7 @@ CLASS_LIST_VIEW_TABS = [
 CATALOG_VIEW_TABS = [
     {"id": "disciplinas", "label": "Disciplinas"},
     {"id": "profesores", "label": "Profesores"},
+    {"id": "sedes_salas", "label": "Sedes y salas"},
 ]
 
 
@@ -651,26 +652,9 @@ def class_rows(request):
 
 @admin_required
 def locations_list(request):
-    sedes = Sede.objects.all().order_by("nombre")
-    selected_sede_id = request.GET.get("sede_id")
-    if selected_sede_id:
-        try:
-            selected_sede_id = int(selected_sede_id)
-        except ValueError, TypeError:
-            selected_sede_id = sedes[0].id if sedes else None
-    elif sedes:
-        selected_sede_id = sedes[0].id
-    else:
-        selected_sede_id = None
-
-    return render(
-        request,
-        "classes/locations_list.html",
-        {
-            "sedes": sedes,
-            "selected_sede_id": selected_sede_id,
-        },
-    )
+    sede_id = request.GET.get("sede_id")
+    suffix = f"&sede_id={sede_id}" if sede_id else ""
+    return redirect(reverse("classes:catalog") + "?tab=sedes_salas" + suffix)
 
 
 @admin_required
@@ -700,8 +684,22 @@ def sala_rows(request):
 @admin_required
 def catalog(request):
     tab = request.GET.get("tab", "disciplinas")
-    if tab not in ("disciplinas", "profesores"):
+    valid_tabs = [t["id"] for t in CATALOG_VIEW_TABS]
+    if tab not in valid_tabs:
         tab = "disciplinas"
+
+    sedes = Sede.objects.all().order_by("nombre")
+    selected_sede_id = request.GET.get("sede_id")
+    if selected_sede_id:
+        try:
+            selected_sede_id = int(selected_sede_id)
+        except (ValueError, TypeError):
+            selected_sede_id = sedes[0].id if sedes.exists() else None
+    elif sedes.exists():
+        selected_sede_id = sedes[0].id
+    else:
+        selected_sede_id = None
+
     return render(
         request,
         "classes/catalog.html",
@@ -712,6 +710,8 @@ def catalog(request):
             "create_teacher_url": reverse("classes:create_teacher"),
             "view_tabs": CATALOG_VIEW_TABS,
             "initial_tab": tab,
+            "sedes": sedes,
+            "selected_sede_id": selected_sede_id,
         },
     )
 
@@ -908,28 +908,28 @@ def sala_modal(request, sala_id=None):
 @admin_required
 def create_sede(request):
     if request.method != "POST":
-        return redirect("classes:locations_list")
+        return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
     form = SedeForm(request.POST)
     if form.is_valid():
         sede = form.save()
         return _hx_ok_or_redirect(
             request,
             message=f"La sede «{sede.nombre}» fue creada.",
-            redirect_to="classes:locations_list",
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
             close_modal="sedeModalOpen",
             locations_reload=(
-                reverse("classes:locations_list") + f"?sede_id={sede.pk}"
+                reverse("classes:catalog") + f"?tab=sedes_salas&sede_id={sede.pk}"
             ),
         )
     if request.headers.get("HX-Request"):
         return _render_sede_modal_panel(request, form)
-    return redirect("classes:locations_list")
+    return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
 
 
 @admin_required
 def update_sede(request, sede_id):
     if request.method != "POST":
-        return redirect("classes:locations_list")
+        return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
     instance = get_object_or_404(Sede, pk=sede_id)
     form = SedeForm(request.POST, instance=instance)
     if form.is_valid():
@@ -937,21 +937,21 @@ def update_sede(request, sede_id):
         return _hx_ok_or_redirect(
             request,
             message=f"La sede «{sede.nombre}» fue actualizada.",
-            redirect_to="classes:locations_list",
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
             close_modal="sedeModalOpen",
             locations_reload=(
-                reverse("classes:locations_list") + f"?sede_id={sede.pk}"
+                reverse("classes:catalog") + f"?tab=sedes_salas&sede_id={sede.pk}"
             ),
         )
     if request.headers.get("HX-Request"):
         return _render_sede_modal_panel(request, form, instance)
-    return redirect("classes:locations_list")
+    return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
 
 
 @admin_required
 def create_sala(request):
     if request.method != "POST":
-        return redirect("classes:locations_list")
+        return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
     form = SalaForm(request.POST)
     if form.is_valid():
         sala = form.save()
@@ -959,7 +959,7 @@ def create_sala(request):
         return _hx_ok_or_redirect(
             request,
             message=f"La sala «{sala.nombre}» fue creada.",
-            redirect_to="classes:locations_list",
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
             close_modal="salaModalOpen",
             refresh=_sala_rows_refresh(sede.pk),
         )
@@ -971,13 +971,13 @@ def create_sala(request):
             lock_sede=bool(sede_id),
             selected_sede_id=int(sede_id) if sede_id and str(sede_id).isdigit() else None,
         )
-    return redirect("classes:locations_list")
+    return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
 
 
 @admin_required
 def update_sala(request, sala_id):
     if request.method != "POST":
-        return redirect("classes:locations_list")
+        return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
     instance = get_object_or_404(Sala, pk=sala_id)
     form = SalaForm(request.POST, instance=instance)
     if form.is_valid():
@@ -985,13 +985,13 @@ def update_sala(request, sala_id):
         return _hx_ok_or_redirect(
             request,
             message=f"La sala «{sala.nombre}» fue actualizada.",
-            redirect_to="classes:locations_list",
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
             close_modal="salaModalOpen",
             refresh=_sala_rows_refresh(sala.sede_id),
         )
     if request.headers.get("HX-Request"):
         return _render_sala_modal_panel(request, form, instance)
-    return redirect("classes:locations_list")
+    return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
 
 
 @admin_required
@@ -1097,7 +1097,7 @@ def update_teacher(request, teacher_id):
 @admin_required
 def delete_sede(request, sede_id):
     if request.method != "POST":
-        return redirect("classes:locations_list")
+        return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
     sede = get_object_or_404(Sede, pk=sede_id)
     try:
         nombre = sede.nombre
@@ -1105,14 +1105,14 @@ def delete_sede(request, sede_id):
         return _hx_ok_or_redirect(
             request,
             message=f"La sede «{nombre}» fue eliminada.",
-            redirect_to="classes:locations_list",
-            locations_reload=reverse("classes:locations_list"),
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
+            locations_reload=reverse("classes:catalog") + "?tab=sedes_salas",
         )
     except ProtectedError:
         return _hx_ok_or_redirect(
             request,
             message=f"No se puede eliminar la sede «{sede.nombre}» porque tiene salas con clases asignadas.",
-            redirect_to="classes:locations_list",
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
             level="error",
         )
 
@@ -1120,7 +1120,7 @@ def delete_sede(request, sede_id):
 @admin_required
 def delete_sala(request, sala_id):
     if request.method != "POST":
-        return redirect("classes:locations_list")
+        return redirect(reverse("classes:catalog") + "?tab=sedes_salas")
     sala = get_object_or_404(Sala, pk=sala_id)
     sede_id = sala.sede_id
     try:
@@ -1129,14 +1129,14 @@ def delete_sala(request, sala_id):
         return _hx_ok_or_redirect(
             request,
             message=f"La sala «{nombre}» fue eliminada.",
-            redirect_to="classes:locations_list",
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
             refresh=_sala_rows_refresh(sede_id),
         )
     except ProtectedError:
         return _hx_ok_or_redirect(
             request,
             message=f"No se puede eliminar la sala «{sala.nombre}» porque tiene clases asignadas.",
-            redirect_to="classes:locations_list",
+            redirect_to=reverse("classes:catalog") + "?tab=sedes_salas",
             level="error",
         )
 
