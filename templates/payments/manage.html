@@ -29,14 +29,11 @@
       <div class="admin-panel flex flex-col min-w-0">
         <div id="global-history-container"
              hx-get="{% url 'payments:global_history' %}"
-             hx-trigger="load, reloadGlobalHistory from:body"
+             hx-trigger="reloadGlobalHistory from:body"
              hx-target="this"
              hx-swap="innerHTML"
              class="flex-1 flex flex-col">
-          <div class="flex-1 flex flex-col p-6 items-center justify-center min-h-[400px]">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <p class="text-sm text-gray-500 mt-3">Cargando historial de pagos...</p>
-          </div>
+          {% include 'partials/payments/_global_payment_history_panel.html' %}
         </div>
       </div>
     </section>

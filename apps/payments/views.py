@@ -271,7 +271,13 @@ def historial_pagos_global(request):
     estado = request.GET.get("estado", "").strip()
     periodo_id = request.GET.get("periodo", "").strip()
 
-    pagos = Pago.objects.select_related("usuario", "periodo").order_by("-fecha_pago")
+    is_cleared = "cleared" in request.GET
+    has_filters = not is_cleared
+
+    if not has_filters:
+        pagos = Pago.objects.none()
+    else:
+        pagos = Pago.objects.select_related("usuario", "periodo").order_by("-fecha_pago")
 
     if query:
         pagos = pagos.filter(
@@ -322,6 +328,7 @@ def historial_pagos_global(request):
             "metodo": metodo,
             "estado": estado,
             "periodo_id": periodo_id,
+            "has_filters": has_filters,
         }
     )
 

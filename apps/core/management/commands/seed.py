@@ -501,9 +501,9 @@ def _periodos_relativos_a_hoy():
         5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
         9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre",
     }
-    
+
     periodos = []
-    
+
     for delta in range(-4, 2):
         mes = today.month + delta
         año = today.year
@@ -513,17 +513,17 @@ def _periodos_relativos_a_hoy():
         while mes > 12:
             mes -= 12
             año += 1
-            
+
         if delta < 0:
             estado = f"cerrado_{abs(delta)}"
         elif delta > 0:
             estado = "proximo"
         else:
             estado = "activo"
-            
+
         if delta == -1:
             estado = "cerrado"
-            
+
         periodos.append({
             "nombre": f"{meses_nombre[mes]} {año}",
             "estado": estado,
@@ -532,7 +532,7 @@ def _periodos_relativos_a_hoy():
             "apertura_abonados": _primer_dia(año, mes) - timedelta(days=15),
             "apertura_general": _primer_dia(año, mes),
         })
-        
+
     return periodos
 
 
@@ -636,16 +636,16 @@ class Command(BaseCommand):
         # Generar 150 usuarios aleatorios extra para mayor realismo en las planillas
         nombres = ["Juan", "Pedro", "Maria", "Ana", "Luis", "Carlos", "Sofia", "Lucia", "Martina", "Matias", "Facundo", "Tomas", "Camila", "Valentina", "Florencia", "Agustin", "Ignacio", "Nicolas"]
         apellidos = ["Gomez", "Perez", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Gonzalez", "Garcia", "Silva", "Romero", "Sosa", "Torres", "Ruiz", "Diaz"]
-        
+
         for i in range(150):
             dni = f"{random.randint(30000000, 45000000)}"
             email = f"cliente_rnd_{i}_{dni}@mail.com"
             if User.objects.filter(email=email).exists():
                 continue
-                
+
             fn = random.choice(nombres)
             ln = random.choice(apellidos)
-            
+
             User.objects.create(
                 username=email,
                 email=email,
@@ -934,7 +934,7 @@ class Command(BaseCommand):
                             monto = PRECIOS_DISCIPLINA.get(clase.disciplina.nombre, 3000)
                             if tipo == Inscripcion.Tipo.CLASE_SUELTA:
                                 monto = monto / 2
-                                
+
                             # Simular cancelaciones en algunas ocurrencias (solo en pasado/actual)
                             from apps.classes.models import InscripcionOcurrencia
                             for oc in insc.ocurrencias.all():
@@ -975,7 +975,7 @@ class Command(BaseCommand):
                             # Simular asistencia para ocurrencias pasadas o actuales
                             from apps.attendance.models import Asistencia
                             import datetime
-                            
+
                             now = timezone.now()
                             for oc in insc.ocurrencias.all():
                                 if oc.estado == InscripcionOcurrencia.Estado.ACTIVA and oc.fecha_clase <= now:
@@ -1001,12 +1001,12 @@ class Command(BaseCommand):
     # -----------------------------------------------------------------------
 
     def _seed_demo_case(self, User, Class, Inscripcion, PeriodoCobro, Pago, PagoInscripcion, PrecioClase):
-        from apps.payments.periodos import obtener_periodo_activo_si_hay
+        from apps.classes.services import obtener_periodo_activo_si_hay
         from apps.classes.ocurrencias import generar_ocurrencias_mensual
 
         today = timezone.localdate()
         dia_semana = today.weekday()
-        
+
         clases_hoy = list(Class.objects.filter(dia_semana=dia_semana)[:2])
         if len(clases_hoy) < 2:
             return
@@ -1037,7 +1037,7 @@ class Command(BaseCommand):
             usuario=user, clase=c1, periodo=periodo,
             tipo=Inscripcion.Tipo.MENSUAL, estado=Inscripcion.Estado.RESERVADA
         )
-        
+
         i2 = Inscripcion.objects.create(
             usuario=user, clase=c2, periodo=periodo,
             tipo=Inscripcion.Tipo.MENSUAL, estado=Inscripcion.Estado.RESERVADA
@@ -1045,7 +1045,7 @@ class Command(BaseCommand):
 
         p1_obj = PrecioClase.objects.filter(clase=c1, periodo=periodo).first()
         p2_obj = PrecioClase.objects.filter(clase=c2, periodo=periodo).first()
-        
+
         monto_c1 = p1_obj.monto if p1_obj else Decimal("3000.00")
         monto_c2 = p2_obj.monto if p2_obj else Decimal("3000.00")
 

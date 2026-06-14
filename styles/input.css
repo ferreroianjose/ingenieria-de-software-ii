@@ -1631,7 +1631,7 @@
   }
 
   .page-canvas {
-    @apply flex flex-1 flex-col min-h-full;
+    @apply flex flex-1 flex-col min-h-svh;
   }
   .site-footer {
     @apply relative w-full z-0;

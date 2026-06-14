@@ -1130,3 +1130,27 @@ class StaffPaymentViewsTests(TestCase):
         response = self.client.get(reverse("payments:global_history"))
         self.assertEqual(response.status_code, 200)
 
+    def test_historial_pagos_global_filters(self):
+        self.client.login(username='admin@gymflow.com', password='password123')
+        
+        # Crear un pago para que la base de datos no esté vacía
+        Pago.objects.create(
+            usuario=self.cliente,
+            periodo=self.periodo,
+            monto=Decimal('3000.00'),
+            metodo=Pago.Metodo.EFECTIVO,
+            estado=Pago.Estado.COMPLETADO
+        )
+        
+        # 1. Sin parámetros de búsqueda (por defecto realiza la consulta y devuelve los pagos)
+        response = self.client.get(reverse("payments:global_history"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context['has_filters'])
+        self.assertGreater(len(response.context['page_obj']), 0)
+        
+        # 2. Con parámetro cleared=1 (limpia y devuelve vacio)
+        response = self.client.get(reverse("payments:global_history"), {'cleared': '1'})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context['has_filters'])
+        self.assertEqual(len(response.context['page_obj']), 0)
+

@@ -6,7 +6,8 @@
           hx-target="#global-history-container"
           hx-swap="innerHTML"
           hx-trigger="submit"
-          hx-on::after-request="if (event.detail.successful) this.setAttribute('data-searched', '1')">
+          hx-on::after-request="if (event.detail.successful) this.setAttribute('data-searched', '1')"
+          onkeydown="if (event.key === 'Enter') { event.preventDefault(); return false; }">
           
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 [&>div]:grid [&>div]:grid-cols-1 [&>div]:justify-between [&>div]:gap-0">
             <!-- Búsqueda por Cliente -->
@@ -150,5 +151,9 @@
     </nav>
     {% endif %}
 {% else %}
-    {% include 'partials/admin/_empty_state.html' with icon='search' message='No se encontraron pagos con los filtros seleccionados.' extra_classes='min-h-[300px]' %}
+    {% if has_filters %}
+        {% include 'partials/admin/_empty_state.html' with icon='search' message='No se encontraron pagos con los filtros seleccionados.' extra_classes='min-h-[300px] !w-auto' %}
+    {% else %}
+        {% include 'partials/admin/_empty_state.html' with icon='search' message='Ingresá criterios de búsqueda o seleccioná filtros para consultar el historial de pagos.' extra_classes='min-h-[300px] !w-auto' %}
+    {% endif %}
 {% endif %}
