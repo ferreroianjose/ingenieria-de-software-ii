@@ -1,0 +1,60 @@
+<div class="admin-panel__table">
+    <table class="min-w-full table-auto admin-selectable-table">
+        <thead>
+            <tr class="[&_th]:px-6 [&_th]:py-3 [&_th]:text-left">
+                {% if is_admin %}
+                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
+                {% endif %}
+                <th>Disciplina</th>
+                <th>Sala</th>
+                <th>Profesor</th>
+                <th>Fecha/Hora</th>
+                <th>Duración</th>
+                <th>Cupo</th>
+                <th>Precio</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody id="class-rows-tbody">
+            {% include 'partials/classes/rows/_class_rows.html' with searched=searched classes=classes is_admin=is_admin only %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj and page_obj.paginator.count > 0 %}
+<nav
+    class="flex flex-col gap-3 border-t border-gray-100 px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
+    aria-label="Paginación"
+>
+    <p class="text-sm text-gray-500">
+        {{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+    </p>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex flex-wrap gap-2">
+        {% if page_obj.has_previous %}
+        <button
+            type="button"
+            class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger btn-auto"
+            hx-get="{% url 'classes:class_rows' %}?page={{ page_obj.previous_page_number }}"
+            hx-include="#class-filters-form"
+            hx-target="#class-table-panel"
+            hx-swap="innerHTML"
+        >Anterior</button>
+        {% endif %}
+        <span class="flex items-center px-2 text-sm font-medium text-gray-600">
+            Página {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+        {% if page_obj.has_next %}
+        <button
+            type="button"
+            class="btn-auto rounded-full bg-primary-400 px-4 py-1.5 text-sm font-bold text-white hover:bg-primary-600"
+            hx-get="{% url 'classes:class_rows' %}?page={{ page_obj.next_page_number }}"
+            hx-include="#class-filters-form"
+            hx-target="#class-table-panel"
+            hx-swap="innerHTML"
+        >Siguiente</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</nav>
+{% endif %}

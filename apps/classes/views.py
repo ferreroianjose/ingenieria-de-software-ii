@@ -6,6 +6,7 @@ from apps.core.access import admin_required, staff_required
 from django.db.models import ProtectedError
 from django.http import HttpResponse
 from django.urls import reverse
+from django.core.paginator import Paginator
 
 from .forms import ClassForm, TeacherForm, SedeForm, SalaForm, DisciplinaForm
 from .models import Class, Teacher, Sede, Sala, Disciplina, Inscripcion
@@ -385,8 +386,13 @@ def _class_rows_context(request):
             "classes": [],
             "searched": False,
             "q": "",
+            "page_obj": None,
         }
     qs = _filter_class_queryset(request)
+    
+    page_number = request.GET.get("page") or 1
+    paginator = Paginator(qs, 25)
+    page_obj = paginator.get_page(page_number)
     
     from apps.payments.models import PeriodoCobro, PrecioClase
     from django.utils import timezone
@@ -394,14 +400,14 @@ def _class_rows_context(request):
     periodo = PeriodoCobro.objects.filter(fecha_fin_periodo__gte=hoy).order_by('fecha_inicio_periodo').first()
     precios = {p.clase_id: p.monto for p in PrecioClase.objects.filter(periodo=periodo)} if periodo else {}
     
-    clases = list(qs)
-    for c in clases:
+    for c in page_obj:
         c.precio_actual = precios.get(c.id)
         
     return {
-        "classes": clases,
+        "classes": page_obj,
         "searched": True,
         "q": request.GET.get("q", ""),
+        "page_obj": page_obj,
     }
 
 
@@ -638,7 +644,7 @@ def class_rows(request):
     ctx["is_admin"] = request.user.rol == "ADMIN"
     return render(
         request,
-        "partials/classes/rows/_class_rows.html",
+        "partials/classes/_class_table_panel.html",
         ctx,
     )
 

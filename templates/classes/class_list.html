@@ -5,7 +5,7 @@
 {% block content %}
 <div
     class="internal-page"
-    x-data="Object.assign(adminSelection({ idKey: 'selectedClassId', labelKey: 'selectedClassLabel', clearOnSwapTargets: ['class-rows-tbody'], extraClearKeys: ['selectedClassEstado'] }), {
+    x-data="Object.assign(adminSelection({ idKey: 'selectedClassId', labelKey: 'selectedClassLabel', clearOnSwapTargets: ['class-table-panel'], extraClearKeys: ['selectedClassEstado'] }), {
         selectedClassEstado: '',
         classDrawerOpen: false,
         tab: '{{ initial_tab }}',
@@ -40,32 +40,13 @@
         <section x-show="tab === 'lista'" x-cloak class="flex flex-col gap-4">
             <div class="admin-panel">
                 <div class="admin-panel__toolbar">
-                    {% include 'partials/classes/list/_class_filters_form.html' with filter_url=filter_url disciplinas=disciplinas sedes=sedes profesores=profesores weekday_choices=weekday_choices estado_choices=estado_choices %}
+                    {% include 'partials/classes/list/_class_filters_form.html' with filter_url=filter_url disciplinas=disciplinas sedes=sedes profesores=profesores weekday_choices=weekday_choices estado_choices=estado_choices target='#class-table-panel' %}
                 </div>
                 {% if is_admin %}
                 {% include 'partials/classes/list/_class_selection_toolbar.html' %}
                 {% endif %}
-                <div class="admin-panel__table">
-                    <table class="min-w-full table-auto admin-selectable-table">
-                        <thead>
-                            <tr class="[&_th]:px-6 [&_th]:py-3 [&_th]:text-left">
-                                {% if is_admin %}
-                                <th class="w-11 px-3 py-3" scope="col"><span class="sr-only">Selección</span></th>
-                                {% endif %}
-                                <th>Disciplina</th>
-                                <th>Sala</th>
-                                <th>Profesor</th>
-                                <th>Fecha/Hora</th>
-                                <th>Duración</th>
-                                <th>Cupo</th>
-                                <th>Precio</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody id="class-rows-tbody">
-                            {% include 'partials/classes/rows/_class_rows.html' with searched=class_rows_searched is_admin=is_admin only %}
-                        </tbody>
-                    </table>
+                <div id="class-table-panel">
+                    {% include 'partials/classes/_class_table_panel.html' with searched=class_rows_searched classes=classes is_admin=is_admin only %}
                 </div>
             </div>
         </section>
