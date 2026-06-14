@@ -4,7 +4,8 @@
 {% block title %}Asistencia — GYMFlow{% endblock %}
 
 {% block content %}
-<div class="internal-page" x-data="{ tab: 'ingreso', scanning: false, scanner: null }">
+<div class="internal-page" x-data="{ tab: 'ingreso', scanning: false, scanner: null, emergencyPhoneModalOpen: false }"
+     @admin-modal-close.window="if ($event.detail === 'emergencyPhoneModalOpen') emergencyPhoneModalOpen = false;">
   <!-- Script de lectura de códigos QR de HTML5 -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
@@ -162,7 +163,7 @@
             </div>
         </div>
     </section>
-
+    {% include 'partials/ui/modals/_center_modal_shell.html' with modal_open_var='emergencyPhoneModalOpen' container_id='emergency-phone-modal' %}
   </div>
 </div>
 {% endblock %}

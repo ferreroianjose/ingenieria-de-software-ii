@@ -8,6 +8,7 @@ urlpatterns = [
     path('manage/', views.staff_asistencia, name='manage'),
     path('search/', views.buscar_cliente, name='search'),
     path('detail/', views.detalle_cliente_asistencia, name='detail'),
+    path('cargar-telefono/', views.cargar_telefono, name='cargar_telefono'),
     path('register/', views.registrar_asistencia, name='register'),
     path('undo-register/', views.anular_asistencia, name='undo_register'),
     path('pay-cash/', views.cobrar_efectivo_recepcion, name='pay_cash'),

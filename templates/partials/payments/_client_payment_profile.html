@@ -9,7 +9,7 @@
     <!-- Botón Volver -->
     <div class="px-6 py-3 border-b border-gray-100 bg-gray-50/50 shrink-0 flex items-center">
         <button type="button" 
-                onclick="const input = document.getElementById('payments-search-input'); if(input && input.value.trim() !== '') { htmx.trigger('#payments-search-form', 'submit'); } else { htmx.ajax('GET', '{% url 'payments:search_client' %}', {target: '#payment-content-container'}); }"
+                onclick="const form = document.getElementById('payments-search-form'); const input = form ? form.querySelector('input[name=q]') : null; if(input && input.value.trim() !== '') { htmx.trigger('#payments-search-form', 'submit'); } else { htmx.ajax('GET', '{% url 'payments:search_client' %}', {target: '#payment-content-container'}); }"
                 class="text-sm font-semibold text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
             Volver a la búsqueda
@@ -23,7 +23,6 @@
             <p class="text-sm text-gray-500 font-normal mt-0.5">{{ client_user.email }}</p>
             <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-sm text-gray-600">
                 <span class="flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
                     DNI: <strong class="text-gray-800 font-semibold">{{ client_user.dni }}</strong>
                 </span>
             </div>

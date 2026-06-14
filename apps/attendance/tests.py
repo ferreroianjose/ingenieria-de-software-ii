@@ -197,3 +197,36 @@ class AttendanceTests(TestCase):
         
         # Verificar que se creó el registro
         self.assertTrue(Asistencia.objects.filter(inscripcion=self.inscripcion).exists())
+
+    def test_cargar_telefono_get(self):
+        """El staff puede abrir la modal para cargar el teléfono de emergencia."""
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        response = self.client.get(reverse('attendance:cargar_telefono'), {'user_id': self.client_user.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Cargar Teléfono de Emergencia')
+
+    def test_cargar_telefono_post_exito(self):
+        """El staff puede guardar el teléfono de emergencia exitosamente."""
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        response = self.client.post(reverse('attendance:cargar_telefono'), {
+            'user_id': self.client_user.id,
+            'telefono_emergencia': '+5493511234567'
+        })
+        self.assertEqual(response.status_code, 200)
+        
+        self.client_user.refresh_from_db()
+        self.assertEqual(self.client_user.telefono_emergencia, '+5493511234567')
+        self.assertIn('closeAdminModal', response['HX-Trigger'])
+
+    def test_cargar_telefono_post_error(self):
+        """El staff recibe error si el formato del teléfono es incorrecto (letras)."""
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        response = self.client.post(reverse('attendance:cargar_telefono'), {
+            'user_id': self.client_user.id,
+            'telefono_emergencia': 'numero123'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'El teléfono no puede contener letras')
+        
+        self.client_user.refresh_from_db()
+        self.assertNotEqual(self.client_user.telefono_emergencia, 'numero123')

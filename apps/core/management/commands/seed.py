@@ -1031,6 +1031,7 @@ class Command(BaseCommand):
         if not periodo:
             return
 
+        Pago.objects.filter(usuario=user, periodo=periodo).delete()
         Inscripcion.objects.filter(usuario=user, periodo=periodo).delete()
 
         i1 = Inscripcion.objects.create(

@@ -111,11 +111,7 @@ def detalle_cliente_asistencia(request):
             "error_message": error_message
         })
 
-    if not client_id:
-        return HttpResponse("")
-
-    client_user = get_object_or_404(User, id=client_id, rol="CLIENTE")
-
+def _get_client_detail_context(client_user, qr_token=None):
     # Calcular edad
     edad = _calcular_edad(client_user.fecha_nacimiento)
     es_menor = edad is not None and edad < 18
@@ -160,7 +156,7 @@ def detalle_cliente_asistencia(request):
             "hora_asistencia": hora_asistencia,
         })
 
-    return render(request, "partials/attendance/_client_detail.html", {
+    return {
         "cliente": client_user,
         "edad": edad,
         "es_menor": es_menor,
@@ -168,7 +164,74 @@ def detalle_cliente_asistencia(request):
         "ocurrencias_detalle": ocurrencias_detalle,
         "today": today,
         "qr_used": bool(qr_token),
-    })
+    }
+
+
+@staff_required
+def detalle_cliente_asistencia(request):
+    """Retorna la ficha del cliente."""
+    client_id = request.GET.get("user_id")
+    qr_token = request.GET.get("qr_token")
+
+    if qr_token:
+        # Intentar descifrar token QR
+        signer = signing.TimestampSigner()
+        try:
+            # Token válido por 5 minutos (300 segundos)
+            client_id = signer.unsign(qr_token, max_age=300)
+        except signing.SignatureExpired:
+            error_message = "El código QR ha expirado. Por favor, solicitá uno nuevo."
+        except signing.BadSignature:
+            error_message = "Código QR inválido."
+        
+        if 'error_message' in locals():
+            return render(request, "partials/attendance/_client_error.html", {
+                "error_message": error_message
+            })
+
+    if not client_id:
+        return HttpResponse("")
+
+    client_user = get_object_or_404(User, id=client_id, rol="CLIENTE")
+    context = _get_client_detail_context(client_user, qr_token)
+    return render(request, "partials/attendance/_client_detail.html", context)
+
+
+import json
+from apps.users.forms import ProfileUpdateForm
+
+@staff_required
+def cargar_telefono(request):
+    user_id = request.GET.get("user_id") or request.POST.get("user_id")
+    client_user = get_object_or_404(User, id=user_id, rol="CLIENTE")
+
+    if request.method == "POST":
+        form = ProfileUpdateForm(request.POST, instance=client_user)
+        if form.is_valid():
+            form.save()
+            context = _get_client_detail_context(client_user)
+            response = render(request, "partials/attendance/_client_detail.html", context)
+            response['HX-Trigger'] = json.dumps({
+                'closeAdminModal': 'emergencyPhoneModalOpen',
+                'adminFlash': {'message': 'Teléfono de emergencia guardado exitosamente.', 'level': 'success'}
+            })
+            response['HX-Retarget'] = '#main-content-container'
+            return response
+    else:
+        form = ProfileUpdateForm(instance=client_user)
+
+    return render(
+        request,
+        "partials/attendance/_emergency_phone_modal_panel.html",
+        {
+            "modal_form": form,
+            "cliente": client_user,
+            "modal_title": "Cargar Teléfono de Emergencia",
+            "modal_subtitle": f"Registrá el teléfono para {client_user.get_full_name()}",
+            "modal_button_label": "Guardar",
+            "action_url": f"{reverse('attendance:cargar_telefono')}?user_id={client_user.id}",
+        }
+    )
 
 
 @staff_required
