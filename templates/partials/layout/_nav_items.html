@@ -144,42 +144,8 @@
   </a>
   {% endif %}
 
-  <!-- PÁGINAS DE ADMIN -->
-  {% if user.rol == 'ADMIN' %}
-  <a href="{% url 'classes:class_list' %}"
-     class="nav-item"
-     :class="currentPath.startsWith('/classes/list') ? 'nav-item-active' : ''">
-    <div class="nav-item-inner">
-      {% include 'partials/ui/_icon.html' with name="kanban-fill" class="size-5 shrink-0" %}
-      <span class="nav-text">Gestionar clases</span>
-    </div>
-  </a>
-
-
-
-  <a href="{% url 'classes:catalog' %}"
-     class="nav-item"
-     :class="currentPath.startsWith('/classes/catalog') ? 'nav-item-active' : ''">
-    <div class="nav-item-inner">
-      {% include 'partials/ui/_icon.html' with name="person-arms-up" class="size-5 shrink-0" %}
-      <span class="nav-text">Catálogo</span>
-    </div>
-  </a>
-
-  {% endif %}
-
-  <!-- PÁGINAS DE EMPLEADO (y admin) -->
+  <!-- PÁGINAS DE ADMIN Y EMPLEADO -->
   {% if user.rol == 'EMPLEADO' or user.rol == 'ADMIN' %}
-  <a href="{% url 'manage' %}"
-     class="nav-item"
-     :class="currentPath.startsWith('/users/manage') ? 'nav-item-active' : ''">
-    <div class="nav-item-inner">
-      {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
-      <span class="nav-text">{% if user.rol == 'ADMIN' %}Usuarios{% else %}Clientes{% endif %}</span>
-    </div>
-  </a>
-
-  {% if user.rol == 'EMPLEADO' %}
   <a href="{% url 'classes:class_list' %}"
      class="nav-item"
      :class="currentPath.startsWith('/classes/list') ? 'nav-item-active' : ''">
@@ -188,7 +154,26 @@
       <span class="nav-text">Clases</span>
     </div>
   </a>
+
+  {% if user.rol == 'ADMIN' %}
+  <a href="{% url 'classes:catalog' %}"
+     class="nav-item"
+     :class="currentPath.startsWith('/classes/catalog') ? 'nav-item-active' : ''">
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="person-arms-up" class="size-5 shrink-0" %}
+      <span class="nav-text">Catálogo</span>
+    </div>
+  </a>
   {% endif %}
+
+  <a href="{% url 'manage' %}"
+     class="nav-item"
+     :class="currentPath.startsWith('/users/manage') ? 'nav-item-active' : ''">
+    <div class="nav-item-inner">
+      {% include 'partials/ui/_icon.html' with name="people-fill" class="size-5 shrink-0" %}
+      <span class="nav-text">{% if user.rol == 'ADMIN' %}Usuarios{% else %}Clientes{% endif %}</span>
+    </div>
+  </a>
 
   <a href="{% url 'payments:manage' %}"
      class="nav-item"
