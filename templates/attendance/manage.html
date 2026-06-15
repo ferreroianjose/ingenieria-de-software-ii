@@ -123,10 +123,19 @@
             </template>
 
             <!-- Client Detail / Search Results Container -->
-            <div id="main-content-container" x-show="!scanning" class="flex-1 w-full flex flex-col">
+            <div id="main-content-container" x-show="!scanning" class="flex-1 w-full flex flex-col"
+                 {% if initial_user_id %}
+                 hx-get="{% url 'attendance:detail' %}?user_id={{ initial_user_id }}"
+                 hx-trigger="load"
+                 {% endif %}
+            >
                 <!-- Empty State Wrapper -->
                 <div class="flex-1 flex flex-col p-3">
-                    {% include 'partials/admin/_empty_state.html' with icon='qr' message='Buscá a un cliente manualmente en la barra superior o activá la cámara para escanear un código QR.' extra_classes='!m-0 !rounded-[20px] min-h-[11rem] w-full' %}
+                    {% if initial_user_id %}
+                        <div class="flex-1 flex items-center justify-center p-8 text-sm font-medium text-gray-500">Cargando...</div>
+                    {% else %}
+                        {% include 'partials/admin/_empty_state.html' with icon='qr' message='Buscá a un cliente manualmente en la barra superior o activá la cámara para escanear un código QR.' extra_classes='!m-0 !rounded-[20px] min-h-[11rem] w-full' %}
+                    {% endif %}
                 </div>
             </div>
         </div>

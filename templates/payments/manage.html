@@ -17,8 +17,17 @@
         </div>
 
         <!-- Contenedor único para resultados y perfil (Consistente con Asistencia) -->
-        <div id="payment-content-container" class="relative flex-1 min-h-[400px] flex flex-col">
-          {% include 'partials/payments/_client_ready_state.html' %}
+        <div id="payment-content-container" class="relative flex-1 min-h-[400px] flex flex-col"
+             {% if initial_user_id %}
+             hx-get="{% url 'payments:client_detail' %}?user_id={{ initial_user_id }}"
+             hx-trigger="load"
+             {% endif %}
+        >
+          {% if initial_user_id %}
+            <div class="flex-1 flex items-center justify-center p-8 text-sm font-medium text-gray-500">Cargando perfil de pagos...</div>
+          {% else %}
+            {% include 'partials/payments/_client_ready_state.html' %}
+          {% endif %}
         </div>
       </div>
     </section>

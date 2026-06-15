@@ -4,6 +4,9 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.core.access import staff_required
+from apps.users.models import User
+
 from apps.core.page_chrome import (
     PAGE_CHROME_LIGHT,
     PAGE_CHROME_DARK,
@@ -420,3 +423,19 @@ def faq(request):
             page_section="Preguntas frecuentes",
         ),
     )
+
+
+@staff_required
+def dashboard_quick_search(request):
+    q = request.GET.get("q", "").strip()
+    if not q or len(q) < 2:
+        return render(request, "partials/dashboards/_quick_search_results.html", {"clientes": [], "q": q})
+
+    clientes = User.objects.filter(rol="CLIENTE").filter(
+        Q(first_name__icontains=q) |
+        Q(last_name__icontains=q) |
+        Q(dni__icontains=q) |
+        Q(email__icontains=q)
+    )[:5]
+
+    return render(request, "partials/dashboards/_quick_search_results.html", {"clientes": clientes, "q": q})

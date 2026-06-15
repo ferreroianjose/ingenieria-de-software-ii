@@ -55,6 +55,7 @@ def staff_asistencia(request):
         "view_tabs": ATTENDANCE_VIEW_TABS,
         "clases_disponibles": clases_disponibles,
         "periodos": periodos,
+        "initial_user_id": request.GET.get("user_id"),
     })
 
 

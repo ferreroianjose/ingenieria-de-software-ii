@@ -40,49 +40,43 @@
         {% include 'partials/admin/_admin_page_header.html' with title="Dashboard Operativo" subtitle="Acciones rápidas y control del día." %}
 
         {# ═══════════════════════════════════════════════════════════════════ #}
-        {# PANEL 1 — MÉTRICAS Y ESCÁNER QR                                     #}
+        {# PANELES SUPERIORES (Resumen, QR, Búsqueda)                          #}
         {# ═══════════════════════════════════════════════════════════════════ #}
-        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <!-- MÉTRICAS DEL DÍA -->
-            <div class="admin-panel col-span-1 lg:col-span-2 flex flex-col">
-                <div class="admin-panel__toolbar border-b border-gray-100 flex items-center justify-between">
+            <!-- RESUMEN DEL DÍA (Full Width) -->
+            <div class="admin-panel col-span-1 lg:col-span-12 flex flex-col">
+                <div class="admin-panel__toolbar border-b border-gray-100 flex items-center justify-between py-3 sm:py-4">
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Resumen del día</p>
-                    <div class="flex gap-2">
-                        <a href="{% url 'manage' %}" class="btn-auto rounded-full bg-primary-400 text-white px-4 py-1.5 text-xs font-bold hover:bg-primary-600 transition-colors no-underline shadow-sm">Buscar alumno</a>
-                        <a href="{% url 'payments:manage' %}" class="btn-auto rounded-full bg-gray-800 text-white px-4 py-1.5 text-xs font-bold hover:bg-gray-900 transition-colors no-underline shadow-sm">Cobranzas</a>
-                    </div>
                 </div>
-                <div class="flex-1 flex flex-col justify-center p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                        <div class="flex flex-col items-center gap-1 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0">
-                            <span class="text-4xl font-black text-gray-900 tabular-nums leading-none">{{ asistencias_hoy }}</span>
-                            <div class="flex items-center gap-1">
-                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Asistencias</span>
-                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Cantidad de ingresos registrados el día de hoy (tanto vía escáner QR como manual)." %}
-                            </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
+                    <div class="flex items-center justify-between sm:flex-col sm:justify-center p-4 sm:p-5 gap-1">
+                        <div class="flex items-center gap-1 sm:order-2">
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Asistencias</span>
+                            {% include 'partials/dashboards/_dash_tooltip.html' with tip="Cantidad de ingresos registrados el día de hoy (tanto vía escáner QR como manual)." %}
                         </div>
-                        <div class="flex flex-col items-center gap-1 border-b sm:border-b-0 sm:border-r border-gray-100 pb-4 sm:pb-0">
-                            <span class="text-4xl font-black text-gray-900 tabular-nums leading-none">${{ ingresos_hoy|floatformat:"0" }}</span>
-                            <div class="flex items-center gap-1">
-                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Cobros de hoy</span>
-                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Suma total de los pagos cobrados y acreditados en efectivo, tarjeta o MercadoPago durante el día de hoy." %}
-                            </div>
+                        <span class="text-3xl font-black text-gray-900 tabular-nums leading-none sm:order-1">{{ asistencias_hoy }}</span>
+                    </div>
+                    <div class="flex items-center justify-between sm:flex-col sm:justify-center p-4 sm:p-5 gap-1">
+                        <div class="flex items-center gap-1 sm:order-2">
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Cobros de hoy</span>
+                            {% include 'partials/dashboards/_dash_tooltip.html' with tip="Suma total de los pagos cobrados y acreditados en sucursal o MercadoPago durante el día de hoy." %}
                         </div>
-                        <div class="flex flex-col items-center gap-1">
-                            <span class="text-4xl font-black text-gray-900 tabular-nums leading-none">{{ cancelaciones_hoy }}</span>
-                            <div class="flex items-center gap-1">
-                                <span class="text-xs text-gray-400 font-bold uppercase tracking-wider">Cancelaciones</span>
-                                {% include 'partials/dashboards/_dash_tooltip.html' with tip="Cantidad de asistencias que han sido canceladas en el día de hoy." %}
-                            </div>
+                        <span class="text-3xl font-black text-gray-900 tabular-nums leading-none sm:order-1">${{ ingresos_hoy|floatformat:"0" }}</span>
+                    </div>
+                    <div class="flex items-center justify-between sm:flex-col sm:justify-center p-4 sm:p-5 gap-1">
+                        <div class="flex items-center gap-1 sm:order-2">
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Cancelaciones</span>
+                            {% include 'partials/dashboards/_dash_tooltip.html' with tip="Cantidad de asistencias que han sido canceladas en el día de hoy." %}
                         </div>
+                        <span class="text-3xl font-black text-gray-900 tabular-nums leading-none sm:order-1">{{ cancelaciones_hoy }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- ESCÁNER QR NATIVO -->
-            <div class="admin-panel col-span-1 flex flex-col relative min-h-[320px]">
-                <div class="admin-panel__toolbar border-b border-gray-100 bg-gray-50 rounded-t-2xl flex items-center justify-between">
+            <div class="admin-panel col-span-1 lg:col-span-5 flex flex-col relative h-[380px]">
+                <div class="admin-panel__toolbar border-b border-gray-100 bg-gray-50 rounded-t-2xl flex items-center justify-between py-3 sm:py-4 shrink-0">
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Ingreso Rápido</p>
                     <button
                         type="button"
@@ -150,17 +144,61 @@
                 <div class="flex-1 flex flex-col relative overflow-hidden bg-white rounded-b-2xl">
                     <template x-if="scanning">
                         <div class="absolute inset-0 bg-gray-900 z-10 flex flex-col items-center justify-center p-4">
-                            <div id="dashboard-qr-reader" class="w-full max-w-[220px] rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-800 bg-black aspect-square"></div>
+                            <div id="dashboard-qr-reader" class="w-full max-w-[200px] rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-800 bg-black aspect-square"></div>
                             <p class="text-xs font-semibold text-white/70 mt-4 uppercase tracking-widest text-center">Enfocá el código QR aquí</p>
                         </div>
                     </template>
 
-                    <div class="flex-1 w-full flex flex-col items-center justify-center text-center p-8 min-h-[250px]" x-show="!scanning">
-                        <div class="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4 ring-1 ring-gray-100">
-                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                    <div class="flex-1 w-full flex flex-col items-center justify-center text-center p-6" x-show="!scanning">
+                        <div class="w-14 h-14 rounded-full bg-gray-50 flex items-center justify-center mb-3 ring-1 ring-gray-100">
+                            <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                         </div>
                         <p class="text-sm font-semibold text-gray-600">Listo para escanear</p>
-                        <p class="text-xs text-gray-400 mt-1 max-w-[200px]">Activá la cámara para detectar un código QR al instante.</p>
+                        <p class="text-xs text-gray-400 mt-1 max-w-[180px]">Activá la cámara para detectar un código QR al instante.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BÚSQUEDA RÁPIDA -->
+            <div class="admin-panel col-span-1 lg:col-span-7 flex flex-col h-[380px]">
+                <div class="admin-panel__toolbar border-b border-gray-100 py-3 sm:py-4 shrink-0">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Búsqueda Rápida</p>
+                </div>
+                <div class="flex-1 flex flex-col p-4 sm:p-5 gap-4 bg-white overflow-hidden">
+                    <form id="quick-search-form"
+                          hx-get="{% url 'dashboard_quick_search' %}"
+                          hx-target="#quick-search-results"
+                          hx-swap="innerHTML"
+                          class="flex items-center gap-2 shrink-0">
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input
+                                type="search"
+                                name="q"
+                                id="quick-search-input"
+                                placeholder="Nombre, DNI o email del cliente..."
+                                class="w-full rounded-full border border-gray-200 pl-10 pr-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-primary-400 focus:outline-none focus:ring-1 focus:ring-primary-400 bg-gray-50 focus:bg-white transition-colors"
+                                autocomplete="off"
+                                required
+                            />
+                        </div>
+                        <button type="submit"
+                                class="btn-auto shrink-0 rounded-full bg-primary-400 text-white px-5 py-2 text-sm font-bold hover:bg-primary-600 transition-colors shadow-sm">
+                            Buscar
+                        </button>
+                    </form>
+
+                    <!-- Resultados -->
+                    <div id="quick-search-results" class="flex-1 overflow-y-auto pr-1">
+                        <div class="flex flex-col items-center justify-center py-4 text-center gap-2 h-full">
+                            <div class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center ring-1 ring-gray-100">
+                                <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <p class="text-sm font-semibold text-gray-500">Buscá un cliente</p>
+                            <p class="text-xs text-gray-400 max-w-xs">Ingresá al menos 2 caracteres y presioná Buscar para ver resultados.</p>
+                        </div>
                     </div>
                 </div>
             </div>

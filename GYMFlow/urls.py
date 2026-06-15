@@ -25,6 +25,7 @@ urlpatterns = [
     path("", core_views.root, name="root"),
     path("dashboard/", core_views.dashboard, name="dashboard"),
     path("faq/", core_views.faq, name="faq"),
+    path("dashboard/quick-search/", core_views.dashboard_quick_search, name="dashboard_quick_search"),
 
     # Módulo de usuarios
     path("users/", include("apps.users.urls")),

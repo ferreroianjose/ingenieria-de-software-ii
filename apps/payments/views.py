@@ -52,6 +52,7 @@ def staff_pagos(request):
         {
             "view_tabs": view_tabs,
             "periodos": periodos,
+            "initial_user_id": request.GET.get("user_id"),
         },
     )
 
