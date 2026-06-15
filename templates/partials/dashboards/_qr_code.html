@@ -1,12 +1,65 @@
 {% if qr_url %}
-<div class="flex items-center justify-center size-full relative" x-data="{ qrUrl: '{{ qr_url }}', qrToken: '{{ qr_token }}' }"
-     hx-get="{% url 'attendance:generate_qr' %}" hx-trigger="every 300s" hx-swap="none"
-     @htmx:after-request.window="if (event.detail.target.id === 'qr-code-img' || event.detail.xhr.status === 200) { 
-        try {
-            let res = JSON.parse(event.detail.xhr.responseText);
-            if (res.qr_url) { qrUrl = res.qr_url; qrToken = res.qr_token; }
-        } catch(e) {}
-     }">
+<div class="flex items-center justify-center size-full relative overflow-hidden rounded-2xl isolate [transform:translateZ(0)]" 
+     x-data="{ 
+         qrUrl: '{{ qr_url|safe }}', 
+         qrToken: '{{ qr_token }}',
+         errorOverlayHTML: null,
+         pollInterval: null,
+         init() {
+             this.startPolling();
+         },
+         startPolling() {
+             if (this.pollInterval) clearInterval(this.pollInterval);
+             this.errorOverlayHTML = null;
+             this.pollInterval = setInterval(async () => {
+                 try {
+                     let res = await fetch('{% url "attendance:qr_status" %}?token=' + this.qrToken);
+                     if (res.status === 200) {
+                         let text = await res.text();
+                         if (text.trim().length > 0) {
+                             this.errorOverlayHTML = text;
+                             clearInterval(this.pollInterval);
+                             
+                             if (text.includes('data-status') && text.includes('success')) {
+                                 setTimeout(() => {
+                                     window.dispatchEvent(new CustomEvent('close-modal'));
+                                 }, 3000);
+                             }
+                         }
+                     }
+                 } catch (e) {
+                     console.error('Error polling QR status:', e);
+                 }
+             }, 2000);
+         },
+         reloadQR() {
+             // Fetched by a button click in the overlay
+             fetch('{% url "attendance:generate_qr" %}?format=json')
+                 .then(r => r.json())
+                 .then(data => {
+                     if (data.qr_url) {
+                         this.qrUrl = data.qr_url;
+                         this.qrToken = data.qr_token;
+                         this.startPolling(); // Restart polling with new token
+                     }
+                 });
+         }
+     }"
+     hx-get="{% url 'attendance:generate_qr' %}?format=json" hx-trigger="every 300s" hx-swap="none"
+     @htmx:after-request="try {
+        let res = JSON.parse(event.detail.xhr.responseText);
+        if (res.qr_url) { 
+            qrUrl = res.qr_url; 
+            qrToken = res.qr_token; 
+            startPolling();
+        }
+     } catch(e) {}">
+    
+    <!-- Alpine error overlay container -->
+    <template x-if="errorOverlayHTML">
+        <div class="absolute inset-0 z-50 size-full bg-white rounded-2xl isolate [transform:translateZ(0)]" x-html="errorOverlayHTML"></div>
+    </template>
+
     <img id="qr-code-img" :src="qrUrl" alt="Código QR de ingreso" class="{{ class|default:'size-full rounded-2xl' }} object-contain" />
 </div>
 {% else %}

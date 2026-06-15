@@ -89,28 +89,6 @@ def _calcular_edad(fecha_nacimiento):
     )
 
 
-@staff_required
-def detalle_cliente_asistencia(request):
-    """Carga los datos de un cliente y sus clases para hoy por ID o token QR."""
-    client_id = request.GET.get("user_id")
-    qr_token = request.GET.get("qr_token")
-    client_user = None
-    error_message = None
-
-    if qr_token:
-        signer = signing.TimestampSigner()
-        try:
-            # Token expira en 5 minutos (300 segundos)
-            client_id = signer.unsign(qr_token, max_age=300)
-        except signing.SignatureExpired:
-            error_message = "El código QR ha expirado. Por favor, solicite al cliente actualizar su pantalla."
-        except signing.BadSignature:
-            error_message = "El código QR es inválido o está corrupto."
-
-    if error_message:
-        return render(request, "partials/attendance/_client_error.html", {
-            "error_message": error_message
-        })
 
 def _get_client_detail_context(client_user, qr_token=None):
     # Calcular edad
@@ -196,7 +174,16 @@ def detalle_cliente_asistencia(request):
     client_user = get_object_or_404(User, id=client_id, rol="CLIENTE")
     context = _get_client_detail_context(client_user, qr_token)
     context["source"] = request.GET.get("source") or request.POST.get("source") or ""
-    return render(request, "partials/attendance/_client_detail.html", context)
+    error_msg = request.GET.get("error_message") or ""
+    context["error_message_from_scan"] = error_msg
+
+    response = render(request, "partials/attendance/_client_detail.html", context)
+    if error_msg:
+        import json
+        response['HX-Trigger'] = json.dumps({
+            'adminFlash': {'message': error_msg, 'level': 'error'}
+        })
+    return response
 
 
 import json
@@ -205,6 +192,7 @@ from apps.users.forms import ProfileUpdateForm
 @staff_required
 def cargar_telefono(request):
     user_id = request.GET.get("user_id") or request.POST.get("user_id")
+    source = request.GET.get("source") or request.POST.get("source") or ""
     client_user = get_object_or_404(User, id=user_id, rol="CLIENTE")
 
     if request.method == "POST":
@@ -212,12 +200,16 @@ def cargar_telefono(request):
         if form.is_valid():
             form.save()
             context = _get_client_detail_context(client_user)
+            context["source"] = source
             response = render(request, "partials/attendance/_client_detail.html", context)
             response['HX-Trigger'] = json.dumps({
                 'closeAdminModal': 'emergencyPhoneModalOpen',
                 'adminFlash': {'message': 'Teléfono de emergencia guardado exitosamente.', 'level': 'success'}
             })
-            response['HX-Retarget'] = '#main-content-container'
+            if source == 'dashboard':
+                response['HX-Retarget'] = '#qr-modal-content'
+            else:
+                response['HX-Retarget'] = '#main-content-container'
             return response
     else:
         form = ProfileUpdateForm(instance=client_user)
@@ -454,3 +446,28 @@ def planilla_asistencia_print(request):
     if not context:
         return HttpResponse("Clase y período son requeridos.", status=400)
     return render(request, "attendance/planilla_print.html", context)
+
+from django.core.cache import cache
+
+from django.views.decorators.cache import never_cache
+
+@login_required
+@never_cache
+def qr_status_poll(request):
+    """
+    Endpoint de polling para el celular del cliente.
+    Si hay un resultado en caché para el token dado, retorna un partial con el feedback.
+    Si no hay resultado, retorna 204 No Content para seguir esperando.
+    """
+    qr_token = request.GET.get("token")
+    if not qr_token:
+        return HttpResponse(status=204)
+    
+    result = cache.get(f"qr_result_{qr_token}")
+    if not result:
+        return HttpResponse(status=204)
+        
+    # Borrar la caché para no mostrarlo de nuevo infinitamente
+    cache.delete(f"qr_result_{qr_token}")
+    
+    return render(request, "partials/attendance/_qr_status_overlay.html", {"result": result})

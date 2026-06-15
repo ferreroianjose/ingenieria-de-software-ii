@@ -21,6 +21,7 @@ class ReconciliationSchedulingTests(TestCase):
     )
     def test_crea_schedule_diario_reconciliacion(self):
         from django_q.models import Schedule
+        from django.utils import timezone
 
         ensure_reconciliation_schedule()
         schedule = Schedule.objects.get(name="classes.reconciliar_vencimientos_mensuales")
@@ -29,8 +30,9 @@ class ReconciliationSchedulingTests(TestCase):
             schedule.func, "apps.classes.services.reconciliar_vencimientos_mensuales"
         )
         self.assertEqual(schedule.repeats, -1)
-        self.assertEqual(schedule.next_run.hour, 3)
-        self.assertEqual(schedule.next_run.minute, 45)
+        local_next_run = timezone.localtime(schedule.next_run)
+        self.assertEqual(local_next_run.hour, 3)
+        self.assertEqual(local_next_run.minute, 45)
 
     @override_settings(AUTO_RECONCILIACION_MENSUAL_ACTIVA=False)
     def test_no_crea_schedule_si_esta_deshabilitado(self):

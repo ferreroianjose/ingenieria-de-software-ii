@@ -16,4 +16,10 @@ urlpatterns = [
     path('undo-approve-tutor/', views.deshacer_constancia_recepcion, name='undo_approve_tutor'),
     path('planilla-grid/', views.planilla_asistencia_grid, name='planilla_grid'),
     path('planilla-grid/print/', views.planilla_asistencia_print, name='planilla_print'),
+    path('qr-status/', views.qr_status_poll, name='qr_status'),
+]
+
+from . import api
+urlpatterns += [
+    path('api/qr-scan/', api.api_qr_scan, name='api_qr_scan'),
 ]

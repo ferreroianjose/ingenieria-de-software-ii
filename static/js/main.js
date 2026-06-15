@@ -228,6 +228,7 @@ function showAdminFlash({ message, level = "success" }) {
 }
 
 window.clearAdminFlash = clearAdminFlash;
+window.showAdminFlash = showAdminFlash;
 
 function closeAdminModal(modalVar) {
 	if (!modalVar) return;
@@ -377,7 +378,8 @@ window.addEventListener("submit", function (evt) {
 	}
 });
 
-document.body.addEventListener("htmx:beforeRequest", function () {
+document.body.addEventListener("htmx:beforeRequest", function (evt) {
+	if (evt.detail.elt && evt.detail.elt.hasAttribute("data-silent-poll")) return;
 	const spinner = document.getElementById("global-spinner");
 	if (spinner) {
 		spinner.classList.remove("opacity-0");
@@ -387,6 +389,7 @@ document.body.addEventListener("htmx:beforeRequest", function () {
 
 document.body.addEventListener("htmx:afterRequest", function (evt) {
 	applyHtmxTriggers(evt.detail?.xhr);
+	if (evt.detail.elt && evt.detail.elt.hasAttribute("data-silent-poll")) return;
 	const spinner = document.getElementById("global-spinner");
 	if (spinner) {
 		spinner.classList.remove("opacity-100");

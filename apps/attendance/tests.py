@@ -124,7 +124,7 @@ class AttendanceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Juan Perez')
         self.assertContains(response, 'Musculación')
-        self.assertContains(response, 'Registrar Presente')
+        self.assertContains(response, 'Registrar presente')
 
     def test_detalle_cliente_asistencia_qr_valid(self):
         """El staff puede cargar la ficha de asistencia usando un QR token válido."""
@@ -162,8 +162,8 @@ class AttendanceTests(TestCase):
         self.client.login(username='empleado@gymflow.com', password='password123')
         response = self.client.get(reverse('attendance:detail'), {'user_id': self.client_user.id})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'FALTA TELÉFONO DE EMERGENCIA')
-        self.assertContains(response, 'Presente Bloqueado')
+        self.assertContains(response, 'Falta cargar teléfono de emergencia.')
+        self.assertContains(response, 'Bloqueado')
 
     def test_alerta_menor_de_edad_constancia_tutor(self):
         """Si el cliente es menor de edad y no tiene constancia aprobada, se bloquea y se muestra opción de aprobar."""
@@ -175,8 +175,8 @@ class AttendanceTests(TestCase):
         self.client.login(username='empleado@gymflow.com', password='password123')
         response = self.client.get(reverse('attendance:detail'), {'user_id': self.client_user.id})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Aprobar Constancia Ahora')
-        self.assertContains(response, 'Presente Bloqueado')
+        self.assertContains(response, 'Aprobar Constancia')
+        self.assertContains(response, 'Bloqueado')
 
         # Aprobar constancia vía POST
         response_approve = self.client.post(reverse('attendance:approve_tutor'), {'user_id': self.client_user.id})
@@ -230,3 +230,121 @@ class AttendanceTests(TestCase):
         
         self.client_user.refresh_from_db()
         self.assertNotEqual(self.client_user.telefono_emergencia, 'numero123')
+
+    def test_api_qr_scan_success(self):
+        """El API de QR scan registra presente si el cliente tiene todo al día."""
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        signer = signing.TimestampSigner()
+        token = signer.sign(str(self.client_user.id))
+
+        response = self.client.post(
+            reverse('attendance:api_qr_scan'),
+            data={'qr_token': token},
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn(data['status'], ['success', 'manual_action_required'])
+
+    def test_api_qr_scan_expired(self):
+        """El API de QR scan retorna error 400 si el token expiró."""
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        signer = signing.TimestampSigner()
+        token = signer.sign(str(self.client_user.id))
+        
+        response = self.client.post(
+            reverse('attendance:api_qr_scan'),
+            data={'qr_token': token + 'invalid'},
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['status'], 'error')
+
+    def test_api_qr_scan_no_classes(self):
+        """El API retorna manual_action_required con 200 y guarda en caché si no tiene clases hoy."""
+        other_client = User.objects.create_user(
+            username='otro_cliente@gymflow.com',
+            email='otro_cliente@gymflow.com',
+            password='password123',
+            rol='CLIENTE',
+            dni='12121212',
+            first_name='Otro',
+            last_name='Cliente',
+            fecha_nacimiento=date(1990, 5, 15),
+            telefono_emergencia='1122334455'
+        )
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        signer = signing.TimestampSigner()
+        token = signer.sign(str(other_client.id))
+        
+        response = self.client.post(
+            reverse('attendance:api_qr_scan'),
+            data={'qr_token': token},
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'manual_action_required')
+        self.assertIn('clases programadas', data['message'])
+        self.assertEqual(data['user_id'], other_client.id)
+
+        # Verificar cache
+        from django.core.cache import cache
+        cached_result = cache.get(f"qr_result_{token}")
+        self.assertIsNotNone(cached_result)
+        self.assertEqual(cached_result['status'], 'error')
+        self.assertIn('clases programadas', cached_result['message'])
+
+    def test_api_qr_scan_missing_phone(self):
+        """El API retorna manual_action_required si falta el teléfono de emergencia."""
+        self.client_user.telefono_emergencia = ""
+        self.client_user.save()
+        
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        signer = signing.TimestampSigner()
+        token = signer.sign(str(self.client_user.id))
+        
+        response = self.client.post(
+            reverse('attendance:api_qr_scan'),
+            data={'qr_token': token},
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'manual_action_required')
+        self.assertIn('teléfono de emergencia', data['message'])
+
+    def test_api_qr_scan_minor_no_auth(self):
+        """El API retorna manual_action_required si es menor con autorización pendiente."""
+        self.client_user.fecha_nacimiento = timezone.localdate() - timedelta(days=16*365)
+        self.client_user.estado_constancia = 'PENDIENTE'
+        self.client_user.save()
+        
+        self.client.login(username='empleado@gymflow.com', password='password123')
+        signer = signing.TimestampSigner()
+        token = signer.sign(str(self.client_user.id))
+        
+        response = self.client.post(
+            reverse('attendance:api_qr_scan'),
+            data={'qr_token': token},
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'manual_action_required')
+        self.assertIn('autorización del tutor', data['message'])
+
+    def test_qr_status_poll_view(self):
+        """El polling de QR status retorna 200 con HTML si hay resultado en caché y luego borra la caché."""
+        self.client.login(username='cliente@gymflow.com', password='password123')
+        token = "test_status_token"
+        
+        from django.core.cache import cache
+        cache.set(f"qr_result_{token}", {"status": "error", "message": "Mensaje de prueba"}, timeout=30)
+        
+        response = self.client.get(reverse('attendance:qr_status'), {'token': token})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Mensaje de prueba')
+        self.assertContains(response, 'Requiere acción manual')
+        
+        self.assertIsNone(cache.get(f"qr_result_{token}"))

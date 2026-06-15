@@ -228,6 +228,7 @@ function showAdminFlash({ message, level = "success" }) {
 }
 
 window.clearAdminFlash = clearAdminFlash;
+window.showAdminFlash = showAdminFlash;
 
 function closeAdminModal(modalVar) {
 	if (!modalVar) return;
