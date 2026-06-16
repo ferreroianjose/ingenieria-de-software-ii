@@ -47,14 +47,13 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento", "telefono_emergencia")
+        fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento")
         labels = {
             "email": "Correo electrónico",
             "first_name": "Nombre",
             "last_name": "Apellido",
             "dni": "DNI",
             "fecha_nacimiento": "Fecha de nacimiento",
-            "telefono_emergencia": "Teléfono de emergencia",
         }
         widgets = {
             "fecha_nacimiento": forms.DateInput(attrs={"type": "date"}),
@@ -108,20 +107,15 @@ class CustomUserCreationForm(UserCreationForm):
                 )
         return fecha
 
-    def clean_telefono_emergencia(self):
-        telefono = self.cleaned_data.get("telefono_emergencia")
-        if telefono:
-            import re
-            if not re.match(r'^[\d\+\-\s\(\)]*$', telefono):
-                raise forms.ValidationError("El teléfono no puede contener letras, solo números y los símbolos + o -.")
-        return telefono
 
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ("telefono_emergencia",)
-        labels = {"telefono_emergencia": "Teléfono de emergencia"}
+        labels = {
+            "telefono_emergencia": "Teléfono de emergencia"
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -134,6 +128,7 @@ class ProfileUpdateForm(forms.ModelForm):
             if not re.match(r'^[\d\+\-\s\(\)]*$', telefono):
                 raise forms.ValidationError("El teléfono no puede contener letras, solo números y los símbolos + o -.")
         return telefono
+
 
 
 class TwoFactorForm(forms.Form):
@@ -171,10 +166,26 @@ class UserAdminUpdateForm(forms.ModelForm):
         apply_required_error_messages(self)
 
     def clean_first_name(self):
-        return name_validator(self.cleaned_data.get("first_name"))
+        first_name = self.cleaned_data.get("first_name")
+        if first_name:
+            name_validator.validate(first_name)
+        return first_name
 
     def clean_last_name(self):
-        return name_validator(self.cleaned_data.get("last_name"))
+        last_name = self.cleaned_data.get("last_name")
+        if last_name:
+            name_validator.validate(last_name)
+        return last_name
+
+    def clean_rol(self):
+        rol = self.cleaned_data.get("rol")
+        if rol in ["ADMIN", "EMPLEADO"]:
+            if self.instance and self.instance.pk:
+                if self.instance.inscripciones.exists():
+                    raise forms.ValidationError(
+                        "No se puede asignar el rol de Empleado o Administrador a un usuario con historial de inscripciones."
+                    )
+        return rol
 
 class CustomPasswordResetForm(PasswordResetForm):
     def send_mail(

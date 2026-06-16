@@ -32,9 +32,17 @@
 
 		<div class="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8 [&_label]:mb-2 [&_label]:block [&_label]:text-sm [&_label]:font-bold [&_label]:text-gray-700">
             {% if form.errors %}
-            <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-                <strong class="block mb-1 font-bold">Corrija los siguientes errores:</strong>
-                {{ form.errors }}
+            <div class="mb-6 rounded-full bg-red-50 px-6 py-4 text-sm text-red-700 border border-red-200">
+                <ul class="space-y-1 font-medium">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
             </div>
             {% endif %}
 

@@ -298,6 +298,9 @@ def validar_intencion_inscripcion(
     usuario, clase_id, periodo, tipo, fecha_clase=None, permitir_sin_cupo=False
 ):
     """Comprueba que el usuario puede inscribirse; no escribe en la BD."""
+    if usuario.rol != "CLIENTE":
+        raise ReservaError("Los empleados y administradores no pueden inscribirse a clases.")
+
     if not usuario.telefono_emergencia:
         raise TelefonoEmergenciaFaltante()
 
