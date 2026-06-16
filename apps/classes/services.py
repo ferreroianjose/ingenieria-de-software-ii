@@ -315,6 +315,12 @@ def validar_intencion_inscripcion(
     if tipo == Inscripcion.Tipo.CLASE_SUELTA:
         if not fecha_clase:
             raise ReservaError("Elegí la fecha de la clase para continuar.")
+        if timezone.localtime(fecha_clase) <= timezone.localtime(timezone.now()):
+            raise ReservaError("No podés reservar una clase que ya comenzó o que ya pasó.")
+        hoy_local = timezone.localdate()
+        fin_de_semana = hoy_local + timedelta(days=6 - hoy_local.weekday())
+        if timezone.localdate(timezone.localtime(fecha_clase)) > fin_de_semana:
+            raise ReservaError("Solo podés reservar clases dentro de la semana actual.")
         if not fecha_clase_elegible(clase, fecha_clase):
             raise ReservaError("La fecha elegida no está disponible para inscripción.")
         dia_semana, hora_inicio = _horario_objetivo(clase, fecha_clase)
@@ -359,6 +365,8 @@ def validar_intencion_inscripcion(
             raise ReservaError(
                 "No quedan clases de este horario en el mes elegido."
             )
+        if proxima_ocurrencia_en_periodo(clase, periodo) is None:
+            raise ReservaError("No quedan clases futuras de este horario en el período.")
         dia_semana, hora_inicio = _horario_objetivo(clase)
         if usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=clase.id):
             raise ConflictoHorario()
@@ -433,6 +441,8 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
                 if existing:
                     raise InscripcionDuplicada(existing)
         else:
+            if proxima_ocurrencia_en_periodo(clase, periodo) is None:
+                raise ReservaError("No quedan clases futuras de este horario en el período.")
             dia_semana, hora_inicio = _horario_objetivo(clase)
             if usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=clase.id):
                 raise ConflictoHorario()
