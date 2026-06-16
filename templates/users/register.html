@@ -36,8 +36,9 @@
               <label for="dni">DNI</label>
               <input id="dni" name="dni" type="text" required value="{{ form.dni.value|default:'' }}">
           </div>
-          <div class="flex-0">
-              {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" min_age=14 required=True %}
+          <div class="flex-0 flex flex-col">
+              {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" required=True %}
+              <p class="text-xs text-gray-500 mt-1">Debés tener al menos 14 años.</p>
           </div>
       </div>
 
