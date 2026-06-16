@@ -63,20 +63,40 @@
                                 { facingMode: 'environment' },
                                 { fps: 15, qrbox: (vw, vh) => { let s = Math.min(vw, vh) * 0.75; return { width: s, height: s }; }, aspectRatio: 1.0 },
                                 (decodedText) => {
-                                    htmx.ajax('GET', '{% url 'attendance:detail' %}?qr_token=' + encodeURIComponent(decodedText), {
-                                        target: '#main-content-container',
-                                        swap: 'innerHTML'
-                                    });
-                                    scanner.stop().then(() => {
-                                        scanner.clear();
-                                        document.getElementById('qr-reader').innerHTML = '';
-                                        scanner = null;
-                                        scanning = false;
-                                    }).catch(() => {
-                                        try { scanner.clear(); } catch(e){}
-                                        document.getElementById('qr-reader').innerHTML = '';
-                                        scanner = null;
-                                        scanning = false;
+                                    const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1] || '';
+                                    fetch('/attendance/api/qr-scan/', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                                        body: JSON.stringify({ qr_token: decodedText })
+                                    })
+                                    .then(res => res.json())
+                                    .then(data => {
+                                        if (data.status === 'success') {
+                                            showAdminFlash({ message: data.message + ' (' + data.client_name + ')', level: 'success' });
+                                            htmx.ajax('GET', '/attendance/detail/?user_id=' + data.user_id + '&source=manage', {
+                                                target: '#main-content-container',
+                                                swap: 'innerHTML'
+                                            });
+                                        } else if (data.status === 'manual_action_required') {
+                                            showAdminFlash({ message: data.message, level: 'warning' });
+                                            htmx.ajax('GET', '/attendance/detail/?user_id=' + data.user_id + '&source=manage&error_message=' + encodeURIComponent(data.message || ''), {
+                                                target: '#main-content-container',
+                                                swap: 'innerHTML'
+                                            });
+                                        } else {
+                                            showAdminFlash({ message: data.message || 'Error al leer QR', level: 'error' });
+                                        }
+                                        scanner.stop().then(() => {
+                                            scanner.clear();
+                                            document.getElementById('qr-reader').innerHTML = '';
+                                            scanner = null;
+                                            scanning = false;
+                                        }).catch(() => {
+                                            try { scanner.clear(); } catch(e){}
+                                            document.getElementById('qr-reader').innerHTML = '';
+                                            scanner = null;
+                                            scanning = false;
+                                        });
                                     });
                                 },
                                 (error) => { /* ignore frame errors */ }

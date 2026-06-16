@@ -6,15 +6,28 @@
     <h3 class="text-xl font-black text-green-800 mb-1 tracking-tight">{{ result.message }}</h3>
     <p class="text-sm font-medium text-green-600">{{ result.class_name }}</p>
 </div>
+{% elif result.status == 'warning' %}
+<div @click="reloadQR()" data-status="warning" class="absolute inset-0 bg-amber-50 z-20 flex flex-col items-center justify-center p-6 rounded-2xl text-center border-2 border-amber-500 transition-colors hover:bg-amber-100 group w-full h-full cursor-pointer overflow-hidden shadow-inner select-none">
+    <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mb-4 group-hover:bg-amber-200 transition-colors shrink-0">
+        <svg class="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+        </svg>
+    </div>
+    <h3 class="text-xl font-black text-amber-800 mb-2 tracking-tight px-2 leading-tight">Requiere asistencia</h3>
+    <p class="text-sm font-medium text-amber-700 px-4 mb-4">Acercate a recepción para habilitar tu ingreso.</p>
+    <div class="mt-auto">
+        <span class="text-[11px] font-bold text-amber-600 uppercase tracking-widest group-hover:text-amber-700 transition-colors">Tocar para recargar</span>
+    </div>
+</div>
 {% else %}
 <div @click="reloadQR()" data-status="error" class="absolute inset-0 bg-red-50 z-20 flex flex-col items-center justify-center p-6 rounded-2xl text-center border-2 border-red-500 transition-colors hover:bg-red-100 group w-full h-full cursor-pointer overflow-hidden shadow-inner select-none">
     <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-4 group-hover:bg-red-200 transition-colors shrink-0">
         <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
         </svg>
     </div>
-    <h3 class="text-xl font-black text-red-800 mb-2 tracking-tight px-2 leading-tight">Acceso denegado</h3>
-    <p class="text-sm font-medium text-red-700 px-4 mb-4">Por favor, acercate a recepción para habilitar tu ingreso.</p>
+    <h3 class="text-xl font-black text-red-800 mb-2 tracking-tight px-2 leading-tight">Error de Lectura</h3>
+    <p class="text-sm font-medium text-red-700 px-4 mb-4">{{ result.message|default:"El código QR es inválido o ha expirado." }}</p>
     <div class="mt-auto">
         <span class="text-[11px] font-bold text-red-500 uppercase tracking-widest group-hover:text-red-600 transition-colors">Tocar para recargar</span>
     </div>

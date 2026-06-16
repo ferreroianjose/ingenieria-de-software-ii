@@ -58,7 +58,7 @@ def api_qr_scan(request):
 
     if not ocurrencias_hoy.exists():
         msg = "El cliente no tiene clases programadas para el día de hoy."
-        cache.set(f"qr_result_{qr_token}", {"status": "error", "message": msg}, timeout=30)
+        cache.set(f"qr_result_{qr_token}", {"status": "warning", "message": msg}, timeout=30)
         return JsonResponse({
             "status": "manual_action_required",
             "message": msg,
@@ -66,15 +66,37 @@ def api_qr_scan(request):
         })
 
     # Determinar la clase más próxima (en base a la hora actual)
-    now_time = timezone.localtime().time()
+    now = timezone.localtime()
+    now_minutes = now.hour * 60 + now.minute
     
+    valid_ocurrencias = []
+    for oc in ocurrencias_hoy:
+        # El algoritmo que elige de forma inteligente a qué clase pasar asistencia
+        # debe considerar que, si pasó más de 3/4 del tiempo desde el comienzo
+        # de la clase (o la clase entera), ya no se debe pasar el presente automáticamente.
+        limite_tiempo = oc.fecha_clase + (oc.inscripcion.clase.duracion * 0.75)
+        if now > limite_tiempo:
+            continue
+        valid_ocurrencias.append(oc)
+
+    if not valid_ocurrencias:
+        msg = "Las clases programadas para hoy ya han finalizado o están por terminar."
+        cache.set(f"qr_result_{qr_token}", {"status": "warning", "message": msg}, timeout=30)
+        return JsonResponse({
+            "status": "manual_action_required",
+            "message": msg,
+            "user_id": client_user.id
+        })
+
     mejor_ocurrencia = None
     menor_diferencia = None
 
-    for oc in ocurrencias_hoy:
+    for oc in valid_ocurrencias:
         clase_hora = oc.inscripcion.clase.hora_inicio
+        clase_minutes = clase_hora.hour * 60 + clase_hora.minute
         # Calcular diferencia en minutos (ignorando si fue hace un rato o es en el futuro)
-        diff = abs((clase_hora.hour * 60 + clase_hora.minute) - (now_time.hour * 60 + now_time.minute))
+        # Esto permite que si llega muy temprano a la clase de la tarde, igual la elija
+        diff = abs(clase_minutes - now_minutes)
         if menor_diferencia is None or diff < menor_diferencia:
             menor_diferencia = diff
             mejor_ocurrencia = oc
@@ -132,7 +154,8 @@ def api_qr_scan(request):
             "status": "success", 
             "message": "Ya ingresó", 
             "client_name": client_user.first_name, 
-            "class_name": clase_nombre
+            "class_name": clase_nombre,
+            "user_id": client_user.id
         })
 
     # Registrar asistencia
@@ -152,5 +175,6 @@ def api_qr_scan(request):
         "status": "success", 
         "message": "Asistencia registrada", 
         "client_name": client_user.first_name, 
-        "class_name": clase_nombre
+        "class_name": clase_nombre,
+        "user_id": client_user.id
     })
