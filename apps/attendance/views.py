@@ -178,10 +178,10 @@ def detalle_cliente_asistencia(request):
     context["error_message_from_scan"] = error_msg
 
     response = render(request, "partials/attendance/_client_detail.html", context)
-    if error_msg:
+    if error_msg and context["source"] != "dashboard":
         import json
         response['HX-Trigger'] = json.dumps({
-            'adminFlash': {'message': error_msg, 'level': 'error'}
+            'adminFlash': {'message': error_msg, 'level': 'error' if error_msg != "Las clases programadas para hoy ya han finalizado o están por terminar." and error_msg != "El cliente no tiene clases programadas para el día de hoy." else 'warning'}
         })
     return response
 

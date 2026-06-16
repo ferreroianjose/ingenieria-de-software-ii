@@ -11,6 +11,20 @@
     </div>
     {% endif %}
 
+    <!-- Mensaje de Escáner en Modal -->
+    {% if error_message_from_scan and source == 'dashboard' %}
+    <div class="mx-6 mt-6 p-4 rounded-xl border {% if 'finalizado' in error_message_from_scan or 'no tiene clases' in error_message_from_scan %}bg-amber-50/50 border-amber-200/60 text-amber-800{% else %}bg-red-50/50 border-red-200/60 text-red-800{% endif %} flex items-center gap-3 shrink-0 shadow-sm">
+        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {% if 'finalizado' in error_message_from_scan or 'no tiene clases' in error_message_from_scan %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            {% else %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            {% endif %}
+        </svg>
+        <p class="text-sm font-semibold opacity-90 m-0">{{ error_message_from_scan }}</p>
+    </div>
+    {% endif %}
+
     <!-- Ficha del Cliente Header -->
     <div class="p-6 border-b border-gray-100 flex flex-wrap items-start justify-between gap-6 shrink-0">
         <div class="min-w-[240px] flex-initial">
