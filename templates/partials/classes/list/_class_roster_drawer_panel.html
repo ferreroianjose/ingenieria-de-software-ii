@@ -1,0 +1,117 @@
+<div class="flex h-full min-h-0 flex-col">
+    <header class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 p-6 sm:p-8">
+        <div class="min-w-0 flex-1 space-y-1">
+            <h1 class="title-impact">Inscriptos</h1>
+            <p class="text-sm font-normal text-gray-600">{{ clase.disciplina.nombre }} | {{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }}</p>
+        </div>
+        <button
+            type="button"
+            class="btn-auto shrink-0 rounded-full border-0 bg-gray-200 p-2 text-gray-800 shadow-fair-md hover:bg-gray-100 hover:text-primary-400"
+            @click="classDrawerOpen = false"
+            aria-label="Cerrar"
+        >
+            <svg class="size-7" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </header>
+
+    <div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-6 sm:p-8">
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold uppercase tracking-wide text-gray-500">
+                    Lista de Alumnos
+                    {% if selected_periodo_id != 'all' %}
+                    <span class="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-600 normal-case tracking-normal">{{ inscripciones|length }} / {{ clase.cupo_maximo }}</span>
+                    {% else %}
+                    <span class="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-600 normal-case tracking-normal">{{ inscripciones|length }}</span>
+                    {% endif %}
+                </h3>
+                <select 
+                    class="form-select form-input w-auto !py-1 text-xs" 
+                    name="periodo_id" 
+                    hx-get="{% url 'classes:class_roster_drawer' clase.id %}" 
+                    hx-target="#class-drawer-container"
+                >
+                    <option value="all" {% if selected_periodo_id == "all" %}selected{% endif %}>Todos los períodos</option>
+                    {% for p in periodos %}
+                        <option value="{{ p.id }}" {% if selected_periodo_id == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            {% if inscripciones %}
+                
+                <h4 class="text-xs font-bold uppercase tracking-wider text-primary-500 mt-6 mb-3 flex items-center gap-2">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>
+                    Abonados (Mensuales)
+                </h4>
+                <ul class="space-y-3">
+                {% for inscripcion in inscripciones %}
+                    {% if inscripcion.tipo == 'MENSUAL' %}
+                    <li class="cursor-pointer rounded-xl border border-gray-100 bg-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all hover:bg-gray-50 hover:border-primary-200 hover:shadow-md group"
+                        @click="$dispatch('user-drawer-open')" 
+                        hx-get="{% url 'classes:student_enrollments_drawer' inscripcion.usuario.id %}?periodo_id={{ selected_periodo_id }}" 
+                        hx-target="#user-drawer-container">
+                        <div class="min-w-0 flex-1">
+                            <span class="block font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{{ inscripcion.usuario.get_full_name }}</span>
+                            <span class="block text-xs text-gray-500 mt-0.5">{{ inscripcion.usuario.email }} | DNI: {{ inscripcion.usuario.dni }}</span>
+                        </div>
+                        <div class="shrink-0 flex items-center gap-3 text-gray-400 group-hover:text-primary-500 transition-colors">
+                            {% if inscripcion.estado != 'RESERVADA' %}
+                            <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 whitespace-nowrap text-center">
+                                {{ inscripcion.get_estado_display }}
+                            </span>
+                            {% endif %}
+                            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+
+                <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mt-8 mb-3 flex items-center gap-2">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" /></svg>
+                    Clases Sueltas (Eventuales)
+                </h4>
+                <ul class="space-y-3">
+                {% for inscripcion in inscripciones %}
+                    {% if inscripcion.tipo == 'CLASE_SUELTA' %}
+                    <li class="cursor-pointer rounded-xl border border-gray-100 bg-white p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 opacity-80 transition-all hover:opacity-100 hover:bg-gray-50 hover:border-primary-200 hover:shadow-md group"
+                        @click="$dispatch('user-drawer-open')" 
+                        hx-get="{% url 'classes:student_enrollments_drawer' inscripcion.usuario.id %}?periodo_id={{ selected_periodo_id }}" 
+                        hx-target="#user-drawer-container">
+                        <div class="min-w-0 flex-1">
+                            <span class="block font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{{ inscripcion.usuario.get_full_name }}</span>
+                            <span class="block text-xs text-gray-500 mt-0.5">{{ inscripcion.usuario.email }} | DNI: {{ inscripcion.usuario.dni }}</span>
+                            <span class="block text-xs text-gray-400 mt-1">
+                                {% with primera_clase=inscripcion.ocurrencias.first %}
+                                    {% if primera_clase %}
+                                        Fecha de clase: {{ primera_clase.fecha_clase|date:"d/m/Y" }}
+                                    {% else %}
+                                        Fecha de clase: Sin asignar
+                                    {% endif %}
+                                {% endwith %}
+                            </span>
+                        </div>
+                        <div class="shrink-0 flex items-center gap-3 text-gray-400 group-hover:text-primary-500 transition-colors">
+                            {% if inscripcion.estado != 'RESERVADA' %}
+                            <span class="px-2 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 whitespace-nowrap text-center">
+                                {{ inscripcion.get_estado_display }}
+                            </span>
+                            {% endif %}
+                            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+
+            {% else %}
+                <div class="rounded-xl border border-dashed border-gray-300 p-6 text-center">
+                    <p class="text-sm text-gray-500">No hay inscriptos para este período.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>

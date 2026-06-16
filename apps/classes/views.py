@@ -81,7 +81,7 @@ def _hx_ok_or_redirect(
 def _class_rows_refresh():
     return {
         "url": reverse("classes:class_rows"),
-        "target": "#class-rows-tbody",
+        "target": "#class-table-panel",
     }
 
 
@@ -195,6 +195,98 @@ def _render_class_drawer(request, form, instance=None, status=200):
             "action_url": ctx["action_url"],
         },
         status=status,
+    )
+
+
+@staff_required
+def class_roster_drawer(request, class_id):
+    clase = get_object_or_404(Class.objects.all(), pk=class_id)
+    
+    from apps.payments.models import PeriodoCobro
+    from apps.payments.periodos import periodo_vigente
+    
+    periodos = PeriodoCobro.objects.order_by("-fecha_inicio_periodo")
+    periodo_id = request.GET.get("periodo_id")
+    
+    if periodo_id == "all":
+        inscripciones = clase.inscripciones.filter(
+            estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+        ).select_related("usuario", "periodo").prefetch_related("ocurrencias").order_by("-fecha_inscripcion")
+        selected_periodo_id = "all"
+    else:
+        if periodo_id:
+            try:
+                selected_periodo = PeriodoCobro.objects.get(pk=int(periodo_id))
+            except (ValueError, PeriodoCobro.DoesNotExist):
+                selected_periodo = periodo_vigente()
+        else:
+            selected_periodo = periodo_vigente()
+            
+        selected_periodo_id = str(selected_periodo.id) if selected_periodo else ""
+        
+        if selected_periodo:
+            inscripciones = clase.inscripciones.filter(
+                periodo=selected_periodo,
+                estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+            ).select_related("usuario", "periodo").prefetch_related("ocurrencias").order_by("-fecha_inscripcion")
+        else:
+            inscripciones = []
+
+    return render(
+        request,
+        "partials/classes/list/_class_roster_drawer_panel.html",
+        {
+            "clase": clase,
+            "inscripciones": inscripciones,
+            "periodos": periodos,
+            "selected_periodo_id": selected_periodo_id,
+        }
+    )
+
+
+@staff_required
+def student_enrollments_drawer(request, user_id):
+    from apps.users.models import User
+    from apps.payments.models import PeriodoCobro
+    from apps.payments.periodos import periodo_vigente
+    
+    student = get_object_or_404(User, pk=user_id)
+    periodos = PeriodoCobro.objects.order_by("-fecha_inicio_periodo")
+    periodo_id = request.GET.get("periodo_id")
+    
+    if periodo_id == "all":
+        inscripciones = student.inscripciones.filter(
+            estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+        ).select_related("clase", "clase__disciplina", "clase__sala", "clase__sala__sede", "periodo").order_by("-fecha_inscripcion")
+        selected_periodo_id = "all"
+    else:
+        if periodo_id:
+            try:
+                selected_periodo = PeriodoCobro.objects.get(pk=int(periodo_id))
+            except (ValueError, PeriodoCobro.DoesNotExist):
+                selected_periodo = periodo_vigente()
+        else:
+            selected_periodo = periodo_vigente()
+            
+        selected_periodo_id = str(selected_periodo.id) if selected_periodo else ""
+        
+        if selected_periodo:
+            inscripciones = student.inscripciones.filter(
+                periodo=selected_periodo,
+                estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+            ).select_related("clase", "clase__disciplina", "clase__sala", "clase__sala__sede", "periodo").order_by("-fecha_inscripcion")
+        else:
+            inscripciones = []
+
+    return render(
+        request,
+        "partials/classes/list/_student_enrollments_drawer_panel.html",
+        {
+            "student": student,
+            "inscripciones": inscripciones,
+            "periodos": periodos,
+            "selected_periodo_id": selected_periodo_id,
+        }
     )
 
 

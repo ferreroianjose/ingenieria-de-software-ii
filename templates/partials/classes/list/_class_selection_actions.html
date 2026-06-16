@@ -14,8 +14,16 @@
 	type="button"
 	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary"
 	:disabled="!selectedClassId"
+	@click="if (selectedClassId) { openClassDrawer(adminActionUrl('{% url 'classes:class_roster_drawer' 0 %}', selectedClassId)) }"
+>
+	Ver inscriptos
+</button>
+<button
+	type="button"
+	class="admin-selection-toolbar-btn bg-transparent text-amber-600 ring-2 ring-inset ring-amber-500/80 hover:bg-amber-500 hover:text-white hover:ring-amber-500"
+	:disabled="!selectedClassId"
 	x-text="selectedClassEstado === 'pausada' ? 'Reactivar' : 'Pausar'"
-	@click="if (selectedClassId) adminHtmxPost($refs.pauseClassForm)"
+	@click="if (selectedClassId) { adminHtmxPost($refs.pauseClassForm); clearItemSelection(); }"
 >
 	Pausar
 </button>
@@ -26,7 +34,7 @@
 	type="button"
 	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--danger"
 	:disabled="!selectedClassId"
-	@click="selectedClassId && window.gymflowConfirm('¿Seguro que querés eliminar la clase «' + selectedClassLabel + '»?', { variant: 'danger', title: 'Eliminar clase', confirmLabel: 'Sí, eliminar' }).then(ok => { if (ok) adminHtmxPost($refs.deleteClassForm) })"
+	@click="selectedClassId && window.gymflowConfirm('¿Seguro que querés eliminar la clase «' + selectedClassLabel + '»?', { variant: 'danger', title: 'Eliminar clase', confirmLabel: 'Sí, eliminar' }).then(ok => { if (ok) { adminHtmxPost($refs.deleteClassForm); clearItemSelection(); } })"
 >
 	Eliminar
 </button>

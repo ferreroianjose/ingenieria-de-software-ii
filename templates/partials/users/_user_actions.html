@@ -9,6 +9,15 @@
 	Editar
 </button>
 
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary"
+	:disabled="!selectedUserId"
+	@click="openUserDrawer(adminActionUrl('{% url 'classes:student_enrollments_drawer' 0 %}', selectedUserId))"
+>
+	Ver Reservas
+</button>
+
 <form x-ref="deleteUserForm" method="post" class="hidden" :action="selectedUserId ? adminActionUrl('{{ user_delete_url }}', selectedUserId) : ''">
 	{% csrf_token %}
 </form>
