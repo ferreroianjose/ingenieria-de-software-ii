@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordResetForm
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.template import loader
 
 from apps.core.forms import apply_required_error_messages
 
@@ -174,3 +175,36 @@ class UserAdminUpdateForm(forms.ModelForm):
 
     def clean_last_name(self):
         return name_validator(self.cleaned_data.get("last_name"))
+
+class CustomPasswordResetForm(PasswordResetForm):
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        """
+        Sends a password reset email using the custom notifications service.
+        """
+        from apps.notifications.services import notification_service
+        
+        subject = loader.render_to_string(subject_template_name, context)
+        # Email subject *must not* contain newlines
+        subject = "".join(subject.splitlines())
+        
+        body = loader.render_to_string(email_template_name, context)
+        
+        html_body = None
+        if html_email_template_name is not None:
+            html_body = loader.render_to_string(html_email_template_name, context)
+        
+        notification_service.notify(
+            recipient=to_email,
+            subject=subject,
+            message=body,
+            html_message=html_body
+        )
+
