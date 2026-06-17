@@ -4,6 +4,8 @@ Cubre las regresiones del refactor del paso 3:
 - Bug 1: inscripciones existentes (SUELTA reservada / pendiente de pago) deben
   aparecer en `info.inscripciones_activas` aunque queden ocultas del form.
 - Bug 2: estar en ESPERA por una fecha NO bloquea el form para otras fechas.
+- Bug 3: paso 2 (cronograma) y paso 3 deben usar el mismo criterio de cupo
+  (por opción suelta/mensual), no solo sueltas de la semana ISO.
 """
 
 from datetime import date, datetime, time, timedelta
@@ -15,7 +17,11 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.classes.cliente import info_clase_para_usuario, mis_inscripciones_activas
+from apps.classes.cliente import (
+    info_clase_para_usuario,
+    mis_inscripciones_activas,
+    resumen_cupo_inscripcion,
+)
 from apps.classes.models import (
     Class,
     Disciplina,
@@ -193,6 +199,23 @@ class InfoClaseDetalleTests(TestCase):
         periodos_form_ids = {p["id"] for p in info["periodos_inscripcion"]["MENSUAL"]}
         self.assertNotIn(self.periodo.id, periodos_form_ids)
 
+    def test_sin_suelta_en_semana_pero_cupo_mensual_permite_inscribirse(self):
+        """Regresión: lunes/martes sin fecha suelta en la semana ISO pero con cupo mensual."""
+        # Forzamos que la única ocurrencia suelta de la semana ya pasó (miércoles+).
+        hoy = timezone.localdate()
+        dia_pasado = (hoy.weekday() - 1) % 7  # ayer en la semana, o domingo si hoy es lunes
+        self.clase.dia_semana = dia_pasado
+        self.clase.save(update_fields=["dia_semana"])
+
+        resumen = resumen_cupo_inscripcion(self.clase, self.user)
+        info = info_clase_para_usuario(self.clase, self.user)
+
+        self.assertEqual(resumen["periodos_inscripcion"]["CLASE_SUELTA"], [])
+        self.assertGreater(len(resumen["periodos_inscripcion"]["MENSUAL"]), 0)
+        self.assertGreater(resumen["periodos_inscripcion"]["MENSUAL"][0]["cupo"], 0)
+        self.assertTrue(resumen["puede_agregar_reserva"])
+        self.assertEqual(info["puede_agregar_reserva"], resumen["puede_agregar_reserva"])
+
 
 class DetalleClaseRenovacionAbonadoTests(TestCase):
     """El abonado en ventana de pre-inscripción ve su mensual actual + opción de renovar."""
@@ -336,3 +359,16 @@ class DetalleClaseVistaTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Tus reservas en esta clase")
         self.assertContains(response, "Abandonar lista de espera")
+
+    def test_cronograma_y_detalle_coinciden_en_cupo_mensual(self):
+        """Paso 2 y paso 3 usan el mismo resumen de cupo (mensual sin suelta en semana)."""
+        hoy = timezone.localdate()
+        dia_pasado = (hoy.weekday() - 1) % 7
+        self.clase.dia_semana = dia_pasado
+        self.clase.save(update_fields=["dia_semana"])
+
+        resumen = resumen_cupo_inscripcion(self.clase, self.user)
+        info = info_clase_para_usuario(self.clase, self.user)
+        self.assertTrue(resumen["puede_agregar_reserva"])
+        self.assertEqual(info["puede_agregar_reserva"], resumen["puede_agregar_reserva"])
+        self.assertFalse(resumen["puede_anotarse_espera"])

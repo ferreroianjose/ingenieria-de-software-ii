@@ -125,6 +125,81 @@ def periodos_inscripcion_para_clase(clase, usuario=None):
     return {"CLASE_SUELTA": suelta, "MENSUAL": mensual}
 
 
+def hay_cupo_inscribible_en_opciones(periodos_inscripcion):
+    """True si alguna opción del form (suelta o mensual) tiene cupo libre."""
+    return any(o.get("cupo", 0) > 0 for o in periodos_inscripcion.get("CLASE_SUELTA", [])) or any(
+        p.get("cupo", 0) > 0 for p in periodos_inscripcion.get("MENSUAL", [])
+    )
+
+
+def _filtrar_periodos_inscripcion_usuario(clase, usuario, periodos_inscripcion, inscripciones=None):
+    """Quita del form fechas/períodos que el usuario ya tiene activos en esta clase."""
+    from django.utils.dateparse import parse_datetime
+    from django.utils import timezone as tz
+
+    from apps.classes.services import _normalizar_fecha_clase
+
+    inscripciones = inscripciones if inscripciones is not None else list(
+        mis_inscripciones_activas(clase, usuario)
+    )
+    ocupadas = fechas_suelta_ocupadas(clase, usuario)
+
+    def _parse_iso(iso):
+        dt = parse_datetime(iso)
+        if dt and tz.is_naive(dt):
+            dt = tz.make_aware(dt, tz.get_current_timezone())
+        return _normalizar_fecha_clase(dt) if dt else None
+
+    suelta = [
+        o
+        for o in periodos_inscripcion["CLASE_SUELTA"]
+        if _parse_iso(o["fecha_clase"]) not in ocupadas
+    ]
+    periodos_mensual_ocupados = {
+        ins.periodo_id
+        for ins in inscripciones
+        if ins.tipo == Inscripcion.Tipo.MENSUAL
+        and ins.estado != Inscripcion.Estado.CANCELADA
+    }
+    mensual = [
+        p
+        for p in periodos_inscripcion["MENSUAL"]
+        if p["id"] not in periodos_mensual_ocupados
+    ]
+    return {"CLASE_SUELTA": suelta, "MENSUAL": mensual}
+
+
+def periodos_inscripcion_disponibles(clase, usuario=None):
+    """Opciones de inscripción ya filtradas para el usuario (fechas/períodos ocupados)."""
+    periodos = periodos_inscripcion_para_clase(clase, usuario=usuario)
+    if usuario is None or not getattr(usuario, "is_authenticated", False):
+        return periodos
+    return _filtrar_periodos_inscripcion_usuario(clase, usuario, periodos)
+
+
+def resumen_cupo_inscripcion(clase, usuario=None):
+    """Estado de cupo alineado entre cronograma (paso 2) y detalle (paso 3).
+
+    Usa las mismas opciones del form y el cupo por opción (suelta o mensual),
+    no el máximo de sueltas en la semana ISO — que puede ser 0 aunque el mes
+    completo siga teniendo lugar (p. ej. lunes ya pasó esta semana).
+    """
+    periodos = periodos_inscripcion_disponibles(clase, usuario=usuario)
+    hay_opciones = bool(periodos["CLASE_SUELTA"] or periodos["MENSUAL"])
+    hay_cupo = hay_cupo_inscribible_en_opciones(periodos)
+    cupos = [o.get("cupo", 0) for o in periodos["CLASE_SUELTA"]] + [
+        p.get("cupo", 0) for p in periodos["MENSUAL"]
+    ]
+    return {
+        "periodos_inscripcion": periodos,
+        "hay_opciones": hay_opciones,
+        "hay_cupo": hay_cupo,
+        "puede_agregar_reserva": hay_opciones and hay_cupo,
+        "puede_anotarse_espera": hay_opciones and not hay_cupo,
+        "cupo": max(cupos) if cupos else 0,
+    }
+
+
 def _estado_ui_para_inscripcion(inscripcion, request=None):
     """Estado UI de UNA inscripción, considerando si hay intento de pago activo.
 
@@ -324,46 +399,14 @@ def info_clase_para_usuario(clase, usuario, request=None):
         )
     )
 
-    cupo = cupo_disponible(clase)
-    periodos_inscripcion = periodos_inscripcion_para_clase(clase, usuario=usuario)
+    cupo_resumen = resumen_cupo_inscripcion(clase, usuario=usuario)
+    periodos_inscripcion = cupo_resumen["periodos_inscripcion"]
 
-    # Filtrar fechas que el usuario ya tiene reservadas / en espera / pendientes.
-    ocupadas = fechas_suelta_ocupadas(clase, usuario)
-    from django.utils.dateparse import parse_datetime
-    from django.utils import timezone as tz
+    from django.conf import settings
 
-    from apps.classes.services import _normalizar_fecha_clase
-
-    def _parse_iso(iso):
-        dt = parse_datetime(iso)
-        if dt and tz.is_naive(dt):
-            dt = tz.make_aware(dt, tz.get_current_timezone())
-        return _normalizar_fecha_clase(dt) if dt else None
-
-    periodos_inscripcion["CLASE_SUELTA"] = [
-        o
-        for o in periodos_inscripcion["CLASE_SUELTA"]
-        if _parse_iso(o["fecha_clase"]) not in ocupadas
-    ]
-
-    # Si ya tiene una mensual activa, sacamos el período correspondiente del form
-    # (no permitimos doble inscripción al mismo mes). El próximo período (renovación
-    # del abonado) sigue apareciendo si todavía no se inscribió a él.
-    periodos_mensual_ocupados = {
-        ins.periodo_id
-        for ins in inscripciones
-        if ins.tipo == Inscripcion.Tipo.MENSUAL
-        and ins.estado != Inscripcion.Estado.CANCELADA
-    }
-    periodos_inscripcion["MENSUAL"] = [
-        p
-        for p in periodos_inscripcion["MENSUAL"]
-        if p["id"] not in periodos_mensual_ocupados
-    ]
-
-    puede_suelta = len(periodos_inscripcion["CLASE_SUELTA"]) > 0
-    puede_mensual = len(periodos_inscripcion["MENSUAL"]) > 0
-    hay_opciones = puede_suelta or puede_mensual
+    suelta_ventana_semana_iso = not (
+        getattr(settings, "VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", 0) or 0
+    )
 
     inicio = (
         # Si hay reserva confirmada, mostrar su próxima ocurrencia activa;
@@ -388,7 +431,8 @@ def info_clase_para_usuario(clase, usuario, request=None):
         "inscripciones_activas": items,
         "tiene_inscripciones_activas": bool(items),
         "periodos_inscripcion": periodos_inscripcion,
-        "puede_agregar_reserva": hay_opciones and cupo > 0,
-        "puede_anotarse_espera": hay_opciones and cupo == 0,
-        "cupo": cupo,
+        "puede_agregar_reserva": cupo_resumen["puede_agregar_reserva"],
+        "puede_anotarse_espera": cupo_resumen["puede_anotarse_espera"],
+        "cupo": cupo_resumen["cupo"],
+        "suelta_ventana_semana_iso": suelta_ventana_semana_iso,
     }

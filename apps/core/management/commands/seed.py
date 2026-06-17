@@ -445,6 +445,7 @@ CLASES = [
     ("Spinning",   "Sede Belgrano", "Sala Spin",  "Sofía",     "Acosta",    3, time(10, 0), 60, 20),
     ("Yoga",       "Sede Palermo",  "Sala Zen",   "Camila",    "Torres",    3, time(18, 0), 60, 16),
     ("HIIT",       "Sede Palermo",  "Sala Power", "Martín",    "Díaz",      3, time(19, 0), 60, 22),
+    ("Boxeo",      "Sede Belgrano", "Sala Box",   "Diego",     "Morales",   3, time(21, 0), 60,  1),  # demo: cupo único
     # Viernes
     ("Yoga",       "Sede Palermo",  "Sala Zen",   "Carlos",    "Sánchez",   4, time(7,  0), 60, 16),
     ("Funcional",  "Sede Palermo",  "Sala Power", "Facundo",   "López",     4, time(8,  0), 60, 24),
@@ -1122,6 +1123,60 @@ class Command(BaseCommand):
         )
         generar_ocurrencias_mensual(i_mensual)
 
-        self.stdout.write(
-            "  Caso de demo (Seña pendiente de saldar + Abono saldado) creado."
-        )
+        # Boxeo cupo 1: clase suelta de esta semana ocupada por otro cliente.
+        from apps.classes.services import ocurrencias_clase_en_ventana
+
+        clase_boxeo_llena = Class.objects.filter(
+            disciplina__nombre="Boxeo",
+            cupo_maximo=1,
+            estado="disponible",
+        ).first()
+        ocupante = User.objects.filter(email="enrique@email.com").first()
+        fecha_boxeo = None
+        if clase_boxeo_llena and ocupante and ocupante.pk != user.pk:
+            fechas_ventana = ocurrencias_clase_en_ventana(clase_boxeo_llena)
+            if fechas_ventana:
+                fecha_boxeo, periodo_boxeo = fechas_ventana[0]
+                insc_previas = Inscripcion.objects.filter(
+                    clase=clase_boxeo_llena,
+                    periodo=periodo_boxeo,
+                )
+                PagoInscripcion.objects.filter(
+                    inscripcion__in=insc_previas
+                ).delete()
+                insc_previas.delete()
+
+                i_boxeo = Inscripcion.objects.create(
+                    usuario=ocupante,
+                    clase=clase_boxeo_llena,
+                    periodo=periodo_boxeo,
+                    tipo=Inscripcion.Tipo.CLASE_SUELTA,
+                    estado=Inscripcion.Estado.RESERVADA,
+                )
+                p_box = PrecioClase.objects.filter(
+                    clase=clase_boxeo_llena, periodo=periodo_boxeo
+                ).first()
+                precio_mensual = (
+                    p_box.monto if p_box else PRECIOS_DISCIPLINA["Boxeo"]
+                )
+                precio_suelta = (precio_mensual / 2).quantize(Decimal("0.01"))
+                pago_box = Pago.objects.create(
+                    usuario=ocupante,
+                    periodo=periodo_boxeo,
+                    monto=precio_suelta,
+                    metodo=Pago.Metodo.MERCADOPAGO,
+                    estado=Pago.Estado.COMPLETADO,
+                )
+                PagoInscripcion.objects.create(
+                    pago=pago_box, inscripcion=i_boxeo, monto_aplicado=precio_suelta
+                )
+                crear_ocurrencia_suelta(i_boxeo, fecha_boxeo)
+
+        msg = "  Caso de demo (Seña pendiente de saldar + Abono saldado"
+        if clase_boxeo_llena and ocupante and fecha_boxeo:
+            msg += (
+                f", Boxeo cupo 1 (clase suelta {fecha_boxeo.strftime('%d/%m %H:%M')}) "
+                f"ocupado por {ocupante.email}"
+            )
+        msg += ") creado."
+        self.stdout.write(msg)

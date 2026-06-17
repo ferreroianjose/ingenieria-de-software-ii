@@ -6,7 +6,11 @@ Form de inscripción reusable. Espera en contexto:
 {% with suelta=periodos_inscripcion_data.CLASE_SUELTA mensual=periodos_inscripcion_data.MENSUAL %}
 <p class="text-sm text-white/70 mb-1">
   {% if suelta and mensual %}
+    {% if info.suelta_ventana_semana_iso %}
+  Podés reservar <strong class="text-white/90">un día concreto en la semana en curso</strong>, o <strong class="text-white/90">todas las clases del mes</strong> para este horario.
+    {% else %}
   Podés reservar <strong class="text-white/90">un día concreto</strong> o <strong class="text-white/90">todas las clases del mes</strong> para este horario.
+    {% endif %}
   {% elif suelta %}
   Elegí el día en el que querés venir (esta semana).
   {% else %}

@@ -1333,7 +1333,8 @@ def cronograma_disciplina(request, disciplina_id):
     clases_info = []
     for c in clases.order_by("dia_semana", "hora_inicio"):
         inicio = proxima_ocurrencia(c)
-        hay_lugar = services.cupo_disponible(c) > 0
+        cupo_resumen = cliente.resumen_cupo_inscripcion(c, usuario=request.user)
+        hay_lugar = cupo_resumen["puede_agregar_reserva"]
         clases_info.append(
             {
                 "detalle_url": reverse("classes:detalle", args=[c.pk]),
