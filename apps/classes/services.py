@@ -554,13 +554,17 @@ def reconciliar_vencimientos_mensuales(fecha=None):
 
 def reconciliar_vencimientos_sueltas():
     """
-    Cancela reservas sueltas que quedaron en estado PENDIENTE_PAGO
-    y ya pasaron su tiempo de gracia (default: 15 minutos).
+    Cancela reservas sueltas que quedaron en estado PENDIENTE_PAGO sin ningún
+    pago confirmado y ya pasaron su tiempo de gracia (default: 15 minutos).
+
+    Las reservas con seña paga NO se tocan: quedan vivas hasta la fecha de la
+    clase. El recepcionista cobra el saldo restante presencialmente.
     """
     from datetime import timedelta
     from django.conf import settings
     from apps.classes.ocurrencias import marcar_ocurrencias_inscripcion_canceladas
     from apps.payments.cancelaciones import cancelar_pagos_pendientes_inscripcion
+    from apps.payments.inscripcion_pago import q_inscripcion_con_pago_completado
 
     minutos = getattr(settings, "TIEMPO_GRACIA_PAGO_SUELTO_MINUTOS", 15)
     limite = timezone.now() - timedelta(minutes=minutos)
@@ -573,6 +577,7 @@ def reconciliar_vencimientos_sueltas():
                 estado=Inscripcion.Estado.PENDIENTE_PAGO,
                 fecha_inscripcion__lt=limite,
             )
+            .exclude(q_inscripcion_con_pago_completado())
             .select_related("clase")
             .order_by("fecha_inscripcion")
         )

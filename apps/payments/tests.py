@@ -1089,35 +1089,57 @@ class StaffPaymentViewsTests(TestCase):
         self.assertContains(response, 'Juan Pérez')
         self.assertContains(response, '33333333')
 
-    def test_detalle_pago_cliente(self):
+    def _paga_sena(self, monto=Decimal('1500.00')):
+        """Helper: registra una seña paga (MercadoPago, COMPLETADO) en la inscripción."""
+        pago = Pago.objects.create(
+            usuario=self.cliente, periodo=self.periodo,
+            monto=monto, metodo=Pago.Metodo.MERCADOPAGO,
+            estado=Pago.Estado.COMPLETADO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago, inscripcion=self.inscripcion, monto_aplicado=monto
+        )
+
+    def test_detalle_pago_cliente_muestra_inscripcion_con_sena(self):
+        """En Pagos > Activas, una reserva con seña paga aparece con su saldo."""
+        self._paga_sena()
         self.client.login(username='emp@gymflow.com', password='password123')
         response = self.client.get(reverse("payments:client_detail"), {'user_id': self.cliente.id})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Juan Pérez')
         self.assertContains(response, 'Spinning')
         self.assertContains(response, 'Saldo')
+        # Botón directo de cobro (sin select de modalidad)
+        self.assertContains(response, 'Cobrar $1500')
+        self.assertNotContains(response, 'name="modalidad"')
+
+    def test_detalle_pago_cliente_oculta_pendientes_efimeras(self):
+        """Una reserva PENDIENTE_PAGO sin ningún pago completado no debe listarse en Activas."""
+        self.client.login(username='emp@gymflow.com', password='password123')
+        response = self.client.get(reverse("payments:client_detail"), {'user_id': self.cliente.id})
+        self.assertEqual(response.status_code, 200)
+        # La inscripción efímera (sin seña) no debe figurar como activa.
+        self.assertNotContains(response, 'Spinning')
 
     def test_registrar_pago_sucursal_success(self):
+        """Sin importar la modalidad enviada, se cobra el saldo restante calculado en backend."""
+        self._paga_sena(Decimal('1000.00'))  # seña parcial; quedan $2000
         self.client.login(username='emp@gymflow.com', password='password123')
-        # Registrar el pago total en efectivo
+
+        # Aunque el front no envíe modalidad, el endpoint cobra el saldo.
         response = self.client.post(
             reverse("payments:registrar_pago_sucursal", args=[self.inscripcion.id]),
-            {'modalidad': 'TOTAL'}
         )
-        # Debería retornar 204 (hx_ok)
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response.headers.get('HX-Reswap'), 'none')
-        
-        # Validar base de datos
+
         self.inscripcion.refresh_from_db()
         self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.RESERVADA)
 
-        pago = Pago.objects.last()
-        self.assertIsNotNone(pago)
-        self.assertEqual(pago.usuario, self.cliente)
-        self.assertEqual(pago.metodo, Pago.Metodo.EFECTIVO)
-        self.assertEqual(pago.estado, Pago.Estado.COMPLETADO)
-        self.assertEqual(pago.monto, Decimal('3000.00'))
+        pago_efectivo = Pago.objects.filter(metodo=Pago.Metodo.EFECTIVO).last()
+        self.assertIsNotNone(pago_efectivo)
+        self.assertEqual(pago_efectivo.estado, Pago.Estado.COMPLETADO)
+        self.assertEqual(pago_efectivo.monto, Decimal('2000.00'))
 
     def test_historial_pagos_global_permissions(self):
         # Como empleado debe dar 403

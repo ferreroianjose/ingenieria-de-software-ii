@@ -273,3 +273,43 @@ class PrioridadYCuposTests(TestCase):
         self.assertEqual(canceladas, 1)
         self.assertEqual(suelta_reciente.estado, Inscripcion.Estado.PENDIENTE_PAGO)
         self.assertEqual(suelta_vencida.estado, Inscripcion.Estado.CANCELADA)
+
+    def test_reconciliacion_sueltas_respeta_reservas_con_sena_paga(self):
+        """Una reserva con seña paga sobrevive aunque haya pasado el tiempo de gracia."""
+        from datetime import timedelta
+        from decimal import Decimal
+
+        from django.test.utils import override_settings
+
+        from apps.classes.services import reconciliar_vencimientos_sueltas
+        from apps.payments.models import Pago, PagoInscripcion, PrecioClase
+
+        # Precio para que `precio_base_inscripcion` calcule algo sano.
+        PrecioClase.objects.get_or_create(
+            clase=self.clase, periodo=self.junio, defaults={"monto": Decimal("4000.00")}
+        )
+
+        suelta_con_sena = Inscripcion.objects.create(
+            usuario=self.user_suelta, clase=self.clase, periodo=self.junio,
+            tipo=Inscripcion.Tipo.CLASE_SUELTA,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        suelta_con_sena.fecha_inscripcion = timezone.now() - timedelta(minutes=40)
+        suelta_con_sena.save(update_fields=["fecha_inscripcion"])
+
+        pago_sena = Pago.objects.create(
+            usuario=self.user_suelta, periodo=self.junio,
+            monto=Decimal("2000.00"), metodo=Pago.Metodo.MERCADOPAGO,
+            estado=Pago.Estado.COMPLETADO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_sena, inscripcion=suelta_con_sena,
+            monto_aplicado=Decimal("2000.00"),
+        )
+
+        with override_settings(TIEMPO_GRACIA_PAGO_SUELTO_MINUTOS=15):
+            canceladas = reconciliar_vencimientos_sueltas()
+
+        suelta_con_sena.refresh_from_db()
+        self.assertEqual(canceladas, 0)
+        self.assertEqual(suelta_con_sena.estado, Inscripcion.Estado.PENDIENTE_PAGO)
