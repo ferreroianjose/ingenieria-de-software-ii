@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models.functions import Lower
 
 
 class Sede(models.Model):
@@ -39,8 +40,17 @@ class Sala(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('nombre', 'sede')
         verbose_name_plural = 'salas'
+        constraints = [
+            # Unicidad case-insensitive: "Sala A" y "sala a" no pueden coexistir
+            # en la misma sede. La validación a nivel form muestra el mensaje
+            # amigable; esta constraint protege contra admin/shell/seed.
+            models.UniqueConstraint(
+                Lower('nombre'),
+                'sede',
+                name='uniq_sala_nombre_lower_sede',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.nombre} - {self.sede.nombre}"

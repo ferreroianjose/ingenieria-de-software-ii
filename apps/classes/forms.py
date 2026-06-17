@@ -69,14 +69,25 @@ class SalaForm(BaseStyledForm):
             'capacidad': forms.NumberInput(attrs={'placeholder': 'Capacidad máxima', 'min': 1}),
         }
 
-    def clean_nombre(self):
-        nombre = self.cleaned_data.get('nombre')
-        sede = self.cleaned_data.get('sede')
+    def clean(self):
+        # Validamos a nivel form (no `clean_nombre`) porque `sede` se declara
+        # después de `nombre` y todavía no estaría en `cleaned_data` en una
+        # validación por campo. Acá ya están ambos limpios.
+        cleaned = super().clean()
+        nombre = cleaned.get('nombre')
+        sede = cleaned.get('sede')
         if nombre and sede:
-            existe = Sala.objects.filter(nombre__iexact=nombre, sede=sede).exclude(pk=self.instance.pk).exists()
+            existe = (
+                Sala.objects.filter(nombre__iexact=nombre, sede=sede)
+                .exclude(pk=self.instance.pk)
+                .exists()
+            )
             if existe:
-                raise ValidationError('Ya existe una sala con ese nombre en esta sede.')
-        return nombre
+                self.add_error(
+                    'nombre',
+                    ValidationError('Ya existe una sala con ese nombre en esta sede.'),
+                )
+        return cleaned
 
     def clean_capacidad(self):
         capacidad = self.cleaned_data.get('capacidad')
