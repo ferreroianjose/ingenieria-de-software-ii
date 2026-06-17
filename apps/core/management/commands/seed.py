@@ -932,7 +932,24 @@ class Command(BaseCommand):
                             continue
                         
                         tipo = random.choices([Inscripcion.Tipo.MENSUAL, Inscripcion.Tipo.CLASE_SUELTA], weights=[0.8, 0.2])[0]
-                        insc = crear_inscripcion(usuario, clase, periodo, tipo, Inscripcion.Estado.RESERVADA)
+
+                        # Decidir modalidad de pago para variar la historia:
+                        #   - MENSUAL: siempre pago total (la app no admite señas).
+                        #   - CLASE_SUELTA: mezclar pago total, seña+saldo y seña sin saldar.
+                        if tipo == Inscripcion.Tipo.CLASE_SUELTA:
+                            modalidad_pago = random.choices(
+                                ["total", "sena_saldo", "solo_sena"],
+                                weights=[0.55, 0.30, 0.15],
+                            )[0]
+                        else:
+                            modalidad_pago = "total"
+
+                        estado_inicial = (
+                            Inscripcion.Estado.PENDIENTE_PAGO
+                            if modalidad_pago == "solo_sena"
+                            else Inscripcion.Estado.RESERVADA
+                        )
+                        insc = crear_inscripcion(usuario, clase, periodo, tipo, estado_inicial)
                         if insc:
                             inscripciones_creadas += 1
                             monto = PRECIOS_DISCIPLINA.get(clase.disciplina.nombre, 3000)
@@ -965,26 +982,48 @@ class Command(BaseCommand):
                             ).first()
 
                             metodo_pago = Pago.Metodo.MERCADOPAGO
-                            if credito_disponible:
+                            if credito_disponible and modalidad_pago == "total":
                                 credito_disponible.estado = Credito.Estado.UTILIZADO
                                 credito_disponible.save()
                                 metodo_pago = Pago.Metodo.CREDITO
 
-                            pago = crear_pago(
-                                usuario, periodo, monto, metodo_pago, Pago.Estado.COMPLETADO, [(insc, monto)]
-                            )
-                            if pago:
-                                pagos_creados += 1
+                            if modalidad_pago == "total":
+                                pago = crear_pago(
+                                    usuario, periodo, monto, metodo_pago, Pago.Estado.COMPLETADO, [(insc, monto)]
+                                )
+                                if pago:
+                                    pagos_creados += 1
+                            else:
+                                # Seña por la mitad (MP), luego (opcionalmente) saldo en efectivo.
+                                sena_amount = (Decimal(monto) / Decimal("2")).quantize(Decimal("0.01"))
+                                pago_sena = crear_pago(
+                                    usuario, periodo, sena_amount,
+                                    Pago.Metodo.MERCADOPAGO, Pago.Estado.COMPLETADO,
+                                    [(insc, sena_amount)],
+                                )
+                                if pago_sena:
+                                    pagos_creados += 1
+                                if modalidad_pago == "sena_saldo":
+                                    saldo_amount = (Decimal(monto) - sena_amount).quantize(Decimal("0.01"))
+                                    pago_saldo = crear_pago(
+                                        usuario, periodo, saldo_amount,
+                                        Pago.Metodo.EFECTIVO, Pago.Estado.COMPLETADO,
+                                        [(insc, saldo_amount)],
+                                    )
+                                    if pago_saldo:
+                                        pagos_creados += 1
 
-                            # Simular asistencia para ocurrencias pasadas o actuales
+                            # Simular asistencia para ocurrencias pasadas o actuales.
+                            # Si quedó deuda (solo_sena), el cliente no entró a la clase.
                             from apps.attendance.models import Asistencia
                             import datetime
 
                             now = timezone.now()
+                            puede_asistir = modalidad_pago != "solo_sena"
                             for oc in insc.ocurrencias.all():
                                 if oc.estado == InscripcionOcurrencia.Estado.ACTIVA and oc.fecha_clase <= now:
-                                    # 95% de probabilidad de asistir
-                                    if random.random() < 0.95:
+                                    # 95% de probabilidad de asistir si está saldada
+                                    if puede_asistir and random.random() < 0.95:
                                         a = Asistencia.objects.create(
                                             inscripcion=insc,
                                             metodo=random.choice([Asistencia.Metodo.QR, Asistencia.Metodo.MANUAL])
@@ -1005,8 +1044,13 @@ class Command(BaseCommand):
     # -----------------------------------------------------------------------
 
     def _seed_demo_case(self, User, Class, Inscripcion, PeriodoCobro, Pago, PagoInscripcion, PrecioClase):
+        from datetime import datetime
+
         from apps.classes.services import obtener_periodo_activo_si_hay
-        from apps.classes.ocurrencias import generar_ocurrencias_mensual
+        from apps.classes.ocurrencias import (
+            crear_ocurrencia_suelta,
+            generar_ocurrencias_mensual,
+        )
 
         today = timezone.localdate()
         dia_semana = today.weekday()
@@ -1038,37 +1082,46 @@ class Command(BaseCommand):
         Pago.objects.filter(usuario=user, periodo=periodo).delete()
         Inscripcion.objects.filter(usuario=user, periodo=periodo).delete()
 
-        i1 = Inscripcion.objects.create(
+        # Caso principal de la demo: clase suelta de HOY con SEÑA paga.
+        # La recepcionista solo necesita aprobar la constancia del tutor y luego
+        # un único click ("Cobrar $X e Ingresar") cobra el saldo y marca asistencia.
+        i_sena = Inscripcion.objects.create(
             usuario=user, clase=c1, periodo=periodo,
-            tipo=Inscripcion.Tipo.MENSUAL, estado=Inscripcion.Estado.RESERVADA
+            tipo=Inscripcion.Tipo.CLASE_SUELTA, estado=Inscripcion.Estado.PENDIENTE_PAGO,
         )
+        p_c1 = PrecioClase.objects.filter(clase=c1, periodo=periodo).first()
+        precio_c1 = p_c1.monto if p_c1 else Decimal("3000.00")
+        sena = (precio_c1 / 2).quantize(Decimal("0.01"))
+        pago_sena = Pago.objects.create(
+            usuario=user, periodo=periodo, monto=sena,
+            metodo=Pago.Metodo.MERCADOPAGO, estado=Pago.Estado.COMPLETADO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_sena, inscripcion=i_sena, monto_aplicado=sena
+        )
+        if c1.hora_inicio:
+            fecha_clase_hoy = timezone.make_aware(
+                datetime.combine(today, c1.hora_inicio),
+                timezone.get_current_timezone(),
+            )
+            crear_ocurrencia_suelta(i_sena, fecha_clase_hoy)
 
-        i2 = Inscripcion.objects.create(
+        # Segundo caso (control): abono mensual totalmente pago = ficha "Saldada".
+        i_mensual = Inscripcion.objects.create(
             usuario=user, clase=c2, periodo=periodo,
-            tipo=Inscripcion.Tipo.MENSUAL, estado=Inscripcion.Estado.RESERVADA
+            tipo=Inscripcion.Tipo.MENSUAL, estado=Inscripcion.Estado.RESERVADA,
         )
-
-        p1_obj = PrecioClase.objects.filter(clase=c1, periodo=periodo).first()
-        p2_obj = PrecioClase.objects.filter(clase=c2, periodo=periodo).first()
-
-        monto_c1 = p1_obj.monto if p1_obj else Decimal("3000.00")
-        monto_c2 = p2_obj.monto if p2_obj else Decimal("3000.00")
-
-        # Pago Seña (mitad)
-        pago1 = Pago.objects.create(
-            usuario=user, periodo=periodo, monto=monto_c1 / 2,
-            metodo=Pago.Metodo.EFECTIVO, estado=Pago.Estado.COMPLETADO
+        p_c2 = PrecioClase.objects.filter(clase=c2, periodo=periodo).first()
+        precio_c2 = p_c2.monto if p_c2 else Decimal("3000.00")
+        pago_total = Pago.objects.create(
+            usuario=user, periodo=periodo, monto=precio_c2,
+            metodo=Pago.Metodo.EFECTIVO, estado=Pago.Estado.COMPLETADO,
         )
-        PagoInscripcion.objects.create(pago=pago1, inscripcion=i1, monto_aplicado=monto_c1 / 2)
-
-        # Pago Total
-        pago2 = Pago.objects.create(
-            usuario=user, periodo=periodo, monto=monto_c2,
-            metodo=Pago.Metodo.EFECTIVO, estado=Pago.Estado.COMPLETADO
+        PagoInscripcion.objects.create(
+            pago=pago_total, inscripcion=i_mensual, monto_aplicado=precio_c2
         )
-        PagoInscripcion.objects.create(pago=pago2, inscripcion=i2, monto_aplicado=monto_c2)
+        generar_ocurrencias_mensual(i_mensual)
 
-        generar_ocurrencias_mensual(i1)
-        generar_ocurrencias_mensual(i2)
-
-        self.stdout.write("  Caso de demo (Seña y Paga en el día) creado exitosamente.")
+        self.stdout.write(
+            "  Caso de demo (Seña pendiente de saldar + Abono saldado) creado."
+        )

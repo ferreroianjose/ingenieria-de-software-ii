@@ -2188,6 +2188,11 @@
     --tw-gradient-from: var(--color-secondary-900);
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
+  .via-secondary-300 {
+    --tw-gradient-via: var(--color-secondary-300);
+    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
+    --tw-gradient-stops: var(--tw-gradient-via-stops);
+  }
   .via-secondary-300\/50 {
     --tw-gradient-via: color-mix(in srgb, oklch(0.778 0.133 202.83) 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
@@ -3045,6 +3050,9 @@
     @supports (color: color-mix(in lab, red, red)) {
       --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-white) 35%, transparent) var(--tw-shadow-alpha), transparent);
     }
+  }
+  .ring-amber-500 {
+    --tw-ring-color: var(--color-amber-500);
   }
   .ring-amber-500\/80 {
     --tw-ring-color: color-mix(in srgb, oklch(76.9% 0.188 70.08) 80%, transparent);

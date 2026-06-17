@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -7,7 +9,7 @@ import django.core.signing as signing
 
 from apps.classes.models import Sede, Sala, Teacher, Disciplina, Class, Inscripcion, InscripcionOcurrencia
 from apps.attendance.models import Asistencia
-from apps.payments.models import PeriodoCobro, Pago, PagoInscripcion
+from apps.payments.models import PeriodoCobro, Pago, PagoInscripcion, PrecioClase
 
 User = get_user_model()
 
@@ -348,3 +350,153 @@ class AttendanceTests(TestCase):
         self.assertContains(response, 'Requiere acción manual')
         
         self.assertIsNone(cache.get(f"qr_result_{token}"))
+
+
+class CobrarSaldoEIngresarTests(TestCase):
+    """Tests del atajo de recepción: cobrar saldo en efectivo + registrar asistencia."""
+
+    def setUp(self):
+        self.client = Client()
+
+        self.staff_user = get_user_model().objects.create_user(
+            username='recep@gymflow.com', email='recep@gymflow.com',
+            password='password123', rol='EMPLEADO', dni='90000001',
+            first_name='Recepción', last_name='Demo',
+        )
+        self.client_user = get_user_model().objects.create_user(
+            username='socio@gymflow.com', email='socio@gymflow.com',
+            password='password123', rol='CLIENTE', dni='40000001',
+            first_name='Socio', last_name='Demo',
+            fecha_nacimiento=date(1990, 1, 1),
+            telefono_emergencia='3511234567',
+        )
+
+        sede = Sede.objects.create(nombre="Sede Test", direccion="Calle 123")
+        sala = Sala.objects.create(nombre="Sala A", capacidad=20, sede=sede)
+        disciplina = Disciplina.objects.create(nombre="Yoga Test")
+        profesor = Teacher.objects.create(nombre="Profe", apellido="Test")
+
+        today = timezone.localdate()
+        self.periodo = PeriodoCobro.objects.create(
+            nombre="Periodo Test",
+            fecha_inicio_periodo=today - timedelta(days=5),
+            fecha_fin_periodo=today + timedelta(days=25),
+            apertura_abonados=today - timedelta(days=10),
+            apertura_general=today - timedelta(days=5),
+        )
+
+        self.clase = Class.objects.create(
+            disciplina=disciplina, sala=sala, profesor=profesor,
+            dia_semana=today.weekday(),
+            hora_inicio=time(12, 0),
+            duracion=timedelta(hours=1),
+            cupo_maximo=15,
+        )
+        PrecioClase.objects.create(
+            clase=self.clase, periodo=self.periodo, monto=Decimal("4000.00")
+        )
+
+        self.inscripcion = Inscripcion.objects.create(
+            usuario=self.client_user, clase=self.clase, periodo=self.periodo,
+            tipo=Inscripcion.Tipo.CLASE_SUELTA,
+            estado=Inscripcion.Estado.PENDIENTE_PAGO,
+        )
+        InscripcionOcurrencia.objects.create(
+            inscripcion=self.inscripcion,
+            fecha_clase=timezone.make_aware(datetime.combine(today, time(12, 0))),
+            estado=InscripcionOcurrencia.Estado.ACTIVA,
+        )
+
+        # Seña ya pagada (mitad del precio).
+        pago_sena = Pago.objects.create(
+            usuario=self.client_user, periodo=self.periodo,
+            monto=Decimal("2000.00"), metodo=Pago.Metodo.MERCADOPAGO,
+            estado=Pago.Estado.COMPLETADO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_sena, inscripcion=self.inscripcion,
+            monto_aplicado=Decimal("2000.00"),
+        )
+
+        self.client.login(username='recep@gymflow.com', password='password123')
+
+    def test_cobrar_saldo_e_ingresar_exito(self):
+        """Un POST cobra el saldo en efectivo y crea la asistencia atómicamente."""
+        response = self.client.post(reverse('attendance:quick_pay_and_enter'), {
+            'inscripcion_id': self.inscripcion.id,
+        })
+        self.assertEqual(response.status_code, 200)
+
+        # Saldo cobrado en efectivo, inscripción saldada.
+        self.inscripcion.refresh_from_db()
+        self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.RESERVADA)
+        pago_efectivo = Pago.objects.filter(
+            usuario=self.client_user,
+            metodo=Pago.Metodo.EFECTIVO,
+            estado=Pago.Estado.COMPLETADO,
+        ).first()
+        self.assertIsNotNone(pago_efectivo)
+        self.assertEqual(pago_efectivo.monto, Decimal("2000.00"))
+
+        # Asistencia registrada en el día actual.
+        self.assertTrue(
+            Asistencia.objects.filter(
+                inscripcion=self.inscripcion,
+                fecha_hora_ingreso__date=timezone.localdate(),
+            ).exists()
+        )
+
+    def test_bloqueado_sin_telefono_emergencia(self):
+        """Sin teléfono de emergencia, ni se cobra ni se asienta asistencia."""
+        self.client_user.telefono_emergencia = ""
+        self.client_user.save()
+
+        response = self.client.post(reverse('attendance:quick_pay_and_enter'), {
+            'inscripcion_id': self.inscripcion.id,
+        })
+        self.assertEqual(response.status_code, 403)
+
+        self.inscripcion.refresh_from_db()
+        self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.PENDIENTE_PAGO)
+        self.assertFalse(
+            Pago.objects.filter(metodo=Pago.Metodo.EFECTIVO).exists()
+        )
+        self.assertFalse(
+            Asistencia.objects.filter(inscripcion=self.inscripcion).exists()
+        )
+
+    def test_sin_saldo_pendiente_rechaza(self):
+        """Si no hay saldo pendiente, el endpoint responde 400 sin efectos secundarios."""
+        # Saldar la inscripción manualmente.
+        pago_saldo = Pago.objects.create(
+            usuario=self.client_user, periodo=self.periodo,
+            monto=Decimal("2000.00"), metodo=Pago.Metodo.EFECTIVO,
+            estado=Pago.Estado.COMPLETADO,
+        )
+        PagoInscripcion.objects.create(
+            pago=pago_saldo, inscripcion=self.inscripcion,
+            monto_aplicado=Decimal("2000.00"),
+        )
+        self.inscripcion.estado = Inscripcion.Estado.RESERVADA
+        self.inscripcion.save(update_fields=["estado"])
+
+        response = self.client.post(reverse('attendance:quick_pay_and_enter'), {
+            'inscripcion_id': self.inscripcion.id,
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(
+            Asistencia.objects.filter(inscripcion=self.inscripcion).exists()
+        )
+
+    def test_quick_pay_no_registra_asistencia(self):
+        """El endpoint legacy `quick_pay` solo cobra; no debe marcar asistencia."""
+        response = self.client.post(reverse('attendance:quick_pay'), {
+            'inscripcion_id': self.inscripcion.id,
+        })
+        self.assertEqual(response.status_code, 200)
+
+        self.inscripcion.refresh_from_db()
+        self.assertEqual(self.inscripcion.estado, Inscripcion.Estado.RESERVADA)
+        self.assertFalse(
+            Asistencia.objects.filter(inscripcion=self.inscripcion).exists()
+        )

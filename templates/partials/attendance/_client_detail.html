@@ -176,7 +176,7 @@
                         {% else %}
                         <div class="flex items-center gap-1 text-xs font-bold uppercase tracking-wide {% if pag.mostrar_pagar %}text-red-600{% else %}text-amber-600{% endif %}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            {% if pag.mostrar_pagar %}Pendiente: ${{ pag.monto_a_pagar }}{% else %}Saldo: ${{ pag.saldo_pendiente }}{% endif %}
+                            {% if pag.mostrar_pagar %}Pendiente: ${{ pag.saldo_restante }}{% else %}Saldo: ${{ pag.saldo_restante }}{% endif %}
                         </div>
                         {% endif %}
                     </div>
@@ -184,20 +184,26 @@
 
                 <!-- Right side: Actions -->
                 <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-                    <!-- Pagar Button (Only if owed) -->
-                    {% if pag.mostrar_pagar or pag.mostrar_pagar_saldo %}
-                    <form hx-post="{% url 'attendance:quick_pay' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="w-full sm:w-auto">
+                    <!-- Pagar (Efectivo) standalone -->
+                    {# Solo aparece cuando NO hay seña parcial (en ese caso lo unificamos con asistencia abajo). #}
+                    {% if pag.mostrar_pagar and not item.ya_asistio %}
+                    <form hx-post="{% url 'attendance:quick_pay' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="w-full sm:w-auto"
+                          data-confirm="Vas a registrar un cobro en efectivo de ${{ pag.saldo_restante }}. ¿Confirmás?"
+                          data-confirm-title="Cobrar en efectivo"
+                          data-confirm-label="Cobrar"
+                          data-confirm-variant="default">
                         {% csrf_token %}
                         <input type="hidden" name="source" value="{{ source|default:'' }}" />
                         <input type="hidden" name="user_id" value="{{ cliente.id }}" />
                         <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
                         <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary h-10 w-full sm:w-auto flex items-center justify-center gap-1.5">
-                            Pagar (Efectivo)
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Cobrar (Efectivo)
                         </button>
                     </form>
                     {% endif %}
 
-                    <!-- Asistencia Button/State -->
+                    <!-- Asistencia / Cobrar+Ingresar -->
                     {% if item.ya_asistio %}
                     <div class="flex items-center gap-2 w-full sm:w-auto h-10">
                         <div class="h-full px-5 rounded-full border-2 border-green-200 bg-green-50 flex items-center justify-center gap-2 flex-1 sm:flex-none">
@@ -217,12 +223,33 @@
                             </button>
                         </form>
                     </div>
+                    {% elif pag.mostrar_pagar_saldo %}
+                    {# Caso típico: cliente llegó con seña paga. Cobramos el saldo y registramos asistencia en un solo click. #}
+                    <form hx-post="{% url 'attendance:quick_pay_and_enter' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="w-full sm:w-auto"
+                          data-confirm="Vas a cobrar ${{ pag.saldo_restante }} en efectivo y registrar la asistencia. ¿Confirmás?"
+                          data-confirm-title="Cobrar saldo e ingresar"
+                          data-confirm-label="Cobrar e ingresar"
+                          data-confirm-variant="default">
+                        {% csrf_token %}
+                        <input type="hidden" name="source" value="{{ source|default:'' }}" />
+                        <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
+                        {% if bloqueo_acceso %}
+                        <button type="button" disabled class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary h-10 w-full sm:w-auto flex items-center justify-center gap-1.5" title="Resolvé los bloqueos del cliente para habilitar el ingreso.">
+                            Bloqueado
+                        </button>
+                        {% else %}
+                        <button type="submit" class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary h-10 w-full sm:w-auto flex items-center justify-center gap-2 group" title="Registra el cobro del saldo en efectivo y la asistencia.">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            Cobrar ${{ pag.saldo_restante }} e Ingresar
+                        </button>
+                        {% endif %}
+                    </form>
                     {% else %}
                     <form hx-post="{% url 'attendance:register' %}" hx-target="{% if source == 'dashboard' %}#qr-modal-content{% else %}#main-content-container{% endif %}" hx-swap="innerHTML" class="w-full sm:w-auto">
                         {% csrf_token %}
                         <input type="hidden" name="source" value="{{ source|default:'' }}" />
                         <input type="hidden" name="inscripcion_id" value="{{ insc.id }}" />
-                        {% if pag.mostrar_pagar or pag.mostrar_pagar_saldo or es_menor and cliente.estado_constancia != 'APROBADA' or not tiene_telefono_emergencia %}
+                        {% if pag.mostrar_pagar or bloqueo_acceso %}
                         <button type="button" disabled class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary h-10 w-full sm:w-auto flex items-center justify-center gap-1.5">
                             Bloqueado
                         </button>
