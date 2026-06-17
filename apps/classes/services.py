@@ -51,20 +51,27 @@ def _proxima_ocurrencia_desde(clase, desde_fecha):
 
 def ocurrencias_clase_en_ventana(clase, dias=None, desde_fecha=None):
     """
-    Ocurrencias futuras del horario dentro de los próximos `dias` (default 21).
+    Ocurrencias futuras del horario dentro de la ventana de reserva suelta.
+
+    - Default: hasta el domingo de la semana ISO en curso (regla actual).
+    - Si se pasa `dias` explícitamente, se usa como horizonte en días
+      (override por caller, p. ej. para tests/jobs internos).
+    - El setting `VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS` queda como escape
+      hatch admin (ver `periodos.horizonte_clase_suelta`).
+
     Cada ítem es (datetime aware, PeriodoCobro que contiene esa fecha).
     """
-    from django.conf import settings
-
-    from apps.payments.periodos import periodo_conteniendo_fecha
+    from apps.payments.periodos import horizonte_clase_suelta, periodo_conteniendo_fecha
 
     if not clase.hora_inicio:
         return []
 
-    dias = dias or getattr(settings, "VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", 21)
     ahora = timezone.localtime(timezone.now())
     hoy = desde_fecha or ahora.date()
-    limite = hoy + timedelta(days=dias)
+    if dias is None:
+        limite = horizonte_clase_suelta(hoy)
+    else:
+        limite = hoy + timedelta(days=dias)
     tz = timezone.get_current_timezone()
     resultado = []
     cursor = hoy + timedelta(days=(clase.dia_semana - hoy.weekday()) % 7)
@@ -362,6 +369,33 @@ def validar_intencion_inscripcion(
             raise ReservaError(
                 "No quedan clases de este horario en el mes elegido."
             )
+        from apps.payments.periodos import (
+            clases_renovables_abonado,
+            en_ventana_preinscripcion_abonados,
+            es_abonado,
+            periodo_vigente,
+        )
+
+        hoy = timezone.localdate()
+        vigente = periodo_vigente(hoy)
+        # MENSUAL del próximo período es una RENOVACIÓN exclusiva de abonados:
+        # solo durante la ventana de pre-inscripción y solo para clases que
+        # el usuario ya tiene activas en el período vigente.
+        if vigente is None or periodo.id != vigente.id:
+            if not en_ventana_preinscripcion_abonados(periodo, hoy):
+                raise ReservaError(
+                    "Todavía no está abierta la inscripción para ese mes."
+                )
+            if not es_abonado(usuario, hoy):
+                raise ReservaError(
+                    "La pre-inscripción al próximo mes es solo para abonados "
+                    "(necesitás una mensualidad activa este mes)."
+                )
+            if clase.id not in clases_renovables_abonado(usuario, hoy):
+                raise ReservaError(
+                    "Solo podés renovar al próximo mes las clases mensuales "
+                    "que ya tenés contratadas este mes."
+                )
         dia_semana, hora_inicio = _horario_objetivo(clase)
         if usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=clase.id):
             raise ConflictoHorario()

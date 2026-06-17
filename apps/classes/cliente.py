@@ -42,10 +42,17 @@ def hay_ocurrencia_suelta_libre(clase, usuario):
     )
 
 
-def periodos_inscripcion_para_clase(clase):
-    """Opciones para el formulario de detalle (fechas sueltas + períodos mensuales)."""
+def periodos_inscripcion_para_clase(clase, usuario=None):
+    """Opciones para el formulario de detalle (fechas sueltas + períodos mensuales).
+
+    Si se pasa `usuario`, la lista MENSUAL solo incluye el próximo período
+    cuando el usuario es abonado y la `clase` está entre sus renovables
+    (ver `apps.payments.periodos.clases_renovables_abonado`).
+    """
     from apps.payments.periodos import (
+        clases_renovables_abonado,
         hint_periodo_mensual,
+        periodo_vigente,
         periodos_elegibles_clase_suelta,
         periodos_elegibles_mensual,
     )
@@ -70,17 +77,29 @@ def periodos_inscripcion_para_clase(clase):
 
     from apps.classes.services import clases_mensuales_cobrables
 
-    mensual = [
-        {
-            "id": p.id,
-            "nombre": p.nombre,
-            "etiqueta": p.nombre,
-            "hint": hint_periodo_mensual(p),
-            "cupo": cupo_disponible(clase, periodo=p),
-        }
-        for p in periodos_elegibles_mensual()
-        if clases_mensuales_cobrables(clase, p) > 0
-    ]
+    vigente = periodo_vigente()
+    renovables = (
+        clases_renovables_abonado(usuario)
+        if usuario is not None
+        else set()
+    )
+    mensual = []
+    for p in periodos_elegibles_mensual(usuario=usuario):
+        if clases_mensuales_cobrables(clase, p) <= 0:
+            continue
+        # El próximo período solo aparece si la clase es renovable por el usuario.
+        es_siguiente = vigente is not None and p.id != vigente.id
+        if es_siguiente and clase.id not in renovables:
+            continue
+        mensual.append(
+            {
+                "id": p.id,
+                "nombre": p.nombre,
+                "etiqueta": p.nombre,
+                "hint": hint_periodo_mensual(p),
+                "cupo": cupo_disponible(clase, periodo=p),
+            }
+        )
 
     return {"CLASE_SUELTA": suelta, "MENSUAL": mensual}
 
@@ -134,7 +153,7 @@ def info_clase_para_usuario(clase, usuario, request=None):
         else ""
     )
 
-    periodos_inscripcion = periodos_inscripcion_para_clase(clase)
+    periodos_inscripcion = periodos_inscripcion_para_clase(clase, usuario=usuario)
     ocupadas = fechas_suelta_ocupadas(clase, usuario)
     from django.utils.dateparse import parse_datetime
     from django.utils import timezone as tz

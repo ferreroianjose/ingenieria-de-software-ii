@@ -20,6 +20,65 @@ def dia_limite_pago_mensual():
     return getattr(settings, "DIA_LIMITE_PAGO_MENSUAL", 10)
 
 
+def lunes_semana_iso(fecha=None):
+    """Lunes de la semana ISO que contiene `fecha` (default: hoy)."""
+    hoy = fecha or timezone.localdate()
+    return hoy - timedelta(days=hoy.weekday())
+
+
+def domingo_semana_iso(fecha=None):
+    """Domingo (inclusive) de la semana ISO que contiene `fecha`."""
+    return lunes_semana_iso(fecha) + timedelta(days=6)
+
+
+def es_abonado(usuario, fecha=None):
+    """True si el usuario tiene una MENSUAL activa en el período vigente.
+
+    Activa = estado en {RESERVADA, PENDIENTE_PAGO}. Es el "beneficio del abonado":
+    haber pagado (o tener reserva con seña) le da derecho a la pre-inscripción
+    de renovación del próximo mes.
+    """
+    if not getattr(usuario, "is_authenticated", False):
+        return False
+    hoy = fecha or timezone.localdate()
+    vigente = periodo_vigente(hoy)
+    if not vigente:
+        return False
+    return Inscripcion.objects.filter(
+        usuario=usuario,
+        tipo=Inscripcion.Tipo.MENSUAL,
+        periodo=vigente,
+        estado__in=[
+            Inscripcion.Estado.RESERVADA,
+            Inscripcion.Estado.PENDIENTE_PAGO,
+        ],
+    ).exists()
+
+
+def clases_renovables_abonado(usuario, fecha=None):
+    """IDs de clases que el usuario abonado puede renovar al período siguiente.
+
+    Son las clases en las que tiene una MENSUAL activa en el período vigente.
+    """
+    if not getattr(usuario, "is_authenticated", False):
+        return set()
+    hoy = fecha or timezone.localdate()
+    vigente = periodo_vigente(hoy)
+    if not vigente:
+        return set()
+    return set(
+        Inscripcion.objects.filter(
+            usuario=usuario,
+            tipo=Inscripcion.Tipo.MENSUAL,
+            periodo=vigente,
+            estado__in=[
+                Inscripcion.Estado.RESERVADA,
+                Inscripcion.Estado.PENDIENTE_PAGO,
+            ],
+        ).values_list("clase_id", flat=True)
+    )
+
+
 def periodo_conteniendo_fecha(fecha):
     """Período de cobro cuyo rango incluye la fecha (día calendario)."""
     return (
@@ -95,9 +154,15 @@ def requiere_precola_suelta(periodo, fecha=None):
     return periodo_habilitado_clase_suelta(periodo, hoy) and hoy < periodo.apertura_general
 
 
-def periodos_elegibles_mensual(fecha=None):
+def periodos_elegibles_mensual(fecha=None, usuario=None):
     """
-    Abono: período en curso o preinscripción al siguiente (no solo el vigente).
+    Períodos elegibles para inscripción mensual.
+
+    - Período en curso: siempre incluido (cualquier usuario).
+    - Período siguiente: solo si el usuario es abonado y estamos en la ventana
+      de pre-inscripción de abonados. La pre-inscripción es una "renovación":
+      el filtro por clase específica ocurre en el caller (ver
+      `apps.classes.cliente.periodos_inscripcion_para_clase`).
     """
     hoy = fecha or timezone.localdate()
     elegibles = []
@@ -117,8 +182,12 @@ def periodos_elegibles_mensual(fecha=None):
             .first()
         )
 
-    if siguiente and siguiente.id not in vistos and en_ventana_preinscripcion_abonados(
-        siguiente, hoy
+    if (
+        siguiente
+        and siguiente.id not in vistos
+        and en_ventana_preinscripcion_abonados(siguiente, hoy)
+        and usuario is not None
+        and es_abonado(usuario, hoy)
     ):
         elegibles.append(siguiente)
         vistos.add(siguiente.id)
@@ -126,11 +195,28 @@ def periodos_elegibles_mensual(fecha=None):
     return elegibles
 
 
-def periodos_elegibles_clase_suelta(fecha=None):
-    """Períodos que solapan la ventana de reserva de clase suelta (~3 semanas)."""
+def horizonte_clase_suelta(fecha=None):
+    """Última fecha (inclusive) elegible para reservar clase suelta.
+
+    Default: domingo de la semana ISO en curso. Si está seteado el override
+    `VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS` (> 0), se respeta como horizonte
+    en días.
+    """
     hoy = fecha or timezone.localdate()
-    dias = getattr(settings, "VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", 21)
-    hasta = hoy + timedelta(days=dias)
+    override = getattr(settings, "VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", 0) or 0
+    if override > 0:
+        return hoy + timedelta(days=override)
+    return domingo_semana_iso(hoy)
+
+
+def periodos_elegibles_clase_suelta(fecha=None):
+    """Períodos que solapan la ventana de reserva (semana ISO por default).
+
+    Aplica a todos los usuarios (abonados o no). La ventana es semanal:
+    el lunes ven 7 días, el sábado solo 1.
+    """
+    hoy = fecha or timezone.localdate()
+    hasta = horizonte_clase_suelta(hoy)
     periodos = PeriodoCobro.objects.filter(
             fecha_inicio_periodo__lte=hasta,
             fecha_fin_periodo__gte=hoy,
@@ -138,9 +224,9 @@ def periodos_elegibles_clase_suelta(fecha=None):
     return [p for p in periodos if periodo_habilitado_clase_suelta(p, hoy)]
 
 
-def periodos_elegibles_para(tipo, fecha=None):
+def periodos_elegibles_para(tipo, fecha=None, usuario=None):
     if tipo == Inscripcion.Tipo.MENSUAL:
-        return periodos_elegibles_mensual(fecha)
+        return periodos_elegibles_mensual(fecha, usuario=usuario)
     return periodos_elegibles_clase_suelta(fecha)
 
 

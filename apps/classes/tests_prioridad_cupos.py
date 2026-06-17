@@ -55,6 +55,16 @@ class PrioridadYCuposTests(TestCase):
             apertura_abonados=date(2026, 5, 20),
             apertura_general=date(2026, 6, 1),
         )
+        # Julio 2026 empieza miércoles 1/7 → la semana ISO 29/6–5/7 atraviesa
+        # el cambio de período, lo que permite testear pre-cola para sueltas
+        # en este boundary.
+        self.julio = PeriodoCobro.objects.create(
+            nombre="Julio 2026",
+            fecha_inicio_periodo=date(2026, 7, 1),
+            fecha_fin_periodo=date(2026, 7, 31),
+            apertura_abonados=date(2026, 6, 21),
+            apertura_general=date(2026, 7, 1),
+        )
         disciplina = Disciplina.objects.create(nombre="Yoga Prioridad")
         sede = Sede.objects.create(nombre="Sede Prioridad", direccion="Calle 123")
         sala = Sala.objects.create(nombre="Sala Prioridad", capacidad=20, sede=sede)
@@ -69,6 +79,17 @@ class PrioridadYCuposTests(TestCase):
             cupo_maximo=1,
             estado="disponible",
         )
+        # Clase miércoles para tests de boundary Junio→Julio
+        self.clase_miercoles = Class.objects.create(
+            disciplina=disciplina,
+            sala=sala,
+            profesor=profesor,
+            dia_semana=2,  # Miércoles → 1/7/2026 entra en la ISO 29/6–5/7
+            hora_inicio=time(10, 0),
+            duracion=timedelta(hours=1),
+            cupo_maximo=1,
+            estado="disponible",
+        )
 
     def _primer_fecha_junio(self, ahora):
         ocurrencias = ocurrencias_clase_en_ventana(self.clase, desde_fecha=ahora.date())
@@ -77,17 +98,27 @@ class PrioridadYCuposTests(TestCase):
                 return dt
         self.fail("No se encontró ocurrencia de junio en la ventana.")
 
+    def _fecha_julio_en_iso(self, ahora):
+        ocurrencias = ocurrencias_clase_en_ventana(
+            self.clase_miercoles, desde_fecha=ahora.date()
+        )
+        for dt, periodo in ocurrencias:
+            if periodo.id == self.julio.id:
+                return dt
+        self.fail("No se encontró ocurrencia de julio en la ventana ISO.")
+
     @patch("django.utils.timezone.now")
     def test_suelta_en_precola_queda_en_espera_aun_con_cupo(self, mock_now):
+        # Lunes 29/6/2026, semana ISO cruza a julio.
         mock_now.return_value = timezone.make_aware(
-            datetime(2026, 5, 25, 9, 0), timezone.get_current_timezone()
+            datetime(2026, 6, 29, 9, 0), timezone.get_current_timezone()
         )
-        fecha_clase = self._primer_fecha_junio(mock_now.return_value)
+        fecha_clase = self._fecha_julio_en_iso(mock_now.return_value)
 
         inscripcion, resultado = reservar_clase(
             self.user_suelta,
-            self.clase.id,
-            periodo=self.junio,
+            self.clase_miercoles.id,
+            periodo=self.julio,
             tipo=Inscripcion.Tipo.CLASE_SUELTA,
             fecha_clase=fecha_clase,
         )

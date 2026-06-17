@@ -65,12 +65,13 @@ class CancelacionesTestCase(TestCase):
             dias_hasta += 7
         
         proxima_fecha = hoy + timedelta(days=dias_hasta)
+        # Ambas fechas deben caer dentro de la semana ISO actual para la
+        # ventana de reserva de clase suelta. `dia_semana_test = mañana` se
+        # garantiza dentro de la semana mientras hoy no sea domingo.
         self.fecha_mensual = timezone.make_aware(
             datetime.combine(proxima_fecha, time(18, 0)), tz
         )
-        self.fecha_suelta = timezone.make_aware(
-            datetime.combine(proxima_fecha + timedelta(days=7), time(18, 0)), tz
-        )
+        self.fecha_suelta = self.fecha_mensual
 
     def _inscripcion_mensual(self):
         inscripcion = Inscripcion.objects.create(
