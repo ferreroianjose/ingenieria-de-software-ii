@@ -154,7 +154,6 @@
     --color-primary-700: oklch(0.423 0.195 328.37);
     --color-primary-800: oklch(0.331 0.152 328.37);
     --color-primary-900: oklch(0.239 0.11 328.37);
-    --color-primary-950: oklch(0.188 0.087 328.37);
     --color-on-light-bg-500: #1a1a1a;
     --color-on-dark-bg-500: #eaeaf0;
     --shadow-fair-lg: 0 3px 10px rgba(0, 0, 0, 0.25);
@@ -330,9 +329,6 @@
     container-name: qr;
   }
   .\@container {
-    container-type: inline-size;
-  }
-  .\[container-type\:inline-size\] {
     container-type: inline-size;
   }
   .pointer-events-none {
@@ -598,17 +594,8 @@
   .m-0 {
     margin: 0;
   }
-  .m-1 {
-    margin: var(--spacing);
-  }
   .m-2 {
     margin: calc(var(--spacing) * 2);
-  }
-  .m-3 {
-    margin: calc(var(--spacing) * 3);
-  }
-  .m-4 {
-    margin: calc(var(--spacing) * 4);
   }
   .-mx-3 {
     margin-inline: calc(var(--spacing) * -3);
@@ -696,9 +683,6 @@
   }
   .mb-0 {
     margin-bottom: 0;
-  }
-  .mb-0\.5 {
-    margin-bottom: calc(var(--spacing) * 0.5);
   }
   .mb-1 {
     margin-bottom: var(--spacing);
@@ -1551,9 +1535,6 @@
   .rounded-none {
     border-radius: 0;
   }
-  .rounded-sm {
-    border-radius: var(--radius-sm);
-  }
   .rounded-xl {
     border-radius: var(--radius-xl);
   }
@@ -1647,9 +1628,6 @@
   }
   .border-gray-400 {
     border-color: var(--color-gray-400);
-  }
-  .border-gray-600 {
-    border-color: var(--color-gray-600);
   }
   .border-gray-700 {
     border-color: var(--color-gray-700);
@@ -2188,26 +2166,10 @@
     --tw-gradient-from: var(--color-secondary-900);
     --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
   }
-  .via-secondary-300 {
-    --tw-gradient-via: var(--color-secondary-300);
-    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
-    --tw-gradient-stops: var(--tw-gradient-via-stops);
-  }
-  .via-secondary-300\/50 {
-    --tw-gradient-via: color-mix(in srgb, oklch(0.778 0.133 202.83) 50%, transparent);
-    @supports (color: color-mix(in lab, red, red)) {
-      --tw-gradient-via: color-mix(in oklab, var(--color-secondary-300) 50%, transparent);
-    }
-    --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
-    --tw-gradient-stops: var(--tw-gradient-via-stops);
-  }
   .via-secondary-950 {
     --tw-gradient-via: var(--color-secondary-950);
     --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);
     --tw-gradient-stops: var(--tw-gradient-via-stops);
-  }
-  .via-25\% {
-    --tw-gradient-via-position: 25%;
   }
   .via-50\% {
     --tw-gradient-via-position: 50%;
@@ -2343,9 +2305,6 @@
   .py-3 {
     padding-block: calc(var(--spacing) * 3);
   }
-  .py-3\.5 {
-    padding-block: calc(var(--spacing) * 3.5);
-  }
   .py-4 {
     padding-block: calc(var(--spacing) * 4);
   }
@@ -2408,9 +2367,6 @@
   }
   .pb-4 {
     padding-bottom: calc(var(--spacing) * 4);
-  }
-  .pl-0 {
-    padding-left: 0;
   }
   .pl-1 {
     padding-left: var(--spacing);
@@ -2506,9 +2462,6 @@
   .text-xs\! {
     font-size: var(--text-xs) !important;
     line-height: var(--tw-leading, var(--text-xs--line-height)) !important;
-  }
-  .\[font-size\:clamp\(var\(--text-4xl\)\,19cqw\,var\(--text-7xl\)\)\] {
-    font-size: clamp(var(--text-4xl), 19cqw, var(--text-7xl));
   }
   .text-\[1\.15em\] {
     font-size: 1.15em;
@@ -3686,13 +3639,6 @@
       }
     }
   }
-  .hover\:bg-gray-800 {
-    &:hover {
-      @media (hover: hover) {
-        background-color: var(--color-gray-800);
-      }
-    }
-  }
   .hover\:bg-primary-50 {
     &:hover {
       @media (hover: hover) {
@@ -3879,20 +3825,6 @@
     &:hover {
       @media (hover: hover) {
         color: var(--color-primary-400);
-      }
-    }
-  }
-  .hover\:text-primary-500 {
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-primary-500);
-      }
-    }
-  }
-  .hover\:text-primary-800 {
-    &:hover {
-      @media (hover: hover) {
-        color: var(--color-primary-800);
       }
     }
   }
@@ -4494,11 +4426,6 @@
       width: calc(var(--spacing) * 100);
     }
   }
-  .md\:w-\[400px\] {
-    @media (width >= 48rem) {
-      width: 400px;
-    }
-  }
   .md\:w-auto {
     @media (width >= 48rem) {
       width: auto;
@@ -4665,11 +4592,6 @@
       padding-right: calc(var(--spacing) * 120);
     }
   }
-  .md\:pr-\[480px\] {
-    @media (width >= 48rem) {
-      padding-right: 480px;
-    }
-  }
   .md\:pl-3 {
     @media (width >= 48rem) {
       padding-left: calc(var(--spacing) * 3);
@@ -4718,11 +4640,6 @@
       grid-column: span 12 / span 12;
     }
   }
-  .lg\:mt-0 {
-    @media (width >= 64rem) {
-      margin-top: 0;
-    }
-  }
   .lg\:mb-2 {
     @media (width >= 64rem) {
       margin-bottom: calc(var(--spacing) * 2);
@@ -4731,11 +4648,6 @@
   .lg\:flex {
     @media (width >= 64rem) {
       display: flex;
-    }
-  }
-  .lg\:grid {
-    @media (width >= 64rem) {
-      display: grid;
     }
   }
   .lg\:h-18 {
@@ -4751,11 +4663,6 @@
   .lg\:w-\[200px\] {
     @media (width >= 64rem) {
       width: 200px;
-    }
-  }
-  .lg\:w-\[450px\] {
-    @media (width >= 64rem) {
-      width: 450px;
     }
   }
   .lg\:w-auto {
@@ -4828,11 +4735,6 @@
       gap: calc(var(--spacing) * 6);
     }
   }
-  .lg\:gap-8 {
-    @media (width >= 64rem) {
-      gap: calc(var(--spacing) * 8);
-    }
-  }
   .lg\:justify-self-auto {
     @media (width >= 64rem) {
       justify-self: auto;
@@ -4888,11 +4790,6 @@
   .xl\:gap-4 {
     @media (width >= 80rem) {
       gap: calc(var(--spacing) * 4);
-    }
-  }
-  .xl\:gap-12 {
-    @media (width >= 80rem) {
-      gap: calc(var(--spacing) * 12);
     }
   }
   .xl\:tracking-wide {

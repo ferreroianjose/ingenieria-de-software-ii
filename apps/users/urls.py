@@ -61,6 +61,7 @@ urlpatterns = [
 
     path("manage/", views.staff_clientes, name="manage"),
     path("manage/rows/", views.user_rows, name="user_rows"),
+    path("manage/crear/", views.create_internal_user, name="create_internal_user"),
     path("manage/<int:user_id>/drawer/", views.user_detail_drawer, name="user_detail_drawer"),
     path("manage/<int:user_id>/editar/", views.update_user_admin, name="update_user_admin"),
     path("manage/<int:user_id>/eliminar/", views.delete_user, name="delete_user"),

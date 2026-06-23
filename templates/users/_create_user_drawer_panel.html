@@ -1,0 +1,91 @@
+<div class="flex h-full min-h-0 flex-col">
+	<form
+		id="user-create-drawer-form"
+		method="post"
+		action="{% url 'create_internal_user' %}"
+		hx-post="{% url 'create_internal_user' %}"
+		hx-target="#user-drawer-container"
+		hx-swap="innerHTML"
+		class="flex min-h-0 flex-1 flex-col overflow-hidden"
+	>
+		{% csrf_token %}
+
+		<header class="flex shrink-0 items-start justify-between gap-4 border-b border-gray-100 p-6 sm:p-8">
+			{% include 'partials/admin/_admin_modal_header.html' with modal_form=form modal_title=modal_title modal_subtitle=modal_subtitle %}
+			<button
+				type="button"
+				class="btn-auto shrink-0 rounded-full border-0 bg-gray-200 p-2 text-gray-800 shadow-fair-md hover:bg-gray-100 hover:text-primary-400"
+				@click="userDrawerOpen = false"
+				aria-label="Cerrar"
+			>
+				<svg class="size-7" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" aria-hidden="true">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+				</svg>
+			</button>
+		</header>
+
+		<div class="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-6 sm:p-8 [&_label]:mb-2 [&_label]:block [&_label]:text-sm [&_label]:font-bold [&_label]:text-gray-700">
+			<div class="space-y-6" x-data="{ rol: '{{ form.rol.value|default:'CLIENTE' }}' }">
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div>
+						<label for="{{ form.first_name.id_for_label }}">Nombre</label>
+						<input type="text" id="{{ form.first_name.id_for_label }}" name="{{ form.first_name.name }}" value="{{ form.first_name.value|default:'' }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+						{% if form.first_name.errors %}<p class="text-red-500 text-xs mt-1">{{ form.first_name.errors.0 }}</p>{% endif %}
+					</div>
+					<div>
+						<label for="{{ form.last_name.id_for_label }}">Apellido</label>
+						<input type="text" id="{{ form.last_name.id_for_label }}" name="{{ form.last_name.name }}" value="{{ form.last_name.value|default:'' }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+						{% if form.last_name.errors %}<p class="text-red-500 text-xs mt-1">{{ form.last_name.errors.0 }}</p>{% endif %}
+					</div>
+				</div>
+
+				<div>
+					<label for="{{ form.email.id_for_label }}">Correo electrónico</label>
+					<input type="email" id="{{ form.email.id_for_label }}" name="{{ form.email.name }}" value="{{ form.email.value|default:'' }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+					{% if form.email.errors %}<p class="text-red-500 text-xs mt-1">{{ form.email.errors.0 }}</p>{% endif %}
+				</div>
+
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div>
+						<label for="{{ form.dni.id_for_label }}">DNI</label>
+						<input type="text" id="{{ form.dni.id_for_label }}" name="{{ form.dni.name }}" value="{{ form.dni.value|default:'' }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
+						{% if form.dni.errors %}<p class="text-red-500 text-xs mt-1">{{ form.dni.errors.0 }}</p>{% endif %}
+					</div>
+					<div>
+						{% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value|date:'Y-m-d'|default:form.fecha_nacimiento.value|default:'' position="bottom right" required=True input_class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20 cursor-pointer" %}
+						{% if form.fecha_nacimiento.errors %}<p class="text-red-500 text-xs mt-1">{{ form.fecha_nacimiento.errors.0 }}</p>{% endif %}
+					</div>
+				</div>
+
+				<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+					<div>
+						<label for="{{ form.rol.id_for_label }}">Rol</label>
+						<select id="{{ form.rol.id_for_label }}" name="{{ form.rol.name }}" x-model="rol" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+							{% for val, lbl in form.fields.rol.choices %}
+							<option value="{{ val }}" {% if form.rol.value == val %}selected{% endif %}>{{ lbl }}</option>
+							{% endfor %}
+						</select>
+						{% if form.rol.errors %}<p class="text-red-500 text-xs mt-1">{{ form.rol.errors.0 }}</p>{% endif %}
+					</div>
+
+					<div x-show="rol === 'CLIENTE'" x-cloak>
+						<label for="{{ form.estado_constancia.id_for_label }}">Estado de constancia</label>
+						<select id="{{ form.estado_constancia.id_for_label }}" name="{{ form.estado_constancia.name }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+							{% for val, lbl in form.fields.estado_constancia.choices %}
+							<option value="{{ val }}" {% if form.estado_constancia.value == val %}selected{% endif %}>{{ lbl }}</option>
+							{% endfor %}
+						</select>
+						{% if form.estado_constancia.errors %}<p class="text-red-500 text-xs mt-1">{{ form.estado_constancia.errors.0 }}</p>{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<footer class="modal-footer relative shrink-0 overflow-hidden bg-gradient-to-b from-secondary-900 via-secondary-950 to-black p-6 sm:p-8">
+			{% include 'partials/ui/modals/_modal_footer_glows.html' %}
+			<button type="submit" class="btn-auto relative z-10 bg-primary-400 px-8 py-2.5 font-bold text-white hover:bg-primary-600 rounded-full transition-colors">
+				{{ modal_button_label }}
+			</button>
+		</footer>
+	</form>
+</div>

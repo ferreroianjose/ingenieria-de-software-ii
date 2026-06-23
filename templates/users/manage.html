@@ -7,12 +7,15 @@
     class="internal-page"
     x-data="{
         userDrawerOpen: false,
-        userDrawerUrlPattern: '{% url 'user_detail_drawer' 0 %}',
+        userCreateUrl: '{% url 'create_internal_user' %}',
+        userEditUrlPattern: '{% url 'user_detail_drawer' 0 %}',
         selectedUserId: null,
         selectedUserLabel: '',
-        openUserRow(id) {
-            const url = adminActionUrl(this.userDrawerUrlPattern, id);
-            if (url) openUserDrawer(url);
+        openSelectedUserDrawer() {
+            const url = this.selectedUserId
+                ? adminActionUrl(this.userEditUrlPattern, this.selectedUserId)
+                : this.userCreateUrl;
+            openUserDrawer(url);
         }
     }"
     x-init="initAdminSelectionClears.call(this, [

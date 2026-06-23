@@ -20,8 +20,13 @@ from .forms import (
     ProfileUpdateForm,
     TwoFactorForm,
     UserAdminUpdateForm,
+    InternalUserCreationForm,
 )
 from .search import USER_PAGE_SIZE, filter_users_queryset
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.template.loader import render_to_string
 
 User = get_user_model()
 
@@ -141,6 +146,86 @@ def register(request):
         {
             "form": form,
             "password_help_texts": "La contraseña debe tener 10 o más caracteres, incluyendo letras, números y al menos un carácter especial.",
+        },
+    )
+
+
+@staff_required
+def create_internal_user(request):
+    if request.method == "POST":
+        form = InternalUserCreationForm(request.POST, creator=request.user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_unusable_password()
+            user.save()
+
+            context = {
+                "email": user.email,
+                "domain": request.META.get("HTTP_HOST", "localhost:8000"),
+                "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                "user": user,
+                "token": default_token_generator.make_token(user),
+                "protocol": "https" if request.is_secure() else "http",
+            }
+            subject = "Configura tu contraseña para GYMFlow"
+            body = render_to_string("users/password_setup_email.html", context)
+
+            notification_service.notify(
+                recipient=user,
+                subject=subject,
+                message=body,
+                html_message=render_to_string(
+                    "users/password_setup_email_html.html", context
+                ),
+            )
+
+            msg = f"Usuario {user.get_full_name()} creado. Se ha enviado un correo para que establezca su contraseña."
+            if request.headers.get("HX-Request"):
+                return hx_ok(
+                    request,
+                    message=msg,
+                    close_modal="userDrawerOpen",
+                    refresh={
+                        "url": reverse("user_rows"),
+                        "target": "#users-table-panel",
+                    },
+                )
+            messages.success(request, msg)
+            return redirect("manage")
+        else:
+            if request.headers.get("HX-Request"):
+                user_type = "Usuario" if request.user.rol == "ADMIN" else "Cliente"
+                return render(
+                    request,
+                    "users/_create_user_drawer_panel.html",
+                    {
+                        "form": form,
+                        "modal_title": f"Crear {user_type}",
+                        "modal_subtitle": f"Completa los datos para dar de alta al nuevo {user_type.lower()}. Se enviará un correo para configurar la contraseña.",
+                        "modal_button_label": f"Crear {user_type.lower()}",
+                    },
+                )
+    else:
+        form = InternalUserCreationForm(creator=request.user)
+
+    if request.headers.get("HX-Request"):
+        user_type = "Usuario" if request.user.rol == "ADMIN" else "Cliente"
+        return render(
+            request,
+            "users/_create_user_drawer_panel.html",
+            {
+                "form": form,
+                "modal_title": f"Crear {user_type}",
+                "modal_subtitle": f"Completa los datos para dar de alta al nuevo {user_type.lower()}. Se enviará un correo para configurar la contraseña.",
+                "modal_button_label": f"Crear {user_type.lower()}",
+            },
+        )
+
+    return render(
+        request,
+        "users/create_internal_user.html",
+        {
+            "form": form,
         },
     )
 
@@ -271,6 +356,7 @@ def update_user_admin(request, user_id):
 from django.db.models import ProtectedError
 from apps.classes.htmx import hx_ok
 
+
 @admin_required
 def delete_user(request, user_id):
     user = get_object_or_404(User, pk=user_id)
@@ -296,7 +382,9 @@ def delete_user(request, user_id):
                     message="No se puede eliminar el usuario porque tiene historial en el sistema (pagos, inscripciones, etc).",
                     level="error",
                 )
-            messages.error(request, "No se puede eliminar el usuario porque tiene historial en el sistema.")
+            messages.error(
+                request,
+                "No se puede eliminar el usuario porque tiene historial en el sistema.",
+            )
             return redirect("manage")
     return render(request, "users/delete_user.html", {"user": user})
-
