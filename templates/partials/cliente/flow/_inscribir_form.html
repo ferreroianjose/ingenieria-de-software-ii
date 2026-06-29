@@ -29,9 +29,12 @@ Form de inscripción reusable. Espera en contexto:
         },
         get estaAgotada() {
             return this.cupoSeleccionado <= 0;
+        },
+        get permiteEspera() {
+            return this.tipo === 'MENSUAL';
         }
       }"
-      :action="estaAgotada ? '{% url 'classes:anotar_espera' info.clase.id %}' : '{% url 'classes:inscribir' info.clase.id %}'"
+      :action="(estaAgotada && permiteEspera) ? '{% url 'classes:anotar_espera' info.clase.id %}' : '{% url 'classes:inscribir' info.clase.id %}'"
       action="{% url 'classes:inscribir' info.clase.id %}"
       method="post" class="mt-4 flex flex-col gap-5"
       id="form-inscripcion-clase"
@@ -143,12 +146,13 @@ Form de inscripción reusable. Espera en contexto:
   </fieldset>
   {% endif %}
 
-  <template x-if="estaAgotada">
+  <template x-if="estaAgotada && permiteEspera">
     <div>
       <div class="mb-4">{% include 'partials/cliente/flow/_flash_item.html' with text='No hay cupos libres ahora. Si se libera uno, te avisamos: anotate en la lista de espera.' level='warning' %}</div>
       {% include 'partials/ui/buttons/_primary_button.html' with label="Anotarme en lista de espera" type="submit" class="w-full !py-3.5" %}
     </div>
   </template>
+
   <template x-if="!estaAgotada">
     <div>
       {% include 'partials/ui/buttons/_primary_button.html' with label="Continuar al pago" type="submit" class="w-full !py-3.5" %}

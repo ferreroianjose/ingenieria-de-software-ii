@@ -1335,6 +1335,18 @@ def cronograma_disciplina(request, disciplina_id):
         inicio = proxima_ocurrencia(c)
         cupo_resumen = cliente.resumen_cupo_inscripcion(c, usuario=request.user)
         hay_lugar = cupo_resumen["puede_agregar_reserva"]
+        puede_espera = cupo_resumen.get("puede_anotarse_espera", False)
+
+        if hay_lugar:
+            badge = "Hay lugar"
+            badge_tone = "ok"
+        elif puede_espera:
+            badge = "Lista de espera"
+            badge_tone = "wait"
+        else:
+            badge = "Agotada"
+            badge_tone = "danger"
+
         clases_info.append(
             {
                 "detalle_url": reverse("classes:detalle", args=[c.pk]),
@@ -1343,8 +1355,8 @@ def cronograma_disciplina(request, disciplina_id):
                 "duracion_minutos": c.duracion_minutos,
                 "lineas": [f"{c.sala.nombre} · {c.sala.sede.nombre}"],
                 "hay_lugar": hay_lugar,
-                "badge": "Hay lugar" if hay_lugar else "Lista de espera",
-                "badge_tone": "ok" if hay_lugar else "wait",
+                "badge": badge,
+                "badge_tone": badge_tone,
             }
         )
 

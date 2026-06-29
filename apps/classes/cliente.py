@@ -190,12 +190,15 @@ def resumen_cupo_inscripcion(clase, usuario=None):
     cupos = [o.get("cupo", 0) for o in periodos["CLASE_SUELTA"]] + [
         p.get("cupo", 0) for p in periodos["MENSUAL"]
     ]
+    puede_anotarse_espera = bool(periodos["MENSUAL"]) and any(
+        p.get("cupo", 0) <= 0 for p in periodos["MENSUAL"]
+    )
     return {
         "periodos_inscripcion": periodos,
         "hay_opciones": hay_opciones,
         "hay_cupo": hay_cupo,
         "puede_agregar_reserva": hay_opciones and hay_cupo,
-        "puede_anotarse_espera": hay_opciones and not hay_cupo,
+        "puede_anotarse_espera": puede_anotarse_espera,
         "cupo": max(cupos) if cupos else 0,
     }
 
@@ -431,6 +434,7 @@ def info_clase_para_usuario(clase, usuario, request=None):
         "inscripciones_activas": items,
         "tiene_inscripciones_activas": bool(items),
         "periodos_inscripcion": periodos_inscripcion,
+        "hay_opciones": cupo_resumen["hay_opciones"],
         "puede_agregar_reserva": cupo_resumen["puede_agregar_reserva"],
         "puede_anotarse_espera": cupo_resumen["puede_anotarse_espera"],
         "cupo": cupo_resumen["cupo"],

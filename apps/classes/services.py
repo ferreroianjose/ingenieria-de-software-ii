@@ -352,8 +352,7 @@ def validar_intencion_inscripcion(
             )
         if requiere_precola_suelta(periodo) and not permitir_sin_cupo:
             raise ReservaError(
-                "La reserva para no abonados abre el primer día del período. "
-                "Por ahora podés anotarte en lista de espera."
+                "La reserva para no abonados abre el primer día del período."
             )
         from apps.classes.ocurrencias import fecha_suelta_reservada
 
@@ -463,7 +462,7 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
                 periodo,
                 tipo,
                 fecha_clase=fecha_clase,
-                permitir_sin_cupo=True,
+                permitir_sin_cupo=False,
             )
             from apps.classes.ocurrencias import fecha_suelta_reservada
 
@@ -501,13 +500,8 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
             tipo=tipo,
         )
 
-        from apps.payments.periodos import requiere_precola_suelta
-
-        forzar_espera = (
-            tipo == Inscripcion.Tipo.CLASE_SUELTA and requiere_precola_suelta(periodo)
-        )
         cupo_actual = cupo_disponible(clase, fecha=fecha_clase, periodo=periodo) if tipo == Inscripcion.Tipo.CLASE_SUELTA else cupo_disponible(clase, periodo=periodo)
-        if cupo_actual > 0 and not forzar_espera:
+        if cupo_actual > 0:
             inscripcion = Inscripcion.objects.create(
                 **create_kwargs,
                 estado=Inscripcion.Estado.PENDIENTE_PAGO,

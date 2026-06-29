@@ -48,11 +48,11 @@
       {% include 'partials/cliente/flow/_inscripciones_activas.html' with info=info %}
     {% endif %}
 
-    {% if info.tiene_inscripciones_activas and info.puede_agregar_reserva or info.puede_anotarse_espera %}
+    {% if info.tiene_inscripciones_activas and info.hay_opciones %}
     <div class="cf-divider"></div>
     {% endif %}
 
-    {% if info.puede_agregar_reserva or info.puede_anotarse_espera %}
+    {% if info.hay_opciones %}
       {% if info.tiene_inscripciones_activas %}
       <p class="text-xs font-bold uppercase tracking-widest text-white/50 mb-2">Agregar otra reserva</p>
       {% endif %}

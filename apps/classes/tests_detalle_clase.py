@@ -202,19 +202,47 @@ class InfoClaseDetalleTests(TestCase):
     def test_sin_suelta_en_semana_pero_cupo_mensual_permite_inscribirse(self):
         """Regresión: lunes/martes sin fecha suelta en la semana ISO pero con cupo mensual."""
         # Forzamos que la única ocurrencia suelta de la semana ya pasó (miércoles+).
-        hoy = timezone.localdate()
-        dia_pasado = (hoy.weekday() - 1) % 7  # ayer en la semana, o domingo si hoy es lunes
-        self.clase.dia_semana = dia_pasado
-        self.clase.save(update_fields=["dia_semana"])
+        # Usamos un día a mediados del período para asegurar que haya clases futuras en el mes.
+        hoy_real = timezone.localdate()
+        hoy = hoy_real.replace(day=15)
+        
+        with patch('django.utils.timezone.localdate', return_value=hoy):
+            dia_pasado = (hoy.weekday() - 1) % 7  # ayer en la semana, o domingo si hoy es lunes
+            self.clase.dia_semana = dia_pasado
+            self.clase.save(update_fields=["dia_semana"])
 
-        resumen = resumen_cupo_inscripcion(self.clase, self.user)
-        info = info_clase_para_usuario(self.clase, self.user)
+            resumen = resumen_cupo_inscripcion(self.clase, self.user)
+            info = info_clase_para_usuario(self.clase, self.user)
 
         self.assertEqual(resumen["periodos_inscripcion"]["CLASE_SUELTA"], [])
         self.assertGreater(len(resumen["periodos_inscripcion"]["MENSUAL"]), 0)
         self.assertGreater(resumen["periodos_inscripcion"]["MENSUAL"][0]["cupo"], 0)
         self.assertTrue(resumen["puede_agregar_reserva"])
         self.assertEqual(info["puede_agregar_reserva"], resumen["puede_agregar_reserva"])
+
+    def test_puede_anotarse_espera_solo_aplica_a_mensual(self):
+        """Si solo hay clase suelta agotada, no se puede anotar en lista de espera."""
+        # Agotamos la clase
+        self.clase.cupo_maximo = 0
+        self.clase.save(update_fields=["cupo_maximo"])
+
+        # Sin opciones MENSUAL, debe dar falso aunque CLASE_SUELTA esté agotada
+        with patch('apps.classes.cliente.periodos_inscripcion_para_clase') as mock_periodos:
+            mock_periodos.return_value = {
+                "CLASE_SUELTA": [{"fecha_clase": self.fecha_suelta.isoformat(), "cupo": 0}],
+                "MENSUAL": []
+            }
+            resumen = resumen_cupo_inscripcion(self.clase, self.user)
+            self.assertFalse(resumen["puede_anotarse_espera"])
+
+            # Con opciones MENSUAL agotadas, debe dar verdadero
+            mock_periodos.return_value = {
+                "CLASE_SUELTA": [{"fecha_clase": self.fecha_suelta.isoformat(), "cupo": 0}],
+                "MENSUAL": [{"id": 1, "cupo": 0}]
+            }
+            resumen2 = resumen_cupo_inscripcion(self.clase, self.user)
+            self.assertTrue(resumen2["puede_anotarse_espera"])
+
 
 
 class DetalleClaseRenovacionAbonadoTests(TestCase):
@@ -362,13 +390,16 @@ class DetalleClaseVistaTests(TestCase):
 
     def test_cronograma_y_detalle_coinciden_en_cupo_mensual(self):
         """Paso 2 y paso 3 usan el mismo resumen de cupo (mensual sin suelta en semana)."""
-        hoy = timezone.localdate()
-        dia_pasado = (hoy.weekday() - 1) % 7
-        self.clase.dia_semana = dia_pasado
-        self.clase.save(update_fields=["dia_semana"])
+        hoy_real = timezone.localdate()
+        hoy = hoy_real.replace(day=15)
+        
+        with patch('django.utils.timezone.localdate', return_value=hoy):
+            dia_pasado = (hoy.weekday() - 1) % 7
+            self.clase.dia_semana = dia_pasado
+            self.clase.save(update_fields=["dia_semana"])
 
-        resumen = resumen_cupo_inscripcion(self.clase, self.user)
-        info = info_clase_para_usuario(self.clase, self.user)
+            resumen = resumen_cupo_inscripcion(self.clase, self.user)
+            info = info_clase_para_usuario(self.clase, self.user)
         self.assertTrue(resumen["puede_agregar_reserva"])
         self.assertEqual(info["puede_agregar_reserva"], resumen["puede_agregar_reserva"])
         self.assertFalse(resumen["puede_anotarse_espera"])
