@@ -38,7 +38,7 @@
       <div class="cf-meta">
         <p class="cf-meta__label">Dónde</p>
         <p class="cf-meta__value">{{ info.clase.sala.nombre }}</p>
-        <p class="text-xs text-white/50 mt-0.5">{{ info.clase.sala.sede.nombre }} · {{ info.clase.duracion_minutos }} min</p>
+        <p class="text-xs text-white/90 mt-0.5">{{ info.clase.sala.sede.nombre }} · {{ info.clase.duracion_minutos }} min</p>
       </div>
     </div>
 
@@ -54,11 +54,14 @@
 
     {% if info.hay_opciones %}
       {% if info.tiene_inscripciones_activas %}
-      <p class="text-xs font-bold uppercase tracking-widest text-white/50 mb-2">Agregar otra reserva</p>
+      <div class="flex items-center gap-3 mb-4">
+        <h3 class="text-xs font-black uppercase tracking-widest text-primary-300">Agregar otra reserva</h3>
+        <div class="h-px flex-1 bg-gradient-to-r from-primary-400/50 to-transparent"></div>
+      </div>
       {% endif %}
       {% include 'partials/cliente/flow/_inscribir_form.html' with info=info periodos_inscripcion_data=periodos_inscripcion_data %}
     {% elif not info.tiene_inscripciones_activas %}
-      <p class="text-sm text-white/60">No hay acciones disponibles en este momento.</p>
+      <p class="text-sm text-white">No hay acciones disponibles en este momento.</p>
     {% endif %}
   </div>
 </section>

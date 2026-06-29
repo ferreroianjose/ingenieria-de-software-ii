@@ -4,7 +4,7 @@ Form de inscripción reusable. Espera en contexto:
 - periodos_inscripcion_data: {CLASE_SUELTA: [...], MENSUAL: [...]}
 {% endcomment %}
 {% with suelta=periodos_inscripcion_data.CLASE_SUELTA mensual=periodos_inscripcion_data.MENSUAL %}
-<p class="text-sm text-white/70 mb-1">
+<p class="text-sm text-white/90 mb-1">
   {% if suelta and mensual %}
     {% if info.suelta_ventana_semana_iso %}
   Podés reservar <strong class="text-white/90">un día concreto en la semana en curso</strong>, o <strong class="text-white/90">todas las clases del mes</strong> para este horario.
@@ -42,7 +42,7 @@ Form de inscripción reusable. Espera en contexto:
   {% csrf_token %}
   <fieldset class="cf-choices border-0 p-0 m-0 min-w-0 @container">
     <legend class="sr-only">Tipo de reserva</legend>
-    <p class="cf-choice__label mb-2 !text-xs uppercase tracking-widest text-white/50">¿Cómo querés reservar?</p>
+    <p class="mb-3 text-sm font-medium text-white/80">¿Cómo querés reservar?</p>
     <div class="grid grid-cols-1 @lg:grid-cols-2 gap-3">
     {% if suelta %}
     <label class="cf-choice m-0">
@@ -72,10 +72,10 @@ Form de inscripción reusable. Espera en contexto:
   {% if suelta %}
   <fieldset data-inscripcion-fechas class="cf-choices border-0 p-0 m-0 min-w-0 cf-inscripcion-panel @container">
     <legend class="sr-only">Fecha de la clase</legend>
-    <p class="cf-choice__label mb-2 !text-xs uppercase tracking-widest text-white/50">Fecha</p>
+    <p class="mb-3 text-sm font-medium text-white/80">Fecha</p>
     {% if suelta|length == 1 %}
     <input type="hidden" name="fecha_clase" value="{{ suelta.0.fecha_clase }}" x-model="fechaClase">
-    <p class="text-sm text-white/80 flex items-center justify-between gap-2 w-full">
+    <p class="text-sm text-white flex items-center justify-between gap-2 w-full">
         <span class="{% if suelta.0.cupo <= 0 %}opacity-50{% endif %}">
             {% include 'partials/cliente/flow/_fecha_hora.html' with dt=suelta.0.fecha_dt %}
         </span>
@@ -111,7 +111,7 @@ Form de inscripción reusable. Espera en contexto:
   {% if mensual %}
   <fieldset data-inscripcion-periodos class="cf-choices border-0 p-0 m-0 min-w-0 cf-inscripcion-panel{% if suelta %} cf-inscripcion-panel--periodos{% endif %} @container">
     <legend class="sr-only">Mes</legend>
-    <p class="cf-choice__label mb-2 !text-xs uppercase tracking-widest text-white/50">¿Qué mes?</p>
+    <p class="mb-3 text-sm font-medium text-white/80">¿Qué mes?</p>
     {% if mensual|length == 1 %}
     <input type="hidden" name="periodo_id" value="{{ mensual.0.id }}" x-model="periodoId">
     <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 w-full {% if mensual.0.cupo <= 0 %}opacity-50{% endif %}">

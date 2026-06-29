@@ -5,9 +5,12 @@ Lista de inscripciones activas del usuario en una clase. Espera:
   `acciones` ({primaria, secundaria}).
 {% endcomment %}
 <section class="flex flex-col gap-3">
-  <p class="text-xs font-bold uppercase tracking-widest text-white/50">Tus reservas en esta clase</p>
+  <div class="flex items-center gap-3 mb-2">
+    <h3 class="text-xs font-black uppercase tracking-widest text-secondary-300">Tus reservas en esta clase</h3>
+    <div class="h-px flex-1 bg-gradient-to-r from-secondary-400/50 to-transparent"></div>
+  </div>
   {% for item in info.inscripciones_activas %}
-  <article class="rounded-2xl border border-white/10 bg-black/20 p-4">
+  <article class="rounded-2xl border border-[#5ce1e6]/30 bg-[#5ce1e6]/10 p-4 shadow-[inset_0_0_20px_rgba(92,225,230,0.05)]">
     <div class="flex items-start justify-between gap-3 mb-2">
       <div class="min-w-0">
         <p class="text-sm font-semibold text-white/90">
@@ -19,7 +22,7 @@ Lista de inscripciones activas del usuario en una clase. Espera:
             {{ item.etiqueta_principal }}
           {% endif %}
         </p>
-        <p class="text-xs text-white/55 mt-0.5">
+        <p class="text-xs font-medium text-white/90 mt-0.5">
           {% if item.tipo == 'CLASE_SUELTA' %}
             Clase individual
           {% else %}

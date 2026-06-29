@@ -31,7 +31,7 @@
       <p class="font-bold text-white">
         Tenés {{ credito_auto.cantidad }} crédito{{ credito_auto.cantidad|pluralize }} de {{ credito_auto.disciplina }} y se aplicará automáticamente.
       </p>
-      <p class="mt-2 text-white/70">
+      <p class="mt-2 text-white/90">
         {% if abono_resumen %}
         Cubre 1 de las {{ abono_resumen.cantidad_clases }} clases del mes. El total pasa de ${{ abono_resumen.precio_total }} a ${{ abono_resumen.precio_total_con_credito }}.
         {% elif credito_auto.cubre_total %}
@@ -44,13 +44,16 @@
     {% endif %}
 
     {% if abono_resumen %}
-    <p class="cf-kicker">Resumen</p>
-    <div class="rounded-2xl border border-primary-400/30 bg-primary-400/10 px-4 py-4 text-sm text-white/85 mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="text-xs font-black uppercase tracking-widest text-primary-300">Resumen</h3>
+      <div class="h-px flex-1 bg-gradient-to-r from-primary-400/50 to-transparent"></div>
+    </div>
+    <div class="rounded-2xl border border-primary-400/30 bg-primary-400/10 px-4 py-4 text-sm text-white mb-6">
       <p class="font-bold text-white">
         {{ abono_resumen.cantidad_clases }} clase{{ abono_resumen.cantidad_clases|pluralize }}
         el {{ clase.get_dia_semana_display }} {{ clase.hora_inicio|time:"H:i" }} hs en {{ periodo.nombre }}
       </p>
-      <p class="mt-2 text-white/70">
+      <p class="mt-2 text-white/90">
         ${{ abono_resumen.precio_unitario }} por clase ·
         {% if abono_resumen.precio_total_con_credito %}
         <span class="line-through opacity-50">${{ abono_resumen.precio_total }}</span> ${{ abono_resumen.precio_total_con_credito }}
@@ -58,7 +61,7 @@
         Total ${{ abono_resumen.precio_total }}
         {% endif %}
       </p>
-      <p class="mt-2 text-xs text-white/50">Con un solo pago en Mercado Pago confirmás todas esas clases.</p>
+      <p class="mt-2 text-xs text-white/90">Con un solo pago en Mercado Pago confirmás todas esas clases.</p>
     </div>
     <form action="{{ pagar_url }}" method="post" hx-boost="false">
       {% csrf_token %}
@@ -67,11 +70,14 @@
       {% include 'partials/ui/buttons/_primary_button.html' with label="Pagar con Mercado Pago" type="submit" class="w-full !py-3.5" %}
     </form>
     {% else %}
-    <p class="cf-kicker">Forma de pago</p>
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="text-xs font-black uppercase tracking-widest text-primary-300">Forma de pago</h3>
+      <div class="h-px flex-1 bg-gradient-to-r from-primary-400/50 to-transparent"></div>
+    </div>
     {% if credito_auto.aplica %}
-    <p class="text-sm text-white/60 mb-3">Confirmá con pago total; tu crédito se aplica automáticamente.</p>
+    <p class="text-sm text-white/90 mb-3">Confirmá con pago total; tu crédito se aplica automáticamente.</p>
     {% else %}
-    <p class="text-sm text-white/60 mb-3">Podés pagar el total o una seña del 50% y el saldo más adelante.</p>
+    <p class="text-sm text-white/90 mb-3">Podés pagar el total o una seña del 50% y el saldo más adelante.</p>
     {% endif %}
     <div class="mt-4 flex flex-col gap-3">
       <p class="text-xs text-white/45 text-center mb-1">Tené en cuenta que el cupo en la clase no se reserva hasta saldar el pago.</p>
