@@ -1290,6 +1290,31 @@ def browse_clases(request):
 def actividades(request):
     actividades_url = reverse("classes:actividades")
     session_urls = _flow_session_urls(request)
+
+    constancia_mensajes = {
+        "RECHAZADA": (
+            "Tu perfil no tiene una constancia aprobada, y no podes hacer "
+            "una reserva hasta tener una. Para tener una constancia "
+            "aprobada, acercate a un local para presentarla."
+        ),
+        "PENDIENTE": (
+            "Tu perfil tiene una constancia pendiente. Espera a que un "
+            "administrador apruebe tu constancia para hacer una reserva."
+        ),
+    }
+    constancia_bloqueo = constancia_mensajes.get(request.user.estado_constancia)
+    if constancia_bloqueo:
+        return render(
+            request,
+            "classes/actividades.html",
+            {
+                "constancia_bloqueo": constancia_bloqueo,
+                "flow_step": "actividades",
+                "flow_title": "Actividades",
+                **build_flow_stepper_context("actividades", actividades_url=actividades_url),
+            },
+        )
+
     disciplinas = list(cliente.disciplinas_con_clases())
     for disciplina in disciplinas:
         disciplina.cronograma_url = reverse(

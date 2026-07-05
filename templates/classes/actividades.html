@@ -3,7 +3,9 @@
 {% block title %}Actividades{% endblock %}
 
 {% block flow_main %}
-{% if not disciplinas %}
+{% if constancia_bloqueo %}
+{% include 'partials/cliente/flow/_empty.html' with message=constancia_bloqueo %}
+{% elif not disciplinas %}
 {% include 'partials/cliente/flow/_empty.html' with message="No hay actividades disponibles en este momento." %}
 {% else %}
 <section class="cf-surface">
