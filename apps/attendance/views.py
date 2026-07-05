@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Q
-from decimal import Decimal
+from django.db import transaction
 from datetime import date
 import django.core.signing as signing
 
@@ -12,8 +12,10 @@ from apps.core.access import staff_required
 from apps.users.models import User
 from apps.classes.models import Inscripcion, InscripcionOcurrencia
 from apps.attendance.models import Asistencia
-from apps.payments.models import Pago, PagoInscripcion
-from apps.payments.inscripcion_pago import resumen_pago_inscripcion, aplicar_pago_aprobado
+from apps.payments.inscripcion_pago import (
+    registrar_pago_efectivo,
+    resumen_pago_inscripcion,
+)
 
 
 @login_required
@@ -100,6 +102,11 @@ def _get_client_detail_context(client_user, qr_token=None):
         client_user.telefono_emergencia and client_user.telefono_emergencia.strip()
     )
 
+    # Pre-cálculo del bloqueo de ingreso (constancia menor o teléfono faltante).
+    # Conviene en contexto porque Django templates no admiten expresiones booleanas
+    # con `and`/`or` dentro de {% with %}.
+    bloqueo_acceso = (es_menor and client_user.estado_constancia != "APROBADA") or not tiene_telefono_emergencia
+
     # Clases/ocurrencias del día de hoy
     today = timezone.localdate()
     ocurrencias_hoy = InscripcionOcurrencia.objects.filter(
@@ -140,6 +147,7 @@ def _get_client_detail_context(client_user, qr_token=None):
         "edad": edad,
         "es_menor": es_menor,
         "tiene_telefono_emergencia": tiene_telefono_emergencia,
+        "bloqueo_acceso": bloqueo_acceso,
         "ocurrencias_detalle": ocurrencias_detalle,
         "today": today,
         "qr_used": bool(qr_token),
@@ -228,52 +236,67 @@ def cargar_telefono(request):
     )
 
 
+def _bloqueo_para_ingresar(client_user):
+    """Devuelve el motivo de bloqueo si el cliente no puede ingresar, o None si está habilitado."""
+    edad = _calcular_edad(client_user.fecha_nacimiento)
+    es_menor = edad is not None and edad < 18
+    tiene_telefono_emergencia = bool(
+        client_user.telefono_emergencia and client_user.telefono_emergencia.strip()
+    )
+
+    if es_menor and client_user.estado_constancia != "APROBADA":
+        return "El menor no tiene una constancia médica aprobada."
+    if not tiene_telefono_emergencia:
+        return "No se ha registrado un teléfono de emergencia."
+    return None
+
+
+def _registrar_asistencia_si_falta(inscripcion, *, metodo, registrado_por):
+    """Crea la Asistencia del día si no existía. Idempotente por inscripción/día."""
+    today = timezone.localdate()
+    if Asistencia.objects.filter(
+        inscripcion=inscripcion, fecha_hora_ingreso__date=today
+    ).exists():
+        return None
+    return Asistencia.objects.create(
+        inscripcion=inscripcion,
+        metodo=metodo,
+        registrado_por=registrado_por,
+    )
+
+
+def _responder_detalle_cliente(request, user_id):
+    """Re-renderiza la ficha del cliente reutilizando la vista de detalle."""
+    mutable_get = request.GET.copy()
+    mutable_get["user_id"] = user_id
+    request.GET = mutable_get
+    return detalle_cliente_asistencia(request)
+
+
 @staff_required
 def registrar_asistencia(request):
     """Registra la asistencia para una inscripción y re-renderiza la ficha del cliente."""
     if request.method != "POST":
         return HttpResponse("Método no permitido", status=405)
 
-    inscripcion_id = request.POST.get("inscripcion_id")
+    inscripcion = get_object_or_404(Inscripcion, id=request.POST.get("inscripcion_id"))
     metodo = request.POST.get("metodo", "MANUAL")
-    
-    inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id)
 
-    # Validaciones estrictas de backend
-    client_user = inscripcion.usuario
-    edad = _calcular_edad(client_user.fecha_nacimiento)
-    es_menor = edad is not None and edad < 18
-    tiene_telefono_emergencia = bool(client_user.telefono_emergencia and client_user.telefono_emergencia.strip())
-
-    if es_menor and client_user.estado_constancia != 'APROBADA':
-        return HttpResponse("Asistencia bloqueada: El menor no tiene una constancia médica aprobada.", status=403)
-    
-    if not tiene_telefono_emergencia:
-        return HttpResponse("Asistencia bloqueada: No se ha registrado un teléfono de emergencia.", status=403)
+    motivo_bloqueo = _bloqueo_para_ingresar(inscripcion.usuario)
+    if motivo_bloqueo:
+        return HttpResponse(f"Asistencia bloqueada: {motivo_bloqueo}", status=403)
 
     resumen_pago = resumen_pago_inscripcion(inscripcion)
     if resumen_pago["mostrar_pagar"] or resumen_pago["mostrar_pagar_saldo"]:
-        return HttpResponse("Asistencia bloqueada: El cliente registra deuda para esta inscripción.", status=403)
-
-    # Evitar duplicados del mismo día
-    today = timezone.localdate()
-    ya_registrada = Asistencia.objects.filter(
-        inscripcion=inscripcion,
-        fecha_hora_ingreso__date=today
-    ).exists()
-
-    if not ya_registrada:
-        Asistencia.objects.create(
-            inscripcion=inscripcion,
-            metodo=metodo,
-            registrado_por=request.user
+        return HttpResponse(
+            "Asistencia bloqueada: El cliente registra deuda para esta inscripción.",
+            status=403,
         )
 
-    # Recargar el detalle del cliente directamente
-    mutable_get = request.GET.copy()
-    mutable_get["user_id"] = inscripcion.usuario_id
-    request.GET = mutable_get
-    return detalle_cliente_asistencia(request)
+    _registrar_asistencia_si_falta(
+        inscripcion, metodo=metodo, registrado_por=request.user
+    )
+    return _responder_detalle_cliente(request, inscripcion.usuario_id)
 
 
 @staff_required
@@ -282,58 +305,58 @@ def anular_asistencia(request):
     if request.method != "POST":
         return HttpResponse("Método no permitido", status=405)
 
-    inscripcion_id = request.POST.get("inscripcion_id")
-    inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id)
-
+    inscripcion = get_object_or_404(Inscripcion, id=request.POST.get("inscripcion_id"))
     today = timezone.localdate()
     Asistencia.objects.filter(
-        inscripcion=inscripcion,
-        fecha_hora_ingreso__date=today
+        inscripcion=inscripcion, fecha_hora_ingreso__date=today
     ).delete()
-
-    # Recargar el detalle del cliente directamente
-    mutable_get = request.GET.copy()
-    mutable_get["user_id"] = inscripcion.usuario_id
-    request.GET = mutable_get
-    return detalle_cliente_asistencia(request)
+    return _responder_detalle_cliente(request, inscripcion.usuario_id)
 
 
 @staff_required
 def cobrar_efectivo_recepcion(request):
-    """Registra un pago en efectivo por el saldo restante en recepción."""
+    """Registra un pago en efectivo por el saldo pendiente. Monto calculado en backend."""
     if request.method != "POST":
         return HttpResponse("Método no permitido", status=405)
 
-    inscripcion_id = request.POST.get("inscripcion_id")
-    monto_str = request.POST.get("monto")
-    
-    inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id)
-    monto = Decimal(monto_str)
+    inscripcion = get_object_or_404(Inscripcion, id=request.POST.get("inscripcion_id"))
+    resumen_pago = resumen_pago_inscripcion(inscripcion)
+    saldo = resumen_pago["saldo_restante"]
+    if saldo <= 0:
+        return HttpResponse("La inscripción no tiene saldo pendiente.", status=400)
 
-    # Crear Pago en efectivo
-    pago = Pago.objects.create(
-        usuario=inscripcion.usuario,
-        periodo=inscripcion.periodo,
-        monto=monto,
-        metodo=Pago.Metodo.EFECTIVO,
-        estado=Pago.Estado.COMPLETADO
-    )
+    registrar_pago_efectivo(inscripcion, saldo)
+    return _responder_detalle_cliente(request, inscripcion.usuario_id)
 
-    # Crear Detalle PagoInscripcion
-    PagoInscripcion.objects.create(
-        pago=pago,
-        inscripcion=inscripcion,
-        monto_applied=monto
-    )
 
-    # Aplicar lógica de pago
-    aplicar_pago_aprobado(pago)
+@staff_required
+def cobrar_saldo_e_ingresar(request):
+    """Cobra el saldo en efectivo y registra la asistencia en una única operación.
 
-    # Recargar el detalle del cliente directamente
-    mutable_get = request.GET.copy()
-    mutable_get["user_id"] = inscripcion.usuario_id
-    request.GET = mutable_get
-    return detalle_cliente_asistencia(request)
+    Atajo de recepción para el caso típico de un cliente que llega a su clase
+    con la seña ya pagada: en lugar de ir a Pagos, marcar saldada y volver a
+    Asistencia, todo se hace con un solo click.
+    """
+    if request.method != "POST":
+        return HttpResponse("Método no permitido", status=405)
+
+    inscripcion = get_object_or_404(Inscripcion, id=request.POST.get("inscripcion_id"))
+    motivo_bloqueo = _bloqueo_para_ingresar(inscripcion.usuario)
+    if motivo_bloqueo:
+        return HttpResponse(f"Asistencia bloqueada: {motivo_bloqueo}", status=403)
+
+    resumen_pago = resumen_pago_inscripcion(inscripcion)
+    saldo = resumen_pago["saldo_restante"]
+    if saldo <= 0:
+        return HttpResponse("La inscripción no tiene saldo pendiente.", status=400)
+
+    with transaction.atomic():
+        registrar_pago_efectivo(inscripcion, saldo)
+        _registrar_asistencia_si_falta(
+            inscripcion, metodo="MANUAL", registrado_por=request.user
+        )
+
+    return _responder_detalle_cliente(request, inscripcion.usuario_id)
 
 
 @staff_required
@@ -347,13 +370,7 @@ def aprobar_constancia_recepcion(request):
     
     cliente.estado_constancia = "APROBADA"
     cliente.save(update_fields=["estado_constancia"])
-
-    # Recargar el detalle del cliente
-    # Recargar el detalle del cliente directamente
-    mutable_get = request.GET.copy()
-    mutable_get["user_id"] = cliente.id
-    request.GET = mutable_get
-    return detalle_cliente_asistencia(request)
+    return _responder_detalle_cliente(request, cliente.id)
 
 
 @staff_required
@@ -364,14 +381,9 @@ def deshacer_constancia_recepcion(request):
 
     user_id = request.POST.get("user_id")
     cliente = get_object_or_404(User, id=user_id, rol="CLIENTE")
-    
     cliente.estado_constancia = "PENDIENTE"
     cliente.save(update_fields=["estado_constancia"])
-
-    mutable_get = request.GET.copy()
-    mutable_get["user_id"] = cliente.id
-    request.GET = mutable_get
-    return detalle_cliente_asistencia(request)
+    return _responder_detalle_cliente(request, cliente.id)
 
 from datetime import timedelta
 

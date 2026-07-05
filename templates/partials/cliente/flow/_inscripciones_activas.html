@@ -1,0 +1,77 @@
+{% comment %}
+Lista de inscripciones activas del usuario en una clase. Espera:
+- info.inscripciones_activas: lista de items con `inscripcion`, `tipo`,
+  `fecha_dt`, `periodo`, `etiqueta_principal`, `estado_badge`, `mensaje`,
+  `acciones` ({primaria, secundaria}).
+{% endcomment %}
+<section class="flex flex-col gap-3">
+  <div class="flex items-center gap-3 mb-2">
+    <h3 class="text-xs font-black uppercase tracking-widest text-secondary-300">Tus reservas en esta clase</h3>
+    <div class="h-px flex-1 bg-gradient-to-r from-secondary-400/50 to-transparent"></div>
+  </div>
+  {% for item in info.inscripciones_activas %}
+  <article class="rounded-2xl border border-[#5ce1e6]/30 bg-[#5ce1e6]/10 p-4 shadow-[inset_0_0_20px_rgba(92,225,230,0.05)]">
+    <div class="flex items-start justify-between gap-3 mb-2">
+      <div class="min-w-0">
+        <p class="text-sm font-semibold text-white/90">
+          {% if item.tipo == 'CLASE_SUELTA' and item.fecha_dt %}
+            {% include 'partials/cliente/flow/_fecha_hora.html' with dt=item.fecha_dt %}
+          {% elif item.tipo == 'MENSUAL' and item.periodo %}
+            Mensualidad · {{ item.periodo.nombre }}
+          {% else %}
+            {{ item.etiqueta_principal }}
+          {% endif %}
+        </p>
+        <p class="text-xs font-medium text-white/90 mt-0.5">
+          {% if item.tipo == 'CLASE_SUELTA' %}
+            Clase individual
+          {% else %}
+            Todas las clases de este horario del mes
+          {% endif %}
+        </p>
+      </div>
+      {% include 'partials/ui/_status_badge.html' with level=item.estado_badge.level label=item.estado_badge.label %}
+    </div>
+
+    {% if item.mensaje %}
+    <div class="mb-3">
+      {% include 'partials/cliente/flow/_flash_item.html' with text=item.mensaje level='warning' %}
+    </div>
+    {% endif %}
+
+    {% with primaria=item.acciones.primaria secundaria=item.acciones.secundaria %}
+    {% if primaria or secundaria %}
+    <div class="grid grid-cols-1 {% if primaria and secundaria %}sm:grid-cols-2{% endif %} gap-3 [&_form]:!w-full [&_button]:!w-full">
+      {% if primaria %}
+        {% if primaria.method == 'get' %}
+        <a href="{{ primaria.url }}" class="cf-cta btn-auto w-full justify-center py-3 text-center">{{ primaria.label }} →</a>
+        {% else %}
+        <form action="{{ primaria.url }}" method="post" hx-boost="false"
+              {% if primaria.confirm_message %}data-confirm="{{ primaria.confirm_message|escape }}"
+              data-confirm-variant="{{ primaria.variant|default:'danger' }}"
+              data-confirm-title="{{ primaria.confirm_title|escape }}"
+              data-confirm-label="{{ primaria.confirm_label|escape }}"
+              data-confirm-cancel-label="{{ primaria.confirm_cancel_label|default:'No, volver'|escape }}"{% endif %}>
+          {% csrf_token %}
+          <input type="hidden" name="destino" value="detalle">
+          {% include 'partials/ui/buttons/_primary_button.html' with label=primaria.label type="submit" class="w-full !py-3" %}
+        </form>
+        {% endif %}
+      {% endif %}
+      {% if secundaria %}
+        {% if secundaria.method == 'get' %}
+        <a href="{{ secundaria.url }}" class="cf-cta btn-auto w-full justify-center py-3 text-center">{{ secundaria.label }}</a>
+        {% else %}
+        <form action="{{ secundaria.url }}" method="post" hx-boost="false">
+          {% csrf_token %}
+          <input type="hidden" name="destino" value="detalle">
+          {% include 'partials/cliente/flow/_confirm_destructive_btn.html' with label=secundaria.label confirm_title=secundaria.confirm_title confirm_message=secundaria.confirm_message confirm_label=secundaria.confirm_label confirm_cancel_label=secundaria.confirm_cancel_label variant=secundaria.variant class='w-full !py-3' %}
+        </form>
+        {% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+    {% endwith %}
+  </article>
+  {% endfor %}
+</section>

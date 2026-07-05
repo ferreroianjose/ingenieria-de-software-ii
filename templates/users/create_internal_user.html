@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear {% if user.rol == 'ADMIN' %}Usuario{% else %}Cliente{% endif %}{% endblock %}
+
+{% block content %}
+<div class="internal-page">
+    <div class="internal-page__content flex flex-col gap-6 max-w-2xl mx-auto mt-8">
+        <h1 class="text-2xl font-bold">Crear {% if user.rol == 'ADMIN' %}Usuario{% else %}Cliente{% endif %}</h1>
+        <p class="text-gray-600">Completa los datos para dar de alta al nuevo usuario. Se enviará un correo para configurar la contraseña.</p>
+
+        <form method="post" class="flex flex-col gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="text-red-500 text-sm">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col">
+                    <label for="{{ form.first_name.id_for_label }}">Nombre</label>
+                    <input type="text" name="{{ form.first_name.name }}" id="{{ form.first_name.id_for_label }}" value="{{ form.first_name.value|default:'' }}" required>
+                    {% if form.first_name.errors %}<p class="text-red-500 text-xs">{{ form.first_name.errors }}</p>{% endif %}
+                </div>
+                <div class="flex flex-col">
+                    <label for="{{ form.last_name.id_for_label }}">Apellido</label>
+                    <input type="text" name="{{ form.last_name.name }}" id="{{ form.last_name.id_for_label }}" value="{{ form.last_name.value|default:'' }}" required>
+                    {% if form.last_name.errors %}<p class="text-red-500 text-xs">{{ form.last_name.errors }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="{{ form.email.id_for_label }}">Correo electrónico</label>
+                <input type="email" name="{{ form.email.name }}" id="{{ form.email.id_for_label }}" value="{{ form.email.value|default:'' }}" required>
+                {% if form.email.errors %}<p class="text-red-500 text-xs">{{ form.email.errors }}</p>{% endif %}
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col">
+                    <label for="{{ form.dni.id_for_label }}">DNI</label>
+                    <input type="text" name="{{ form.dni.name }}" id="{{ form.dni.id_for_label }}" value="{{ form.dni.value|default:'' }}" required>
+                    {% if form.dni.errors %}<p class="text-red-500 text-xs">{{ form.dni.errors }}</p>{% endif %}
+                </div>
+                <div class="flex flex-col">
+                    {% include 'partials/ui/_datepicker.html' with field_name=form.fecha_nacimiento.name label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" required=True %}
+                    {% if form.fecha_nacimiento.errors %}<p class="text-red-500 text-xs mt-1">{{ form.fecha_nacimiento.errors }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="flex flex-col">
+                <label for="{{ form.rol.id_for_label }}">Rol</label>
+                {{ form.rol }}
+                {% if form.rol.errors %}<p class="text-red-500 text-xs">{{ form.rol.errors }}</p>{% endif %}
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <a href="{% url 'manage' %}" class="btn-auto border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 px-6 rounded-full font-bold text-sm transition-colors">Cancelar</a>
+                <button type="submit" class="btn-auto shrink-0 bg-primary-400 hover:bg-primary-600 text-white py-2 px-6 rounded-full font-bold text-sm transition-colors">Crear usuario</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

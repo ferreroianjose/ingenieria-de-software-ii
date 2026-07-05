@@ -21,6 +21,8 @@
   </div>
 {% endblock %}
 
+
+
 {% block auth_primary_button %}
   {% include 'partials/ui/buttons/_primary_button.html' with label="Iniciar sesión" %}
 {% endblock %}
@@ -35,5 +37,10 @@
        hx-push-url="true">
        Registrate
     </a>
+  </p>
+  <p class="mt-4">
+      <a href="{% url 'password_reset' %}">
+          ¿Olvidaste tu contraseña?
+      </a>
   </p>
 {% endblock %}

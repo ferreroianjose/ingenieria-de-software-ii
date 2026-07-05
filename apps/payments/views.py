@@ -97,12 +97,19 @@ def detalle_pago_cliente(request):
 
     today = date.today()
 
-    # 1. Inscripciones activas (período vigente o futuro, no canceladas)
+    # 1. Inscripciones activas (período vigente o futuro, no canceladas).
+    # Excluimos PENDIENTE_PAGO sin ningún pago completado: son efímeras y el cron
+    # de vencimientos las cancela tras el tiempo de gracia. Sólo dejamos las que
+    # tienen seña paga.
+    from apps.payments.inscripcion_pago import q_inscripcion_con_pago_completado
     active_inscriptions = Inscripcion.objects.filter(
         usuario=client_user,
-        periodo__fecha_fin_periodo__gte=today
+        periodo__fecha_fin_periodo__gte=today,
     ).exclude(
-        estado=Inscripcion.Estado.CANCELADA
+        estado=Inscripcion.Estado.CANCELADA,
+    ).exclude(
+        Q(estado=Inscripcion.Estado.PENDIENTE_PAGO)
+        & ~q_inscripcion_con_pago_completado(),
     ).select_related(
         "clase__disciplina", "clase__profesor", "clase__sala__sede", "periodo"
     ).order_by("-fecha_inscripcion")
@@ -111,13 +118,11 @@ def detalle_pago_cliente(request):
     for ins in active_inscriptions:
         resumen_credito = resumen_credito_automatico(ins, client_user)
         resumen_pago = resumen_pago_inscripcion(ins)
-        opciones = opciones_pago_inscripcion(ins, client_user)
 
         active_inscriptions_data.append({
             "object": ins,
             "resumen_credito": resumen_credito,
             "resumen_pago": resumen_pago,
-            "opciones": opciones,
         })
 
     # 2. Historial de inscripciones (período vencido o canceladas)
@@ -177,10 +182,18 @@ def detalle_pago_cliente(request):
 @staff_required
 @require_POST
 def registrar_pago_sucursal(request, inscripcion_id):
-    """Registra el cobro en efectivo/sucursal de una inscripción."""
-    from django.db import transaction
+    """Registra el cobro presencial en efectivo del saldo pendiente de una inscripción.
+
+    En recepción ya no se ofrecen modalidades (Total/Seña): tras el filtro de
+    Pagos > Activas el único caso visible es "seña paga, falta cobrar saldo".
+    El monto se calcula server-side desde `resumen_pago_inscripcion` para que
+    no dependa de input del cliente.
+    """
     from apps.payments.cancelaciones import aplicar_credito_automatico
-    from apps.payments.inscripcion_pago import aplicar_pago_aprobado, PagoInscripcion
+    from apps.payments.inscripcion_pago import (
+        registrar_pago_efectivo,
+        resumen_pago_inscripcion,
+    )
     from apps.classes.htmx import hx_ok
 
     inscripcion = get_object_or_404(Inscripcion, id=inscripcion_id)
@@ -191,13 +204,11 @@ def registrar_pago_sucursal(request, inscripcion_id):
             level="info",
         )
 
-    modalidad = request.POST.get("modalidad", "TOTAL").upper()
     client_user = inscripcion.usuario
 
-    # 1. Aplicar créditos del cliente si existen
-    monto_credito = Decimal("0")
+    # 1. Aplicar créditos del cliente si existen (puede saldarla sin cobrar nada).
     try:
-        monto_credito = aplicar_credito_automatico(inscripcion, client_user)
+        aplicar_credito_automatico(inscripcion, client_user)
     except Exception:
         pass
 
@@ -210,39 +221,17 @@ def registrar_pago_sucursal(request, inscripcion_id):
             trigger="refreshClientProfile",
         )
 
-    # 2. Calcular monto restante a pagar según modalidad
-    try:
-        monto = monto_a_cobrar(inscripcion, modalidad)
-    except ValueError as exc:
-        return hx_ok(
-            request,
-            message=str(exc),
-            level="error",
-        )
-
-    if monto <= 0:
+    # 2. Cobrar el saldo restante en efectivo.
+    saldo = resumen_pago_inscripcion(inscripcion)["saldo_restante"]
+    if saldo <= 0:
         return hx_ok(
             request,
             message="No hay saldo pendiente para cobrar.",
             level="info",
         )
 
-    # 3. Crear el pago en efectivo y completarlo
     try:
-        with transaction.atomic():
-            pago = Pago.objects.create(
-                usuario=client_user,
-                periodo=inscripcion.periodo,
-                monto=monto,
-                metodo=Pago.Metodo.EFECTIVO,
-                estado=Pago.Estado.COMPLETADO
-            )
-            PagoInscripcion.objects.create(
-                pago=pago,
-                inscripcion=inscripcion,
-                monto_aplicado=monto
-            )
-            aplicar_pago_aprobado(pago)
+        registrar_pago_efectivo(inscripcion, saldo)
     except Exception as exc:
         return hx_ok(
             request,
@@ -252,7 +241,7 @@ def registrar_pago_sucursal(request, inscripcion_id):
 
     return hx_ok(
         request,
-        message=f"Pago en efectivo de ${monto} registrado con éxito.",
+        message=f"Pago en efectivo de ${saldo} registrado con éxito.",
         level="success",
         trigger="refreshClientProfile",
     )

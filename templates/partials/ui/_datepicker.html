@@ -20,8 +20,8 @@ Air Datepicker v3 widget:
 <div class="flex flex-col"
      x-data="{
          init() {
-             var displayEl = document.getElementById('dp_{{ field_name }}');
-             var hiddenEl  = document.getElementById('dp_hidden_{{ field_name }}');
+             var displayEl = this.$el.querySelector('#dp_{{ field_name }}');
+             var hiddenEl  = this.$el.querySelector('#dp_hidden_{{ field_name }}');
              if (!displayEl || displayEl._adp) return;
 
              var locale = {
@@ -68,6 +68,7 @@ Air Datepicker v3 widget:
                  style.id = 'adp-theme';
                  style.textContent = [
                      '.air-datepicker {',
+                     '  z-index: 9999 !important;',
                      '  --adp-font-family: var(--font-sans);',
                      '  --adp-accent-color: var(--color-primary-400);',
                      '  --adp-cell-background-color-selected: var(--color-primary-400);',
@@ -85,7 +86,7 @@ Air Datepicker v3 widget:
      }">
 <label for="dp_{{ field_name }}" class="text-nowrap">{{ label }}</label>
 <input id="dp_{{ field_name }}" type="text"
-       class="text-center cursor-pointer w-36"
+       class="{% if input_class %}{{ input_class }}{% else %}text-center cursor-pointer w-36{% endif %}"
        placeholder="{{ placeholder|default:'dd/mm/aaaa' }}"
        {% if required %}required{% endif %}
        readonly>

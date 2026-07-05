@@ -1,1 +1,5 @@
-{% include 'partials/admin/_admin_selection_toolbar.html' with selected_expr='selectedUserId' label_expr='selectedUserLabel' empty_hint='Seleccioná un usuario para editarlo o eliminarlo.' actions_template='partials/users/_user_actions.html' %}
+{% if user.rol == "ADMIN" %}
+{% include "partials/admin/_admin_selection_toolbar.html" with selected_expr="selectedUserId" label_expr="selectedUserLabel" empty_hint="Usá los botones para crear un usuario o seleccioná una fila para editar o eliminar." actions_template="partials/users/_user_actions.html" %}
+{% else %}
+{% include "partials/admin/_admin_selection_toolbar.html" with selected_expr="selectedUserId" label_expr="selectedUserLabel" empty_hint="Usá los botones para crear un cliente o seleccioná una fila para editar o eliminar." actions_template="partials/users/_user_actions.html" %}
+{% endif %}

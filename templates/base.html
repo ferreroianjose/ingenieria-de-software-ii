@@ -8,17 +8,7 @@
 	{% block page_chrome_head %}
 	<meta name="color-scheme" id="meta-color-scheme" content="{% firstof color_scheme 'dark' %}">
 	{% endblock %}
-	{% block page_chrome_boot %}
-	<style id="page-chrome-boot">
-		html,
-		body {
-			color-scheme: {% firstof color_scheme 'dark' %};
-		}
-		#page-canvas {
-			{% firstof page_background '' %}
-		}
-	</style>
-	{% endblock %}
+	{% block page_chrome_head_extra %}{% endblock %}
 	<title>
 		SIEMPRE GYM - {% block title %}SIEMPRE en movimiento{% endblock %}
 	</title>
@@ -198,9 +188,8 @@
 
 	  /* ── Light Sidebar Overrides ─────────────────────────────────────────── */
 	  #sidebar.sidebar--light {
-	    background:
-	      linear-gradient(-135deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0) 25%),
-	      #ffffff;
+	    background-color: var(--theme-color, #ffffff);
+	    background-image: linear-gradient(-135deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0) 25%);
 	    box-shadow:
 	      inset -1px -1px 0 0 rgba(0, 0, 0, 0.04),
 	      inset  1px  1px 0 0 rgba(0, 0, 0, 0.02),
@@ -330,9 +319,8 @@
 
 	  /* ── Light Topbar Overrides ─────────────────────────────────────────── */
 	  #topbar-mobile.topbar--light {
-	    background:
-	      linear-gradient(-135deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0) 25%),
-	      #ffffff;
+	    background-color: var(--theme-color, #ffffff);
+	    background-image: linear-gradient(-135deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0) 25%);
 	    box-shadow:
 	      inset -1px -1px 0 0 rgba(0, 0, 0, 0.04),
 	      inset  1px  0 0 0 rgba(0, 0, 0, 0.02),
@@ -439,7 +427,7 @@
 <body x-data="{ mobileOpen: false, desktopCollapsed: JSON.parse(localStorage.getItem('desktopCollapsed') || 'false') }"
 	x-init="$watch('desktopCollapsed', value => localStorage.setItem('desktopCollapsed', JSON.stringify(value)))"
 	:class="{ 'is-collapsed': desktopCollapsed }"
-	class="min-h-svh flex flex-col overflow-x-hidden relative bg-primary-900">
+	class="min-h-svh flex flex-col overflow-x-hidden relative">
 	{% block header %}
 	{% block sidebar_variant_block %}
 	{% include 'partials/layout/_sidebar.html' with sidebar_variant=sidebar_variant %}
@@ -449,6 +437,25 @@
 
 	<div id="page-scope" class="contents" {% block page_alpine %}{% endblock %}>
 		<main id="main-content" class="flex-1 flex flex-col min-h-0">
+			{% block page_chrome_dynamic %}
+			<style id="page-chrome-dynamic">
+				html,
+				body {
+					color-scheme: {% firstof color_scheme 'dark' %};
+					{% if color_scheme == 'light' %}
+					--theme-color: #ffffff;
+					{% elif theme_color %}
+					--theme-color: {{ theme_color }};
+					{% else %}
+					--theme-color: #000000;
+					{% endif %}
+					background-color: var(--theme-color);
+				}
+				#page-canvas {
+					{% firstof page_background '' %}
+				}
+			</style>
+			{% endblock %}
 			<div
 				id="page-canvas"
 				class="page-canvas"

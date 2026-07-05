@@ -81,7 +81,7 @@ def _hx_ok_or_redirect(
 def _class_rows_refresh():
     return {
         "url": reverse("classes:class_rows"),
-        "target": "#class-rows-tbody",
+        "target": "#class-table-panel",
     }
 
 
@@ -195,6 +195,98 @@ def _render_class_drawer(request, form, instance=None, status=200):
             "action_url": ctx["action_url"],
         },
         status=status,
+    )
+
+
+@staff_required
+def class_roster_drawer(request, class_id):
+    clase = get_object_or_404(Class.objects.all(), pk=class_id)
+    
+    from apps.payments.models import PeriodoCobro
+    from apps.payments.periodos import periodo_vigente
+    
+    periodos = PeriodoCobro.objects.order_by("-fecha_inicio_periodo")
+    periodo_id = request.GET.get("periodo_id")
+    
+    if periodo_id == "all":
+        inscripciones = clase.inscripciones.filter(
+            estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+        ).select_related("usuario", "periodo").prefetch_related("ocurrencias").order_by("-fecha_inscripcion")
+        selected_periodo_id = "all"
+    else:
+        if periodo_id:
+            try:
+                selected_periodo = PeriodoCobro.objects.get(pk=int(periodo_id))
+            except (ValueError, PeriodoCobro.DoesNotExist):
+                selected_periodo = periodo_vigente()
+        else:
+            selected_periodo = periodo_vigente()
+            
+        selected_periodo_id = str(selected_periodo.id) if selected_periodo else ""
+        
+        if selected_periodo:
+            inscripciones = clase.inscripciones.filter(
+                periodo=selected_periodo,
+                estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+            ).select_related("usuario", "periodo").prefetch_related("ocurrencias").order_by("-fecha_inscripcion")
+        else:
+            inscripciones = []
+
+    return render(
+        request,
+        "partials/classes/list/_class_roster_drawer_panel.html",
+        {
+            "clase": clase,
+            "inscripciones": inscripciones,
+            "periodos": periodos,
+            "selected_periodo_id": selected_periodo_id,
+        }
+    )
+
+
+@staff_required
+def student_enrollments_drawer(request, user_id):
+    from apps.users.models import User
+    from apps.payments.models import PeriodoCobro
+    from apps.payments.periodos import periodo_vigente
+    
+    student = get_object_or_404(User, pk=user_id)
+    periodos = PeriodoCobro.objects.order_by("-fecha_inicio_periodo")
+    periodo_id = request.GET.get("periodo_id")
+    
+    if periodo_id == "all":
+        inscripciones = student.inscripciones.filter(
+            estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+        ).select_related("clase", "clase__disciplina", "clase__sala", "clase__sala__sede", "periodo").order_by("-fecha_inscripcion")
+        selected_periodo_id = "all"
+    else:
+        if periodo_id:
+            try:
+                selected_periodo = PeriodoCobro.objects.get(pk=int(periodo_id))
+            except (ValueError, PeriodoCobro.DoesNotExist):
+                selected_periodo = periodo_vigente()
+        else:
+            selected_periodo = periodo_vigente()
+            
+        selected_periodo_id = str(selected_periodo.id) if selected_periodo else ""
+        
+        if selected_periodo:
+            inscripciones = student.inscripciones.filter(
+                periodo=selected_periodo,
+                estado__in=[Inscripcion.Estado.RESERVADA, Inscripcion.Estado.PENDIENTE_PAGO]
+            ).select_related("clase", "clase__disciplina", "clase__sala", "clase__sala__sede", "periodo").order_by("-fecha_inscripcion")
+        else:
+            inscripciones = []
+
+    return render(
+        request,
+        "partials/classes/list/_student_enrollments_drawer_panel.html",
+        {
+            "student": student,
+            "inscripciones": inscripciones,
+            "periodos": periodos,
+            "selected_periodo_id": selected_periodo_id,
+        }
     )
 
 
@@ -1241,7 +1333,20 @@ def cronograma_disciplina(request, disciplina_id):
     clases_info = []
     for c in clases.order_by("dia_semana", "hora_inicio"):
         inicio = proxima_ocurrencia(c)
-        hay_lugar = services.cupo_disponible(c) > 0
+        cupo_resumen = cliente.resumen_cupo_inscripcion(c, usuario=request.user)
+        hay_lugar = cupo_resumen["puede_agregar_reserva"]
+        puede_espera = cupo_resumen.get("puede_anotarse_espera", False)
+
+        if hay_lugar:
+            badge = "Hay lugar"
+            badge_tone = "ok"
+        elif puede_espera:
+            badge = "Lista de espera"
+            badge_tone = "wait"
+        else:
+            badge = "Agotada"
+            badge_tone = "danger"
+
         clases_info.append(
             {
                 "detalle_url": reverse("classes:detalle", args=[c.pk]),
@@ -1250,8 +1355,8 @@ def cronograma_disciplina(request, disciplina_id):
                 "duracion_minutos": c.duracion_minutos,
                 "lineas": [f"{c.sala.nombre} · {c.sala.sede.nombre}"],
                 "hay_lugar": hay_lugar,
-                "badge": "Hay lugar" if hay_lugar else "Lista de espera",
-                "badge_tone": "ok" if hay_lugar else "wait",
+                "badge": badge,
+                "badge_tone": badge_tone,
             }
         )
 
@@ -1294,13 +1399,30 @@ def detalle_clase(request, clase_id):
     request.session["flow_clase_disciplina_id"] = clase.disciplina_id
     request.session["flow_clase_id"] = clase.id
     session_urls = _flow_session_urls(request, disciplina_id=clase.disciplina_id)
+
+    # Para el stepper global tomamos la primer inscripción "pagable" del usuario:
+    # primero la que esté con pago iniciado (`en_pago`), si no la primera
+    # `pendiente_pago`. Si no hay ninguna, cae al `pago_url` de sesión.
     pago_url = None
-    if info["ui_estado"] == "en_pago":
-        pago_url = reverse("payments:seleccion_pago_clase", args=[clase.id])
-    elif info["ui_estado"] == "pendiente_pago" and info["mi_inscripcion"]:
+    pagable = next(
+        (
+            it
+            for it in info["inscripciones_activas"]
+            if it["estado_ui"] == "en_pago"
+        ),
+        None,
+    ) or next(
+        (
+            it
+            for it in info["inscripciones_activas"]
+            if it["estado_ui"] == "pendiente_pago"
+        ),
+        None,
+    )
+    if pagable:
         pago_url = reverse(
             "payments:seleccion_pago",
-            args=[info["mi_inscripcion"].id],
+            args=[pagable["inscripcion"].id],
         )
     else:
         pago_url = session_urls.get("pago_url")
@@ -1316,36 +1438,11 @@ def detalle_clase(request, clase_id):
     else:
         flow_subtitle = info["subtitulo"]
 
-    from apps.classes.confirmaciones import (
-        acciones_anular_inscripcion_impaga,
-        mensaje_confirm_cancelar_reserva_suelta,
-        mensaje_confirm_salir_lista_espera,
-    )
-
-    confirm_salir_espera = None
-    confirm_cancelar_reserva = None
-    anular_inscripcion = None
-    mi = info.get("mi_inscripcion")
-    if mi and info["ui_estado"] == "en_espera":
-        confirm_salir_espera = mensaje_confirm_salir_lista_espera(mi)
-    elif mi and info.get("puede_anular_inscripcion"):
-        anular_inscripcion = acciones_anular_inscripcion_impaga(mi)
-    elif (
-        mi
-        and info["ui_estado"] == "inscripto"
-        and info.get("puede_cancelar")
-        and mi.tipo != Inscripcion.Tipo.MENSUAL
-    ):
-        confirm_cancelar_reserva = mensaje_confirm_cancelar_reserva_suelta(mi)
-
     return render(
         request,
         "classes/detalle_clase.html",
         {
             "info": info,
-            "confirm_salir_espera": confirm_salir_espera,
-            "confirm_cancelar_reserva": confirm_cancelar_reserva,
-            "anular_inscripcion": anular_inscripcion,
             "periodos_inscripcion_data": info["periodos_inscripcion"],
             "flow_step": "clase",
             "flow_back_url": horarios_url,

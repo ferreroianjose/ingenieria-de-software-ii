@@ -161,6 +161,12 @@ class InscripcionMensualSinClasesTests(TestCase):
 
 
 class InscripcionSueltaPrioridadFlowTests(TestCase):
+    """Pre-cola en boundary Junio→Julio (julio empieza miércoles 1/7/2026).
+
+    La semana ISO Lun 29/6 – Dom 5/7 abarca el cambio de período, lo que nos
+    permite testear pre-cola para una fecha de julio estando aún en junio.
+    """
+
     def setUp(self):
         self.user = User.objects.create_user(
             username="sueltaflow@test.com",
@@ -169,19 +175,19 @@ class InscripcionSueltaPrioridadFlowTests(TestCase):
             dni="11223344",
             telefono_emergencia="3515552222",
         )
-        self.mayo = PeriodoCobro.objects.create(
-            nombre="Mayo 2026",
-            fecha_inicio_periodo=date(2026, 5, 1),
-            fecha_fin_periodo=date(2026, 5, 31),
-            apertura_abonados=date(2026, 4, 15),
-            apertura_general=date(2026, 5, 1),
-        )
         self.junio = PeriodoCobro.objects.create(
             nombre="Junio 2026",
             fecha_inicio_periodo=date(2026, 6, 1),
             fecha_fin_periodo=date(2026, 6, 30),
             apertura_abonados=date(2026, 5, 20),
             apertura_general=date(2026, 6, 1),
+        )
+        self.julio = PeriodoCobro.objects.create(
+            nombre="Julio 2026",
+            fecha_inicio_periodo=date(2026, 7, 1),
+            fecha_fin_periodo=date(2026, 7, 31),
+            apertura_abonados=date(2026, 6, 21),
+            apertura_general=date(2026, 7, 1),
         )
         disciplina = Disciplina.objects.create(nombre="Spinning")
         sede = Sede.objects.create(nombre="Sede Spinning", direccion="Calle 3")
@@ -191,7 +197,7 @@ class InscripcionSueltaPrioridadFlowTests(TestCase):
             disciplina=disciplina,
             sala=sala,
             profesor=profesor,
-            dia_semana=0,  # Lunes
+            dia_semana=2,  # Miércoles → cae 1/7/2026 en la semana ISO
             hora_inicio=time(10, 0),
             duracion=timedelta(hours=1),
             cupo_maximo=5,
@@ -199,60 +205,123 @@ class InscripcionSueltaPrioridadFlowTests(TestCase):
         )
         self.client.force_login(self.user)
 
-    def _fecha_iso_junio(self, ahora):
+    def _fecha_iso_julio(self, ahora):
         from apps.classes.services import ocurrencias_clase_en_ventana
 
         ocurrencias = ocurrencias_clase_en_ventana(self.clase, desde_fecha=ahora.date())
         for dt, periodo in ocurrencias:
-            if periodo.id == self.junio.id:
+            if periodo.id == self.julio.id:
                 return dt.isoformat()
-        self.fail("No se encontró ocurrencia en junio para la clase.")
+        self.fail("No se encontró ocurrencia de julio en la ventana ISO.")
 
     @override_settings(HABILITAR_PRECOLA_NO_ABONADOS=True)
     @patch("django.utils.timezone.localdate")
     @patch("django.utils.timezone.now")
-    def test_precola_suelta_desde_inscribir_crea_espera(self, mock_now, mock_localdate):
+    def test_precola_suelta_desde_inscribir_rechaza_reserva(self, mock_now, mock_localdate):
+        # Lunes 29/6/2026: semana ISO 29/6–5/7 cruza a julio.
         ahora = timezone.make_aware(
-            datetime(2026, 5, 25, 9, 0), timezone.get_current_timezone()
+            datetime(2026, 6, 29, 9, 0), timezone.get_current_timezone()
         )
         mock_now.return_value = ahora
         def _localdate_side_effect(value=None, timezone=None):
             if value is None:
-                return date(2026, 5, 25)
+                return date(2026, 6, 29)
             return value.date()
 
         mock_localdate.side_effect = _localdate_side_effect
+        
+        # Como la lista de espera para clases sueltas ya no existe, intentar reservar
+        # antes de la apertura general ahora simplemente rechaza. El view lo atrapa 
+        # y muestra un mensaje de error, redirigiendo.
         response = self.client.post(
             reverse("classes:inscribir", args=[self.clase.id]),
             {
                 "tipo": Inscripcion.Tipo.CLASE_SUELTA,
-                "fecha_clase": self._fecha_iso_junio(ahora),
+                "fecha_clase": self._fecha_iso_julio(ahora),
             },
+            follow=True
         )
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("classes:detalle", args=[self.clase.id]))
-        inscripcion = Inscripcion.objects.get(usuario=self.user, clase=self.clase)
-        self.assertEqual(inscripcion.tipo, Inscripcion.Tipo.CLASE_SUELTA)
-        self.assertEqual(inscripcion.estado, Inscripcion.Estado.ESPERA)
+        
+        # Debe redirigir y mostrar el error
+        self.assertRedirects(response, reverse("classes:detalle", args=[self.clase.id]))
+        messages = list(response.context.get('messages', []))
+        self.assertTrue(any("La reserva para no abonados abre el primer día del período" in m.message for m in messages))
+        
+        # Verificamos que no se creó ninguna inscripción
+        self.assertFalse(Inscripcion.objects.filter(usuario=self.user, clase=self.clase).exists())
+
+    @patch("django.utils.timezone.localdate")
+    @patch("django.utils.timezone.now")
+    def test_suelta_sin_cupo_lanza_clase_no_disponible(self, mock_now, mock_localdate):
+        # Miércoles 1/7/2026: apertura_general de julio → reserva directa.
+        ahora = timezone.make_aware(
+            datetime(2026, 7, 1, 9, 0), timezone.get_current_timezone()
+        )
+        mock_now.return_value = ahora
+        def _localdate_side_effect(value=None, timezone=None):
+            if value is None:
+                return date(2026, 7, 1)
+            return value.date()
+
+        mock_localdate.side_effect = _localdate_side_effect
+        self.client.force_login(self.user)
+        from apps.classes.services import ocurrencias_clase_en_ventana
+        
+        ocurrencias = ocurrencias_clase_en_ventana(self.clase, desde_fecha=ahora.date())
+        fecha_iso = next(
+            dt.isoformat() for dt, p in ocurrencias if p.id == self.julio.id
+        )
+        
+        # Agotamos el cupo de la clase
+        self.clase.cupo_maximo = 0
+        self.clase.save()
+        
+        # El view atrapa ClaseNoDisponible y muestra el mensaje
+        response = self.client.post(
+            reverse("classes:inscribir", args=[self.clase.id]),
+            {
+                "tipo": Inscripcion.Tipo.CLASE_SUELTA,
+                "fecha_clase": fecha_iso,
+            },
+            follow=True
+        )
+        
+        self.assertRedirects(response, reverse("classes:detalle", args=[self.clase.id]))
+        messages = list(response.context.get('messages', []))
+        self.assertTrue(any("No hay cupos disponibles" in m.message for m in messages))
+        
+        # Verificamos que no se inscribió (no hay ESPERA ni RESERVADA)
+        self.assertFalse(Inscripcion.objects.filter(usuario=self.user, clase=self.clase).exists())
 
     @patch("django.utils.timezone.localdate")
     @patch("django.utils.timezone.now")
     def test_suelta_desde_dia_uno_redirige_a_pago_si_hay_cupo(self, mock_now, mock_localdate):
+        # Miércoles 1/7/2026: apertura_general de julio → reserva directa.
         ahora = timezone.make_aware(
-            datetime(2026, 6, 1, 9, 0), timezone.get_current_timezone()
+            datetime(2026, 7, 1, 9, 0), timezone.get_current_timezone()
         )
         mock_now.return_value = ahora
         def _localdate_side_effect(value=None, timezone=None):
             if value is None:
-                return date(2026, 6, 1)
+                return date(2026, 7, 1)
             return value.date()
 
         mock_localdate.side_effect = _localdate_side_effect
+        # La sesión se creó con el now real (~jun/2026); como mockeamos al
+        # 1/7/2026, Django la ve expirada. Re-login bajo el now mockeado.
+        self.client.force_login(self.user)
+        # La clase es a las 10:00 del 1/7 (después de las 9:00 del mock).
+        from apps.classes.services import ocurrencias_clase_en_ventana
+
+        ocurrencias = ocurrencias_clase_en_ventana(self.clase, desde_fecha=ahora.date())
+        fecha_iso = next(
+            dt.isoformat() for dt, p in ocurrencias if p.id == self.julio.id
+        )
         response = self.client.post(
             reverse("classes:inscribir", args=[self.clase.id]),
             {
                 "tipo": Inscripcion.Tipo.CLASE_SUELTA,
-                "fecha_clase": self._fecha_iso_junio(ahora),
+                "fecha_clase": fecha_iso,
             },
         )
         self.assertEqual(response.status_code, 302)

@@ -51,20 +51,27 @@ def _proxima_ocurrencia_desde(clase, desde_fecha):
 
 def ocurrencias_clase_en_ventana(clase, dias=None, desde_fecha=None):
     """
-    Ocurrencias futuras del horario dentro de los próximos `dias` (default 21).
+    Ocurrencias futuras del horario dentro de la ventana de reserva suelta.
+
+    - Default: hasta el domingo de la semana ISO en curso (regla actual).
+    - Si se pasa `dias` explícitamente, se usa como horizonte en días
+      (override por caller, p. ej. para tests/jobs internos).
+    - El setting `VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS` queda como escape
+      hatch admin (ver `periodos.horizonte_clase_suelta`).
+
     Cada ítem es (datetime aware, PeriodoCobro que contiene esa fecha).
     """
-    from django.conf import settings
-
-    from apps.payments.periodos import periodo_conteniendo_fecha
+    from apps.payments.periodos import horizonte_clase_suelta, periodo_conteniendo_fecha
 
     if not clase.hora_inicio:
         return []
 
-    dias = dias or getattr(settings, "VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", 21)
     ahora = timezone.localtime(timezone.now())
     hoy = desde_fecha or ahora.date()
-    limite = hoy + timedelta(days=dias)
+    if dias is None:
+        limite = horizonte_clase_suelta(hoy)
+    else:
+        limite = hoy + timedelta(days=dias)
     tz = timezone.get_current_timezone()
     resultado = []
     cursor = hoy + timedelta(days=(clase.dia_semana - hoy.weekday()) % 7)
@@ -298,6 +305,9 @@ def validar_intencion_inscripcion(
     usuario, clase_id, periodo, tipo, fecha_clase=None, permitir_sin_cupo=False
 ):
     """Comprueba que el usuario puede inscribirse; no escribe en la BD."""
+    if usuario.rol != "CLIENTE":
+        raise ReservaError("Los empleados y administradores no pueden inscribirse a clases.")
+
     if not usuario.telefono_emergencia:
         raise TelefonoEmergenciaFaltante()
 
@@ -342,8 +352,7 @@ def validar_intencion_inscripcion(
             )
         if requiere_precola_suelta(periodo) and not permitir_sin_cupo:
             raise ReservaError(
-                "La reserva para no abonados abre el primer día del período. "
-                "Por ahora podés anotarte en lista de espera."
+                "La reserva para no abonados abre el primer día del período."
             )
         from apps.classes.ocurrencias import fecha_suelta_reservada
 
@@ -366,7 +375,36 @@ def validar_intencion_inscripcion(
                 "No quedan clases de este horario en el mes elegido."
             )
         if proxima_ocurrencia_en_periodo(clase, periodo) is None:
-            raise ReservaError("No quedan clases futuras de este horario en el período.")
+            raise ReservaError(
+                "No quedan clases futuras de este horario en el período."
+            )
+        from apps.payments.periodos import (
+            clases_renovables_abonado,
+            en_ventana_preinscripcion_abonados,
+            es_abonado,
+            periodo_vigente,
+        )
+
+        hoy = timezone.localdate()
+        vigente = periodo_vigente(hoy)
+        # MENSUAL del próximo período es una RENOVACIÓN exclusiva de abonados:
+        # solo durante la ventana de pre-inscripción y solo para clases que
+        # el usuario ya tiene activas en el período vigente.
+        if vigente is None or periodo.id != vigente.id:
+            if not en_ventana_preinscripcion_abonados(periodo, hoy):
+                raise ReservaError(
+                    "Todavía no está abierta la inscripción para ese mes."
+                )
+            if not es_abonado(usuario, hoy):
+                raise ReservaError(
+                    "La pre-inscripción al próximo mes es solo para abonados "
+                    "(necesitás una mensualidad activa este mes)."
+                )
+            if clase.id not in clases_renovables_abonado(usuario, hoy):
+                raise ReservaError(
+                    "Solo podés renovar al próximo mes las clases mensuales "
+                    "que ya tenés contratadas este mes."
+                )
         dia_semana, hora_inicio = _horario_objetivo(clase)
         if usuario_tiene_clase_en_horario(usuario, dia_semana, hora_inicio, excluir_clase_id=clase.id):
             raise ConflictoHorario()
@@ -424,7 +462,7 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
                 periodo,
                 tipo,
                 fecha_clase=fecha_clase,
-                permitir_sin_cupo=True,
+                permitir_sin_cupo=False,
             )
             from apps.classes.ocurrencias import fecha_suelta_reservada
 
@@ -462,13 +500,8 @@ def reservar_clase(usuario, clase_id, periodo, tipo, fecha_clase=None):
             tipo=tipo,
         )
 
-        from apps.payments.periodos import requiere_precola_suelta
-
-        forzar_espera = (
-            tipo == Inscripcion.Tipo.CLASE_SUELTA and requiere_precola_suelta(periodo)
-        )
         cupo_actual = cupo_disponible(clase, fecha=fecha_clase, periodo=periodo) if tipo == Inscripcion.Tipo.CLASE_SUELTA else cupo_disponible(clase, periodo=periodo)
-        if cupo_actual > 0 and not forzar_espera:
+        if cupo_actual > 0:
             inscripcion = Inscripcion.objects.create(
                 **create_kwargs,
                 estado=Inscripcion.Estado.PENDIENTE_PAGO,
@@ -561,13 +594,17 @@ def reconciliar_vencimientos_mensuales(fecha=None):
 
 def reconciliar_vencimientos_sueltas():
     """
-    Cancela reservas sueltas que quedaron en estado PENDIENTE_PAGO
-    y ya pasaron su tiempo de gracia (default: 15 minutos).
+    Cancela reservas sueltas que quedaron en estado PENDIENTE_PAGO sin ningún
+    pago confirmado y ya pasaron su tiempo de gracia (default: 15 minutos).
+
+    Las reservas con seña paga NO se tocan: quedan vivas hasta la fecha de la
+    clase. El recepcionista cobra el saldo restante presencialmente.
     """
     from datetime import timedelta
     from django.conf import settings
     from apps.classes.ocurrencias import marcar_ocurrencias_inscripcion_canceladas
     from apps.payments.cancelaciones import cancelar_pagos_pendientes_inscripcion
+    from apps.payments.inscripcion_pago import q_inscripcion_con_pago_completado
 
     minutos = getattr(settings, "TIEMPO_GRACIA_PAGO_SUELTO_MINUTOS", 15)
     limite = timezone.now() - timedelta(minutes=minutos)
@@ -580,6 +617,7 @@ def reconciliar_vencimientos_sueltas():
                 estado=Inscripcion.Estado.PENDIENTE_PAGO,
                 fecha_inscripcion__lt=limite,
             )
+            .exclude(q_inscripcion_con_pago_completado())
             .select_related("clase")
             .order_by("fecha_inscripcion")
         )

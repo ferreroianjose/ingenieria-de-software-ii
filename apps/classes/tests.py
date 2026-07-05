@@ -88,3 +88,42 @@ class MassPriceIncreaseTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '5000.00')
+
+
+class SalaUniquenessTests(TestCase):
+    """Una sala no debe poder crearse dos veces en la misma sede ignorando caso."""
+
+    def setUp(self):
+        self.sede = Sede.objects.create(nombre="Sede X", direccion="Calle 1")
+        self.sede_otra = Sede.objects.create(nombre="Sede Y", direccion="Calle 2")
+        Sala.objects.create(nombre="Sala Zen", capacidad=10, sede=self.sede)
+
+    def test_form_rechaza_nombre_duplicado_distinto_caso(self):
+        from apps.classes.forms import SalaForm
+
+        form = SalaForm(data={
+            'nombre': 'SALA ZEN',
+            'capacidad': 12,
+            'sede': self.sede.pk,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('nombre', form.errors)
+        self.assertIn('Ya existe una sala con ese nombre en esta sede.', form.errors['nombre'])
+
+    def test_form_permite_mismo_nombre_en_otra_sede(self):
+        from apps.classes.forms import SalaForm
+
+        form = SalaForm(data={
+            'nombre': 'sala zen',
+            'capacidad': 12,
+            'sede': self.sede_otra.pk,
+        })
+        self.assertTrue(form.is_valid(), msg=form.errors)
+
+    def test_db_rechaza_duplicado_case_insensitive(self):
+        """La constraint protege contra creación directa (admin, shell, seed)."""
+        from django.db import IntegrityError, transaction
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Sala.objects.create(nombre="sala zen", capacidad=12, sede=self.sede)

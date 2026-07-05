@@ -8,6 +8,7 @@
     x-data="Object.assign(adminSelection({ idKey: 'selectedClassId', labelKey: 'selectedClassLabel', clearOnSwapTargets: ['class-table-panel'], extraClearKeys: ['selectedClassEstado'] }), {
         selectedClassEstado: '',
         classDrawerOpen: false,
+        userDrawerOpen: false,
         tab: '{{ initial_tab }}',
         classCreateUrl: '{% url 'classes:class_modal' %}',
         classEditUrlPattern: '{% url 'classes:class_modal_edit' 0 %}',
@@ -27,8 +28,9 @@
         }
     })"
     x-init="initSelectionClear()"
-    @admin-modal-close.window="if ($event.detail === 'classDrawerOpen') classDrawerOpen = false"
+    @admin-modal-close.window="if ($event.detail === 'classDrawerOpen') classDrawerOpen = false; if ($event.detail === 'userDrawerOpen') userDrawerOpen = false"
     @class-drawer-open.window="classDrawerOpen = true"
+    @user-drawer-open.window="userDrawerOpen = true"
 >
     <div class="internal-page__content flex flex-col gap-6">
         {% if is_admin %}
@@ -153,6 +155,7 @@
 
     {% if is_admin %}
     {% include 'partials/ui/modals/_drawer_shell.html' with modal_open_var='classDrawerOpen' container_id='class-drawer' %}
+    {% include 'partials/ui/modals/_drawer_shell.html' with modal_open_var='userDrawerOpen' container_id='user-drawer' %}
     {% endif %}
 </div>
 

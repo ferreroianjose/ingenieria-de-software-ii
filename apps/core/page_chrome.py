@@ -8,6 +8,7 @@ footer_variant: light | dark — color del texto del footer transparente.
 PAGE_CHROME_DARK = {
     "footer_variant": "dark",
     "color_scheme": "dark",
+    "theme_color": "#000000",
     "page_background": "",
     "sidebar_variant": "dark",
 }
@@ -16,12 +17,13 @@ _CF_GRADIENT = (
     "background:"
     " radial-gradient(circle at 18% 0%, rgba(223, 2, 255, 0.14), transparent 32%),"
     " radial-gradient(circle at 82% 6%, rgba(92, 225, 230, 0.09), transparent 28%),"
-    " #000000;"
+    " #030712;"
 )
 
 PAGE_CHROME_CLIENTE_FLOW = {
     "footer_variant": "dark",
     "color_scheme": "dark",
+    "theme_color": "#030712",
     "page_background": _CF_GRADIENT,
     "sidebar_variant": "dark",
 }
@@ -29,14 +31,16 @@ PAGE_CHROME_CLIENTE_FLOW = {
 PAGE_CHROME_LIGHT = {
     "footer_variant": "light",
     "color_scheme": "light",
-    "page_background": "background:#ffffff;",
+    "theme_color": "#ffffff",
+    "page_background": "background: var(--theme-color);",
     "sidebar_variant": "light",
 }
 
 PAGE_CHROME_ADMIN = {
     "footer_variant": "light",
     "color_scheme": "light",
-    "page_background": "background:#ffffff;",
+    "theme_color": "#ffffff",
+    "page_background": "background: var(--theme-color);",
     "sidebar_variant": "light",
 }
 

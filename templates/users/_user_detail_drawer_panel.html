@@ -32,9 +32,17 @@
 
 		<div class="min-h-0 flex-1 overflow-y-auto p-6 sm:p-8 [&_label]:mb-2 [&_label]:block [&_label]:text-sm [&_label]:font-bold [&_label]:text-gray-700">
             {% if form.errors %}
-            <div class="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-                <strong class="block mb-1 font-bold">Corrija los siguientes errores:</strong>
-                {{ form.errors }}
+            <div class="mb-6 rounded-full bg-red-50 px-6 py-4 text-sm text-red-700 border border-red-200">
+                <ul class="space-y-1 font-medium">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
             </div>
             {% endif %}
 
@@ -56,8 +64,11 @@
                             <input type="text" id="dni" name="dni" value="{{ user.dni }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20" required>
                         </div>
                         <div>
-                            <label for="fecha_nacimiento">Fecha de nacimiento</label>
-                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" value="{{ user.fecha_nacimiento|date:'Y-m-d' }}" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+                            {% if form %}
+                                {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value|date:'Y-m-d'|default:form.fecha_nacimiento.value|default:user.fecha_nacimiento|date:'Y-m-d' position="bottom right" required=True input_class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20 cursor-pointer" %}
+                            {% else %}
+                                {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=user.fecha_nacimiento|date:'Y-m-d' position="bottom right" required=True input_class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20 cursor-pointer" %}
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -76,10 +87,10 @@
                     </div>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="space-y-4" x-data="{ rol: '{{ user.rol }}' }">
                     <h3>Administración</h3>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div>
+                        <div x-show="rol === 'CLIENTE'" x-cloak>
                             <label for="estado_constancia">Estado Constancia</label>
                             <select id="estado_constancia" name="estado_constancia" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
                                 <option value="PENDIENTE" {% if user.estado_constancia == 'PENDIENTE' %}selected{% endif %}>Pendiente</option>
@@ -88,12 +99,14 @@
                             </select>
                         </div>
                         
-                        {% if request.user.rol == 'ADMIN' %}
+                        {% if request.user.rol == 'ADMIN' and user.rol != 'CLIENTE' %}
                         <div>
                             <label for="user-rol-select">Rol</label>
-                            <select id="user-rol-select" name="rol" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
+                            <select id="user-rol-select" name="rol" x-model="rol" class="w-full rounded-full border border-gray-200 px-4 py-2 text-sm text-gray-900 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20">
                                 {% for value, label in roles %}
+                                {% if value != 'CLIENTE' %}
                                 <option value="{{ value }}" {% if user.rol == value %}selected{% endif %}>{{ label }}</option>
+                                {% endif %}
                                 {% endfor %}
                             </select>
                         </div>

@@ -1,8 +1,13 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    UserCreationForm,
+    PasswordResetForm,
+)
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.template import loader
 
 from apps.core.forms import apply_required_error_messages
 
@@ -39,21 +44,18 @@ class GymAuthenticationForm(AuthenticationForm):
 
 class CustomUserCreationForm(UserCreationForm):
     error_messages = {
-        "password_mismatch": (
-            "Los dos campos de contraseñas no coinciden entre si."
-        ),
+        "password_mismatch": ("Los dos campos de contraseñas no coinciden entre si."),
     }
 
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento", "telefono_emergencia")
+        fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento")
         labels = {
             "email": "Correo electrónico",
             "first_name": "Nombre",
             "last_name": "Apellido",
             "dni": "DNI",
             "fecha_nacimiento": "Fecha de nacimiento",
-            "telefono_emergencia": "Teléfono de emergencia",
         }
         widgets = {
             "fecha_nacimiento": forms.DateInput(attrs={"type": "date"}),
@@ -107,14 +109,6 @@ class CustomUserCreationForm(UserCreationForm):
                 )
         return fecha
 
-    def clean_telefono_emergencia(self):
-        telefono = self.cleaned_data.get("telefono_emergencia")
-        if telefono:
-            import re
-            if not re.match(r'^[\d\+\-\s\(\)]*$', telefono):
-                raise forms.ValidationError("El teléfono no puede contener letras, solo números y los símbolos + o -.")
-        return telefono
-
 
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
@@ -130,8 +124,11 @@ class ProfileUpdateForm(forms.ModelForm):
         telefono = self.cleaned_data.get("telefono_emergencia")
         if telefono:
             import re
-            if not re.match(r'^[\d\+\-\s\(\)]*$', telefono):
-                raise forms.ValidationError("El teléfono no puede contener letras, solo números y los símbolos + o -.")
+
+            if not re.match(r"^[\d\+\-\s\(\)]*$", telefono):
+                raise forms.ValidationError(
+                    "El teléfono no puede contener letras, solo números y los símbolos + o -."
+                )
         return telefono
 
 
@@ -151,6 +148,7 @@ class TwoFactorForm(forms.Form):
             raise forms.ValidationError("El código ingresado es incorrecto.")
         return code
 
+
 class UserAdminUpdateForm(forms.ModelForm):
     class Meta:
         model = User
@@ -162,15 +160,165 @@ class UserAdminUpdateForm(forms.ModelForm):
             "fecha_nacimiento",
             "telefono_emergencia",
             "rol",
-            "estado_constancia"
+            "estado_constancia",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         apply_required_error_messages(self)
+        self.fields["estado_constancia"].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        rol = cleaned_data.get("rol")
+        estado_constancia = cleaned_data.get("estado_constancia")
+        if rol == "CLIENTE" and not estado_constancia:
+            self.add_error("estado_constancia", "El campo \"Estado de constancia\" es obligatorio.")
+        return cleaned_data
 
     def clean_first_name(self):
-        return name_validator(self.cleaned_data.get("first_name"))
+        first_name = self.cleaned_data.get("first_name")
+        if first_name:
+            name_validator.validate(first_name)
+        return first_name
 
     def clean_last_name(self):
-        return name_validator(self.cleaned_data.get("last_name"))
+        last_name = self.cleaned_data.get("last_name")
+        if last_name:
+            name_validator.validate(last_name)
+        return last_name
+
+    def clean_rol(self):
+        rol = self.cleaned_data.get("rol")
+        if self.instance and self.instance.pk:
+            original_rol = self.instance.rol
+            if original_rol == "CLIENTE" and rol != "CLIENTE":
+                raise forms.ValidationError(
+                    "Un cliente no puede convertirse en empleado o administrador."
+                )
+            if original_rol in ["ADMIN", "EMPLEADO"] and rol == "CLIENTE":
+                raise forms.ValidationError(
+                    "Un administrador o empleado no puede convertirse en cliente."
+                )
+
+            if rol in ["ADMIN", "EMPLEADO"]:
+                if self.instance.inscripciones.exists():
+                    raise forms.ValidationError(
+                        "No se puede asignar el rol de Empleado o Administrador a un usuario con historial de inscripciones."
+                    )
+        return rol
+
+
+class InternalUserCreationForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("email", "first_name", "last_name", "dni", "fecha_nacimiento", "rol", "estado_constancia")
+        labels = {
+            "email": "Correo electrónico",
+            "first_name": "Nombre",
+            "last_name": "Apellido",
+            "dni": "DNI",
+            "fecha_nacimiento": "Fecha de nacimiento",
+            "rol": "Rol",
+            "estado_constancia": "Estado de constancia",
+        }
+        widgets = {
+            "fecha_nacimiento": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.creator = kwargs.pop("creator", None)
+        super().__init__(*args, **kwargs)
+        apply_required_error_messages(self)
+
+        self.fields["estado_constancia"].required = False
+
+        if self.creator and self.creator.rol == "EMPLEADO":
+            self.fields["rol"].choices = [("CLIENTE", "Cliente")]
+            self.fields["rol"].initial = "CLIENTE"
+        elif self.creator and self.creator.rol == "ADMIN":
+            self.fields["rol"].choices = [
+                ("CLIENTE", "Cliente"),
+                ("EMPLEADO", "Empleado"),
+                ("ADMIN", "Administrador"),
+            ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        rol = cleaned_data.get("rol")
+        estado_constancia = cleaned_data.get("estado_constancia")
+        if rol == "CLIENTE" and not estado_constancia:
+            self.add_error("estado_constancia", "El campo \"Estado de constancia\" es obligatorio.")
+        return cleaned_data
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "Este correo ya está en uso.", code="email_exists"
+            )
+        return email
+
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get("first_name")
+        if first_name:
+            name_validator.validate(first_name)
+        return first_name
+
+    def clean_last_name(self):
+        last_name = self.cleaned_data.get("last_name")
+        if last_name:
+            name_validator.validate(last_name)
+        return last_name
+
+    def clean_dni(self):
+        dni = self.cleaned_data.get("dni")
+        if User.objects.filter(dni=dni).exists():
+            raise forms.ValidationError(
+                "Este DNI ya está registrado.", code="dni_exists"
+            )
+        return dni
+
+    def clean_fecha_nacimiento(self):
+        MIN_AGE = 14
+        fecha = self.cleaned_data.get("fecha_nacimiento")
+        if fecha:
+            hoy = timezone.localdate()
+            cumple_este_anio = fecha.replace(year=hoy.year)
+            edad = hoy.year - fecha.year - (1 if cumple_este_anio > hoy else 0)
+            if edad < MIN_AGE:
+                raise forms.ValidationError(
+                    f"Debés tener al menos {MIN_AGE} años para registrarte.",
+                    code="under_age",
+                )
+        return fecha
+
+
+class CustomPasswordResetForm(PasswordResetForm):
+    def send_mail(
+        self,
+        subject_template_name,
+        email_template_name,
+        context,
+        from_email,
+        to_email,
+        html_email_template_name=None,
+    ):
+        """
+        Sends a password reset email using the custom notifications service.
+        """
+        from apps.notifications.services import notification_service
+
+        subject = loader.render_to_string(subject_template_name, context)
+        # Email subject *must not* contain newlines
+        subject = "".join(subject.splitlines())
+
+        body = loader.render_to_string(email_template_name, context)
+
+        html_body = None
+        if html_email_template_name is not None:
+            html_body = loader.render_to_string(html_email_template_name, context)
+
+        notification_service.notify(
+            recipient=to_email, subject=subject, message=body, html_message=html_body
+        )

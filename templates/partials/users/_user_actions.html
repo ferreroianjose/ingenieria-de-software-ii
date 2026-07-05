@@ -3,10 +3,17 @@
 <button
 	type="button"
 	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--primary"
+	@click.prevent="openSelectedUserDrawer()"
+	x-text="selectedUserId ? 'Editar' : 'Crear {% if user.rol == "ADMIN" %}usuario{% else %}cliente{% endif %}'"
+></button>
+
+<button
+	type="button"
+	class="admin-selection-toolbar-btn admin-selection-toolbar-btn--secondary"
 	:disabled="!selectedUserId"
-	@click="openUserDrawer(adminActionUrl('{% url 'user_detail_drawer' 0 %}', selectedUserId))"
+	@click="openUserDrawer(adminActionUrl('{% url 'classes:student_enrollments_drawer' 0 %}', selectedUserId))"
 >
-	Editar
+	Ver reservas
 </button>
 
 <form x-ref="deleteUserForm" method="post" class="hidden" :action="selectedUserId ? adminActionUrl('{{ user_delete_url }}', selectedUserId) : ''">

@@ -59,6 +59,19 @@ def inscripcion_tiene_intento_pago(inscripcion):
     return PagoInscripcion.objects.filter(inscripcion=inscripcion).exists()
 
 
+def q_inscripcion_con_pago_completado():
+    """Q para inscripciones con al menos un Pago COMPLETADO (típicamente: seña paga).
+
+    Sirve para distinguir las reservas "vivas" de las efímeras en `PENDIENTE_PAGO`,
+    que el cron de vencimientos de clase suelta cancela tras el tiempo de gracia.
+    """
+    return Q(
+        pk__in=PagoInscripcion.objects.filter(
+            pago__estado=Pago.Estado.COMPLETADO,
+        ).values("inscripcion_id")
+    )
+
+
 def filtro_inscripciones_en_reservas():
     """Excluye PENDIENTE_PAGO huérfanas (sin Pago) de datos viejos."""
     return (
@@ -93,6 +106,29 @@ def aplicar_pago_aprobado(pago):
             from apps.classes.ocurrencias import generar_ocurrencias_mensual
 
             generar_ocurrencias_mensual(inscripcion)
+
+
+def registrar_pago_efectivo(inscripcion, monto):
+    """Crea un cobro en efectivo aprobado y aplica las reglas de negocio.
+
+    Reutilizado por recepción al cobrar saldos pendientes (señas o pagos completos)
+    sin pasar por el flujo de MercadoPago.
+    """
+    monto = Decimal(monto).quantize(Decimal("0.01"))
+    pago = Pago.objects.create(
+        usuario=inscripcion.usuario,
+        periodo=inscripcion.periodo,
+        monto=monto,
+        metodo=Pago.Metodo.EFECTIVO,
+        estado=Pago.Estado.PENDIENTE,
+    )
+    PagoInscripcion.objects.create(
+        pago=pago,
+        inscripcion=inscripcion,
+        monto_aplicado=monto,
+    )
+    aplicar_pago_aprobado(pago)
+    return pago
 
 
 def precio_clase_periodo(clase, periodo):

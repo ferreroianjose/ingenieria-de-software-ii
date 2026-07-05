@@ -206,10 +206,11 @@ GYM_RESTRICTED_SCHEDULE = True
 # Precio por defecto para una clase (usado cuando no hay una tarifa por disciplina)
 CLASE_DEFAULT_PRICE = float(os.environ.get("CLASE_DEFAULT_PRICE", "2500.0"))
 
-# Horizonte de días que se muestra para fechas de clase suelta.
-# Impacta qué ocurrencias futuras pueden seleccionarse en el flujo cliente.
+# DEPRECADO. Si > 0 fuerza un horizonte fijo en días para reservas sueltas;
+# si 0 se usa la regla nueva (semana ISO en curso, lunes a domingo) tanto para
+# abonados como no abonados. Se conserva solo como escape hatch admin.
 VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS = int(
-    os.environ.get("VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", "21")
+    os.environ.get("VENTANA_OCURRENCIAS_CLASE_SUELTA_DIAS", "0")
 )
 
 # Cantidad de días previos al inicio del período en que se habilita

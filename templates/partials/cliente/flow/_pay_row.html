@@ -6,7 +6,7 @@
     <span class="flex w-full items-stretch">
       <span class="cf-pay__main">
         <span class="cf-kicker !mb-1">{{ titulo }}</span>
-        <span class="text-sm text-white/70">{{ descripcion }}</span>
+        <span class="text-sm text-white/90">{{ descripcion }}</span>
         {% if credito_aplicado %}
         <span class="mt-1 block text-xs font-semibold text-primary-200">
           Incluye −${{ credito_aplicado|floatformat:2 }} por crédito automático
@@ -18,7 +18,7 @@
         Gratis
         {% elif monto_original %}
         <span class="flex flex-col items-center leading-tight">
-          <span class="text-xs font-semibold text-white/60 line-through">${{ monto_original|floatformat:2 }}</span>
+          <span class="text-xs font-semibold text-white/90 line-through">${{ monto_original|floatformat:2 }}</span>
           <span>${{ monto|floatformat:2 }}</span>
         </span>
         {% else %}

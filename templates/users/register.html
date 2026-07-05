@@ -7,14 +7,14 @@
 {% block auth_form_action %}{% url 'register' %}{% endblock %}
 
 {% block auth_fields %}
-  <div x-data="{ 
-      pass1: '', 
-      pass2: '', 
+  <div x-data="{
+      pass1: '',
+      pass2: '',
       showTooltip: false,
       get isPass1Valid() { return this.pass1.length >= 10 },
       get passwordsMatch() { return this.pass1 === this.pass2 && this.pass2.length > 0 }
   }" class="space-y-4">
-      
+
       <div class="grid grid-cols-2 gap-2">
           <div class='flex flex-col'>
               <label for="first_name">Nombre</label>
@@ -31,20 +31,19 @@
           <input id="email" name="email" type="email" required value="{{ form.email.value|default:'' }}">
       </div>
 
-      <div class="flex flex-row gap-2">
-          <div class="flex-1 flex flex-col">
-              <label for="dni">DNI</label>
-              <input id="dni" name="dni" type="text" required value="{{ form.dni.value|default:'' }}">
-          </div>
-          <div class="flex-0">
-              {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" min_age=14 required=True %}
-          </div>
+      <div>
+        <div class="flex flex-row gap-2">
+            <div class="flex-1 flex flex-col">
+                <label for="dni">DNI</label>
+                <input id="dni" name="dni" type="text" required value="{{ form.dni.value|default:'' }}">
+            </div>
+            <div class="flex-0 flex flex-col">
+                {% include 'partials/ui/_datepicker.html' with field_name="fecha_nacimiento" label="Fecha de nacimiento" value=form.fecha_nacimiento.value position="bottom right" required=True %}
+            </div>
+        </div>
+        <p class="text-xs text-center text-gray-500 mt-1">Debés tener al menos 14 años.</p>
       </div>
 
-      <div class='flex flex-col'>
-          <label for="telefono_emergencia">Teléfono de emergencia</label>
-          <input id="telefono_emergencia" name="telefono_emergencia" type="tel" value="{{ form.telefono_emergencia.value|default:'' }}">
-      </div>
 
       <div class="relative flex flex-col">
           <label for="password1" class="flex items-center gap-2">
@@ -73,7 +72,7 @@
 
 {% block auth_extra %}
   <p>
-    ¿Ya tenés una cuenta? 
+    ¿Ya tenés una cuenta?
     <a hx-get="{% url 'login' %}"
        hx-target="#auth-card"
        hx-select="#auth-card"
